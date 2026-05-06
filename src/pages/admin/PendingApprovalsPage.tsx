@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
-import { Check, X, MapPin, Ruler, User, Calendar, Phone } from 'lucide-react'
+import { Check, X, MapPin, Ruler, User, Calendar, Phone, FolderOpen } from 'lucide-react'
+import { PropertyDocumentsView } from '../../components/properties/PropertyDocuments'
+import type { PropertyDocument } from '../../types'
 
 type Status = 'pending' | 'approved' | 'rejected'
 
@@ -18,6 +20,7 @@ interface PendingProperty {
   description: string
   address: string
   features: string[]
+  documents: PropertyDocument[]
 }
 
 function formatLakhs(amount: number) {
@@ -26,6 +29,9 @@ function formatLakhs(amount: number) {
   return `₹${amount.toLocaleString('en-IN')}`
 }
 
+const SAMPLE_PDF = 'https://www.africau.edu/images/default/sample.pdf'
+const SAMPLE_LAYOUT = 'https://images.unsplash.com/photo-1577415124269-fc1140a69e91?w=1200&q=80'
+
 const INITIAL_PENDING: PendingProperty[] = [
   {
     id: 101, title: '10 Cents Open Land - Nagercoil', city: 'Nagercoil', areaInCents: 10,
@@ -33,6 +39,17 @@ const INITIAL_PENDING: PendingProperty[] = [
     submitterPhone: '+91 98765 43210', submittedAt: '2024-01-20',
     status: 'pending', description: 'Good land near main road with clear documents.',
     address: 'Kottar, Nagercoil', features: ['Road Access', 'Clear Title'],
+    documents: [
+      { id: 1011, propertyId: 101, type: 'ec', name: 'EC for last 13 years (2010 – 2023)',
+        fileName: 'ec-2010-2023.pdf', fileUrl: SAMPLE_PDF, fileSize: 248000,
+        mimeType: 'application/pdf', isPublic: true, uploadedAt: '2024-01-20' },
+      { id: 1012, propertyId: 101, type: 'patta', name: 'Patta Document',
+        fileName: 'patta.pdf', fileUrl: SAMPLE_PDF, fileSize: 156000,
+        mimeType: 'application/pdf', isPublic: true, uploadedAt: '2024-01-20' },
+      { id: 1013, propertyId: 101, type: 'chitta', name: 'Chitta Extract',
+        fileName: 'chitta.pdf', fileUrl: SAMPLE_PDF, fileSize: 98000,
+        mimeType: 'application/pdf', isPublic: true, uploadedAt: '2024-01-20' },
+    ],
   },
   {
     id: 102, title: '5 Cents Residential Plot - Marthandam', city: 'Marthandam', areaInCents: 5,
@@ -40,6 +57,17 @@ const INITIAL_PENDING: PendingProperty[] = [
     submitterPhone: '+91 87654 32109', submittedAt: '2024-01-19',
     status: 'pending', description: 'Corner plot with road frontage.',
     address: 'Town Center, Marthandam', features: ['Corner Plot', 'Road Access'],
+    documents: [
+      { id: 1021, propertyId: 102, type: 'ec', name: 'EC (15 years)',
+        fileName: 'ec.pdf', fileUrl: SAMPLE_PDF, fileSize: 312000,
+        mimeType: 'application/pdf', isPublic: true, uploadedAt: '2024-01-19' },
+      { id: 1022, propertyId: 102, type: 'patta', name: 'Patta',
+        fileName: 'patta.pdf', fileUrl: SAMPLE_PDF, fileSize: 189000,
+        mimeType: 'application/pdf', isPublic: true, uploadedAt: '2024-01-19' },
+      { id: 1023, propertyId: 102, type: 'layout', name: 'Layout Sketch',
+        fileName: 'layout.jpg', fileUrl: SAMPLE_LAYOUT, fileSize: 1240000,
+        mimeType: 'image/jpeg', isPublic: true, uploadedAt: '2024-01-19' },
+    ],
   },
   {
     id: 103, title: '25 Cents Agricultural Land - Thuckalay', city: 'Thuckalay', areaInCents: 25,
@@ -47,6 +75,14 @@ const INITIAL_PENDING: PendingProperty[] = [
     submitterPhone: '+91 76543 21098', submittedAt: '2024-01-18',
     status: 'pending', description: 'Fertile land near river, water source available.',
     address: 'Pechipparai Road, Thuckalay', features: ['Water Source', 'Electricity'],
+    documents: [
+      { id: 1031, propertyId: 103, type: 'patta', name: 'Patta',
+        fileName: 'patta.pdf', fileUrl: SAMPLE_PDF, fileSize: 124000,
+        mimeType: 'application/pdf', isPublic: true, uploadedAt: '2024-01-18' },
+      { id: 1032, propertyId: 103, type: 'fmb', name: 'FMB Sketch',
+        fileName: 'fmb.jpg', fileUrl: SAMPLE_LAYOUT, fileSize: 980000,
+        mimeType: 'image/jpeg', isPublic: false, uploadedAt: '2024-01-18' },
+    ],
   },
   {
     id: 104, title: '8 Cents Plot Near Beach - Kanyakumari', city: 'Kanyakumari', areaInCents: 8,
@@ -54,6 +90,7 @@ const INITIAL_PENDING: PendingProperty[] = [
     submitterPhone: '+91 65432 10987', submittedAt: '2024-01-17',
     status: 'pending', description: 'Premium plot with sea view, close to tourist zone.',
     address: 'Beach Road, Kanyakumari', features: ['Road Access'],
+    documents: [],   // Submitted with no documents — admin should request them
   },
 ]
 
@@ -253,6 +290,40 @@ export default function PendingApprovalsPage() {
                   </div>
                 </div>
               )}
+
+              {/* Documents — admin verification view */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="text-xs text-gray-400 uppercase tracking-wide flex items-center gap-1.5">
+                    <FolderOpen className="w-3 h-3" />
+                    Documents
+                  </div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
+                    style={selected.documents.length > 0
+                      ? { backgroundColor: 'rgba(106,151,57,0.10)', color: '#6A9739' }
+                      : { backgroundColor: 'rgba(245,158,11,0.10)', color: '#B45309' }}>
+                    {selected.documents.length > 0
+                      ? `${selected.documents.length} attached`
+                      : 'None — request from seller'}
+                  </span>
+                </div>
+
+                {selected.documents.length > 0 ? (
+                  <PropertyDocumentsView
+                    documents={selected.documents}
+                    publicOnly={false}
+                  />
+                ) : (
+                  <div className="rounded-lg p-3 text-center border-2 border-dashed"
+                    style={{ borderColor: '#FEF3C7', backgroundColor: 'rgba(245,158,11,0.04)' }}>
+                    <p className="text-xs leading-relaxed" style={{ color: '#B45309' }}>
+                      ⚠ The seller hasn't uploaded any documents yet. Call them on
+                      <strong> {selected.submitterPhone}</strong> to request EC, Patta, Chitta etc.
+                      before approving.
+                    </p>
+                  </div>
+                )}
+              </div>
 
               {selected.status === 'pending' && (
                 <div className="flex gap-2 pt-2">
