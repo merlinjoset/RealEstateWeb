@@ -14,6 +14,12 @@ import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 
 import MapViewPage from './pages/MapViewPage'
+import SubmitPropertyPage from './pages/SubmitPropertyPage'
+import ProfilePage from './pages/ProfilePage'
+import FavoritesPage from './pages/FavoritesPage'
+import MyPropertiesPage from './pages/MyPropertiesPage'
+import NotFoundPage from './pages/NotFoundPage'
+import RequireAdmin from './components/auth/RequireAdmin'
 import AdminLayout from './pages/admin/AdminLayout'
 import DashboardPage from './pages/admin/DashboardPage'
 import AdminPropertiesPage from './pages/admin/AdminPropertiesPage'
@@ -23,6 +29,7 @@ import AdminTestimonialsPage from './pages/admin/AdminTestimonialsPage'
 import AdminUsersPage from './pages/admin/AdminUsersPage'
 import AdminInquiriesPage from './pages/admin/AdminInquiriesPage'
 import AdminSettingsPage from './pages/admin/AdminSettingsPage'
+import AdminSmsTemplatesPage from './pages/admin/AdminSmsTemplatesPage'
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 1000 * 60 * 5 } },
@@ -95,8 +102,40 @@ export default function App() {
                 </PublicLayout>
               }
             />
+            <Route
+              path="/sell"
+              element={
+                <PublicLayout>
+                  <SubmitPropertyPage />
+                </PublicLayout>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <PublicLayout>
+                  <ProfilePage />
+                </PublicLayout>
+              }
+            />
+            <Route
+              path="/favorites"
+              element={
+                <PublicLayout>
+                  <FavoritesPage />
+                </PublicLayout>
+              }
+            />
+            <Route
+              path="/my-properties"
+              element={
+                <PublicLayout>
+                  <MyPropertiesPage />
+                </PublicLayout>
+              }
+            />
 
-            <Route path="/admin" element={<AdminLayout />}>
+            <Route path="/admin" element={<RequireAdmin><AdminLayout /></RequireAdmin>}>
               <Route index element={<DashboardPage />} />
               <Route path="properties" element={<AdminPropertiesPage />} />
               <Route path="add-property" element={<AddPropertyPage />} />
@@ -107,7 +146,19 @@ export default function App() {
               <Route path="users" element={<AdminUsersPage />} />
               <Route path="inquiries" element={<AdminInquiriesPage />} />
               <Route path="settings" element={<AdminSettingsPage />} />
+              <Route path="sms-templates" element={<AdminSmsTemplatesPage />} />
+              <Route path="*" element={<NotFoundPage />} />
             </Route>
+
+            {/* Catch-all 404 — must be last */}
+            <Route
+              path="*"
+              element={
+                <PublicLayout>
+                  <NotFoundPage />
+                </PublicLayout>
+              }
+            />
           </Routes>
         </BrowserRouter>
       </AuthProvider>

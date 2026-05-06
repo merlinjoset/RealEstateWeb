@@ -1,9 +1,11 @@
 import { useState } from 'react'
-import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, Home, Plus, ClipboardList, Users,
-  MessageSquare, Settings, Menu, X, LogOut, Bell, Video,
+  MessageSquare, Settings, Menu, X, LogOut, Bell, Video, Send,
+  ChevronDown, User as UserIcon, ExternalLink,
 } from 'lucide-react'
+import { useAuth } from '../../context/AuthContext'
 
 const NAV_ITEMS = [
   { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, end: true },
@@ -13,12 +15,30 @@ const NAV_ITEMS = [
   { to: '/admin/testimonials', label: 'Testimonials', icon: Video },
   { to: '/admin/inquiries', label: 'Inquiries', icon: MessageSquare, badge: 7 },
   { to: '/admin/users', label: 'Users', icon: Users },
+  { to: '/admin/sms-templates', label: 'SMS Templates', icon: Send },
   { to: '/admin/settings', label: 'Settings', icon: Settings },
 ]
 
 export default function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [userMenuOpen, setUserMenuOpen] = useState(false)
   const navigate = useNavigate()
+  const { user, logout } = useAuth()
+
+  const initials = user
+    ? ((user.firstName[0] ?? '') + (user.lastName[0] ?? '')).toUpperCase() || 'A'
+    : 'A'
+
+  const handleSignOut = async () => {
+    setUserMenuOpen(false)
+    await logout()
+    navigate('/login', { replace: true })
+  }
+
+  const handleExitToSite = () => {
+    setUserMenuOpen(false)
+    navigate('/')
+  }
 
   return (
     <div className="flex h-screen bg-gray-100 overflow-hidden">
@@ -70,13 +90,23 @@ export default function AdminLayout() {
           ))}
         </nav>
 
-        <div className="p-3 border-t border-gray-800">
+        <div className="p-3 border-t border-gray-800 space-y-1">
           <button
-            onClick={() => navigate('/')}
+            onClick={handleExitToSite}
             className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm text-gray-400 hover:text-white hover:bg-gray-800 transition-colors"
           >
-            <LogOut className="w-4 h-4" />
+            <ExternalLink className="w-4 h-4" />
             Exit to Site
+          </button>
+          <button
+            onClick={handleSignOut}
+            className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-semibold transition-colors"
+            style={{ color: '#FCA5A5' }}
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgba(220,38,38,0.20)')}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+          >
+            <LogOut className="w-4 h-4" />
+            Sign out
           </button>
         </div>
       </aside>
@@ -106,11 +136,58 @@ export default function AdminLayout() {
             <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500" />
           </button>
 
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-semibold" style={{ backgroundColor: '#FF5A5F' }}>
-              A
-            </div>
-            <span className="hidden sm:block text-sm font-medium text-gray-700">Admin</span>
+          <div className="relative">
+            <button
+              onClick={() => setUserMenuOpen(!userMenuOpen)}
+              onBlur={() => setTimeout(() => setUserMenuOpen(false), 200)}
+              className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-semibold"
+                style={{ backgroundColor: '#FF5A5F' }}>
+                {initials}
+              </div>
+              <span className="hidden sm:block text-sm font-medium text-gray-700">
+                {user ? `${user.firstName} ${user.lastName}` : 'Admin'}
+              </span>
+              <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
+            </button>
+
+            {userMenuOpen && (
+              <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50">
+                {user && (
+                  <div className="px-4 py-3 border-b border-gray-100">
+                    <div className="text-sm font-semibold text-gray-900 truncate">
+                      {user.firstName} {user.lastName}
+                    </div>
+                    <div className="text-xs text-gray-500 truncate">{user.email}</div>
+                    <span className="inline-block mt-1.5 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
+                      style={{ backgroundColor: 'rgba(255,90,95,0.10)', color: '#FF5A5F' }}>
+                      {user.role}
+                    </span>
+                  </div>
+                )}
+                <Link
+                  to="/profile"
+                  onMouseDown={() => setUserMenuOpen(false)}
+                  className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                >
+                  <UserIcon className="w-4 h-4" /> Profile
+                </Link>
+                <button
+                  onMouseDown={handleExitToSite}
+                  className="flex items-center gap-3 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 text-left"
+                >
+                  <ExternalLink className="w-4 h-4" /> Exit to Site
+                </button>
+                <hr className="my-1 border-gray-100" />
+                <button
+                  onMouseDown={handleSignOut}
+                  className="flex items-center gap-3 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 text-left font-semibold"
+                >
+                  <LogOut className="w-4 h-4" /> Sign out
+                </button>
+              </div>
+            )}
           </div>
         </header>
 

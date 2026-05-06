@@ -78,7 +78,7 @@ export interface User {
   lastName: string
   email: string
   phone?: string
-  role: 'buyer' | 'seller' | 'agent' | 'admin'
+  role: 'Employee' | 'Seller' | 'Agent' | 'Admin'
   avatar?: string
   createdAt: string
 }
@@ -100,7 +100,7 @@ export interface RegisterData {
   email: string
   password: string
   phone?: string
-  role: 'buyer' | 'seller'
+  role: 'Agent' | 'Seller'
 }
 
 export interface PropertyFilters {
@@ -127,6 +127,13 @@ export interface PaginatedResponse<T> {
   totalPages: number
 }
 
+export type InquiryType =
+  | 'General'
+  | 'DocumentRequest'
+  | 'SiteVisit'
+  | 'Pricing'
+  | 'Sell'
+
 export interface ContactForm {
   name: string
   phone: string
@@ -134,6 +141,7 @@ export interface ContactForm {
   message: string
   propertyId?: number
   preferredContact: 'phone' | 'whatsapp'
+  type?: InquiryType
 }
 
 export interface Inquiry {

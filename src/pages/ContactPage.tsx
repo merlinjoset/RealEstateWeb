@@ -2,12 +2,28 @@ import { useState } from 'react'
 import { Phone, Mail, MapPin, MessageCircle, Send, Clock } from 'lucide-react'
 import PageHeader from '../components/layout/PageHeader'
 
+function isIndianMobile(phone: string): boolean {
+  const trimmed = phone.trim()
+  if (!trimmed) return false
+  if (trimmed.startsWith('+')) return trimmed.startsWith('+91')
+  const digits = trimmed.replace(/\D/g, '')
+  if (digits.startsWith('91') && digits.length === 12) return true
+  return digits.length === 10
+}
+
 export default function ContactPage() {
   const [form, setForm] = useState({ name: '', phone: '', email: '', message: '', contact: 'phone' as 'phone' | 'whatsapp' })
   const [sent, setSent] = useState(false)
 
+  const phoneIsIndian = isIndianMobile(form.phone)
+  const emailRequired = !phoneIsIndian && form.phone.length > 0
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    if (emailRequired && !form.email.trim()) {
+      alert('Email is required for non-Indian phone numbers — we can only send SMS to Indian mobiles.')
+      return
+    }
     setSent(true)
   }
 
@@ -104,7 +120,14 @@ export default function ContactPage() {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Phone Number *</label>
+                        <label className="text-sm font-medium text-gray-700 mb-1.5 flex items-center justify-between">
+                          <span>Phone Number *</span>
+                          {form.phone && !phoneIsIndian && (
+                            <span className="text-[11px] font-normal" style={{ color: '#B45309' }}>
+                              ⚠ Email required
+                            </span>
+                          )}
+                        </label>
                         <input
                           required
                           type="tel"
@@ -112,18 +135,28 @@ export default function ContactPage() {
                           onChange={(e) => setForm({ ...form, phone: e.target.value })}
                           placeholder="+91 XXXXX XXXXX"
                           className="input-field"
+                          style={form.phone && !phoneIsIndian ? { borderColor: '#F59E0B' } : undefined}
                         />
                       </div>
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1.5">Email (optional)</label>
+                      <label className="text-sm font-medium text-gray-700 mb-1.5 flex items-center justify-between">
+                        <span>{emailRequired ? 'Email *' : 'Email (optional)'}</span>
+                        {emailRequired && !form.email && (
+                          <span className="text-[11px] font-normal" style={{ color: '#B45309' }}>
+                            Required (non-Indian phone)
+                          </span>
+                        )}
+                      </label>
                       <input
+                        required={emailRequired}
                         type="email"
                         value={form.email}
                         onChange={(e) => setForm({ ...form, email: e.target.value })}
                         placeholder="you@example.com"
                         className="input-field"
+                        style={emailRequired && !form.email ? { borderColor: '#F59E0B' } : undefined}
                       />
                     </div>
 

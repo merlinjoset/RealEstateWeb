@@ -1,120 +1,154 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   Plus, Search, Edit2, Trash2, Eye, EyeOff, Star, X, Save,
   Video as VideoIcon, Play, MapPin, Upload, Link as LinkIcon,
+  Loader2, AlertCircle,
 } from 'lucide-react'
+import {
+  testimonialsApi,
+  type Testimonial,
+  type TestimonialPayload,
+} from '../../services/api'
 
-interface Testimonial {
-  id: number
+interface FormState {
   name: string
   location: string
-  area: string
+  propertyDetail: string
   rating: number
   excerpt: string
   thumbnail: string
   videoUrl: string
   duration: string
   isPublished: boolean
-  createdAt: string
 }
 
-const INITIAL: Testimonial[] = [
-  {
-    id: 1, name: 'Rajan Kumar', location: 'Nagercoil', area: '15 cents · Open Land',
-    rating: 5,
-    excerpt: 'They visited the site with us, explained every document, and stayed honest throughout.',
-    thumbnail: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&q=80&auto=format&fit=crop',
-    videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-    duration: '1:24', isPublished: true, createdAt: '2024-01-12',
-  },
-  {
-    id: 2, name: 'Priya Selvam', location: 'Marthandam', area: '10 cents · Residential Plot',
-    rating: 5,
-    excerpt: 'The free doorstep consultation is real — they came to our village and walked the plot with us.',
-    thumbnail: 'https://images.unsplash.com/photo-1464082354059-27db6ce50048?w=600&q=80&auto=format&fit=crop',
-    videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
-    duration: '0:58', isPublished: true, createdAt: '2024-01-18',
-  },
-  {
-    id: 3, name: 'Xavier Joseph', location: 'Colachel', area: '50 cents · Agricultural',
-    rating: 5,
-    excerpt: 'Compared with three other agents — Jose For Land had the cleanest documentation.',
-    thumbnail: 'https://images.unsplash.com/photo-1500076656116-558758c991c1?w=600&q=80&auto=format&fit=crop',
-    videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
-    duration: '1:42', isPublished: true, createdAt: '2024-01-22',
-  },
-  {
-    id: 4, name: 'Maria Antony', location: 'Kanyakumari', area: '8 cents · Residential Plot',
-    rating: 4,
-    excerpt: 'Quick response to all queries. Got our plot registered within three weeks.',
-    thumbnail: 'https://images.unsplash.com/photo-1592595896551-12b371d546d5?w=600&q=80&auto=format&fit=crop',
-    videoUrl: '',
-    duration: '0:00', isPublished: false, createdAt: '2024-02-02',
-  },
-]
-
-type FormState = Omit<Testimonial, 'id' | 'createdAt'>
-
 const EMPTY_FORM: FormState = {
-  name: '', location: '', area: '', rating: 5, excerpt: '',
+  name: '', location: '', propertyDetail: '', rating: 5, excerpt: '',
   thumbnail: '', videoUrl: '', duration: '', isPublished: true,
 }
 
 export default function AdminTestimonialsPage() {
-  const [items, setItems] = useState<Testimonial[]>(INITIAL)
+  const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
   const [form, setForm] = useState<FormState>(EMPTY_FORM)
+  const [formError, setFormError] = useState<string | null>(null)
   const [deleteId, setDeleteId] = useState<number | null>(null)
   const [previewing, setPreviewing] = useState<Testimonial | null>(null)
 
-  const filtered = items.filter(t =>
-    !search ||
-    t.name.toLowerCase().includes(search.toLowerCase()) ||
-    t.location.toLowerCase().includes(search.toLowerCase())
-  )
+  // ── Live query (admin = include drafts) ───────────────────────────────
+  const query = useQuery({
+    queryKey: ['admin-testimonials'],
+    queryFn: () => testimonialsApi.getAll(),
+  })
 
+  const items = query.data ?? []
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    if (!q) return items
+    return items.filter(t =>
+      t.name.toLowerCase().includes(q) ||
+      t.location.toLowerCase().includes(q) ||
+      t.excerpt.toLowerCase().includes(q),
+    )
+  }, [items, search])
+
+  // ── Mutations ─────────────────────────────────────────────────────────
+  const invalidate = () => {
+    queryClient.invalidateQueries({ queryKey: ['admin-testimonials'] })
+    queryClient.invalidateQueries({ queryKey: ['testimonials', 'published'] })
+  }
+
+  const createMutation = useMutation({
+    mutationFn: (payload: TestimonialPayload) => testimonialsApi.create(payload),
+    onSuccess: () => { invalidate(); closeForm() },
+    onError: (err: any) => setFormError(err?.response?.data?.message ?? 'Failed to create testimonial'),
+  })
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, payload }: { id: number; payload: TestimonialPayload }) =>
+      testimonialsApi.update(id, payload),
+    onSuccess: () => { invalidate(); closeForm() },
+    onError: (err: any) => setFormError(err?.response?.data?.message ?? 'Failed to update testimonial'),
+  })
+
+  const togglePublishMutation = useMutation({
+    mutationFn: (id: number) => testimonialsApi.togglePublished(id),
+    onSuccess: () => invalidate(),
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => testimonialsApi.delete(id),
+    onSuccess: () => { invalidate(); setDeleteId(null) },
+  })
+
+  // ── Handlers ──────────────────────────────────────────────────────────
   const openCreate = () => {
     setEditingId(null)
     setForm(EMPTY_FORM)
+    setFormError(null)
     setShowForm(true)
   }
 
   const openEdit = (t: Testimonial) => {
     setEditingId(t.id)
     setForm({
-      name: t.name, location: t.location, area: t.area, rating: t.rating,
-      excerpt: t.excerpt, thumbnail: t.thumbnail, videoUrl: t.videoUrl,
-      duration: t.duration, isPublished: t.isPublished,
+      name: t.name,
+      location: t.location,
+      propertyDetail: t.propertyDetail ?? '',
+      rating: t.rating,
+      excerpt: t.excerpt,
+      thumbnail: t.thumbnail ?? '',
+      videoUrl: t.videoUrl ?? '',
+      duration: t.duration ?? '',
+      isPublished: t.isPublished,
     })
+    setFormError(null)
     setShowForm(true)
+  }
+
+  const closeForm = () => {
+    setShowForm(false)
+    setEditingId(null)
+    setForm(EMPTY_FORM)
+    setFormError(null)
   }
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault()
-    if (editingId !== null) {
-      setItems(prev => prev.map(t => t.id === editingId ? { ...t, ...form } : t))
-    } else {
-      const newItem: Testimonial = {
-        id: Math.max(...items.map(i => i.id), 0) + 1,
-        ...form,
-        createdAt: new Date().toISOString().slice(0, 10),
-      }
-      setItems(prev => [newItem, ...prev])
+    setFormError(null)
+    const payload: TestimonialPayload = {
+      name: form.name.trim(),
+      location: form.location.trim(),
+      propertyDetail: form.propertyDetail.trim() || null,
+      rating: form.rating,
+      excerpt: form.excerpt.trim(),
+      thumbnail: form.thumbnail.trim() || null,
+      videoUrl: form.videoUrl.trim() || null,
+      duration: form.duration.trim() || null,
+      isPublished: form.isPublished,
+      order: editingId ? items.find(i => i.id === editingId)?.order ?? 0 : 0,
     }
-    setShowForm(false)
-    setForm(EMPTY_FORM)
-    setEditingId(null)
+
+    if (editingId !== null) {
+      updateMutation.mutate({ id: editingId, payload })
+    } else {
+      createMutation.mutate(payload)
+    }
   }
 
-  const togglePublished = (id: number) =>
-    setItems(prev => prev.map(t => t.id === id ? { ...t, isPublished: !t.isPublished } : t))
-
-  const confirmDelete = (id: number) => {
-    setItems(prev => prev.filter(t => t.id !== id))
-    setDeleteId(null)
-  }
+  // ── Render ────────────────────────────────────────────────────────────
+  const stats = useMemo(() => ({
+    total: items.length,
+    published: items.filter(t => t.isPublished).length,
+    drafts: items.filter(t => !t.isPublished).length,
+    avgRating: items.length
+      ? (items.reduce((s, t) => s + t.rating, 0) / items.length).toFixed(1)
+      : '0',
+  }), [items])
 
   return (
     <div>
@@ -123,7 +157,10 @@ export default function AdminTestimonialsPage() {
         <div>
           <h2 className="text-xl font-bold text-gray-900">Testimonials</h2>
           <p className="text-sm text-gray-500 mt-0.5">
-            {items.length} total · {items.filter(t => t.isPublished).length} published
+            {stats.total} total · {stats.published} published
+            {query.isFetching && <span className="ml-2 inline-flex items-center gap-1" style={{ color: '#6A9739' }}>
+              <Loader2 className="w-3 h-3 animate-spin" /> updating
+            </span>}
           </p>
         </div>
         <button
@@ -140,14 +177,10 @@ export default function AdminTestimonialsPage() {
       {/* Stats summary */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         {[
-          { label: 'Total', value: items.length, color: '#111111' },
-          { label: 'Published', value: items.filter(t => t.isPublished).length, color: '#6A9739' },
-          { label: 'Drafts', value: items.filter(t => !t.isPublished).length, color: '#F59E0B' },
-          {
-            label: 'Avg Rating',
-            value: items.length ? (items.reduce((s, t) => s + t.rating, 0) / items.length).toFixed(1) : '0',
-            color: '#FF5A5F',
-          },
+          { label: 'Total',      value: stats.total,     color: '#111111' },
+          { label: 'Published',  value: stats.published, color: '#6A9739' },
+          { label: 'Drafts',     value: stats.drafts,    color: '#F59E0B' },
+          { label: 'Avg Rating', value: stats.avgRating, color: '#FF5A5F' },
         ].map(({ label, value, color }) => (
           <div key={label} className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm">
             <div className="text-2xl font-bold tracking-tight" style={{ color }}>{value}</div>
@@ -170,7 +203,21 @@ export default function AdminTestimonialsPage() {
           </div>
         </div>
 
-        {filtered.length === 0 ? (
+        {query.isLoading ? (
+          <div className="py-16 text-center text-gray-400">
+            <Loader2 className="w-8 h-8 animate-spin mx-auto mb-3" />
+            <p className="text-sm">Loading testimonials…</p>
+          </div>
+        ) : query.isError ? (
+          <div className="py-16 text-center">
+            <AlertCircle className="w-8 h-8 text-red-400 mx-auto mb-3" />
+            <p className="text-sm text-red-600">Failed to load testimonials.</p>
+            <button onClick={() => query.refetch()}
+              className="mt-3 text-xs font-semibold underline" style={{ color: '#FF5A5F' }}>
+              Try again
+            </button>
+          </div>
+        ) : filtered.length === 0 ? (
           <div className="text-center py-16 px-4">
             <VideoIcon className="w-10 h-10 text-gray-300 mx-auto mb-3" />
             <p className="text-gray-400 text-sm">No testimonials found.</p>
@@ -210,7 +257,6 @@ export default function AdminTestimonialsPage() {
                     {t.isPublished ? 'Live' : 'Draft'}
                   </div>
 
-                  {/* Duration */}
                   {t.duration && t.duration !== '0:00' && (
                     <div className="absolute top-2 right-2 px-2 py-0.5 rounded text-[10px] font-semibold text-white"
                       style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}>
@@ -230,17 +276,21 @@ export default function AdminTestimonialsPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-1 text-xs text-gray-500 mb-3">
-                    <MapPin className="w-3 h-3" /> {t.location} · <span>{t.area}</span>
+                    <MapPin className="w-3 h-3" /> {t.location}
+                    {t.propertyDetail && <> · <span>{t.propertyDetail}</span></>}
                   </div>
                   <p className="text-xs text-gray-600 leading-relaxed line-clamp-2 mb-3">"{t.excerpt}"</p>
 
                   {/* Actions */}
                   <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-                    <span className="text-[10px] text-gray-400">{t.createdAt}</span>
+                    <span className="text-[10px] text-gray-400">
+                      {new Date(t.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                    </span>
                     <div className="flex items-center gap-1">
-                      <button onClick={() => togglePublished(t.id)}
+                      <button onClick={() => togglePublishMutation.mutate(t.id)}
+                        disabled={togglePublishMutation.isPending}
                         title={t.isPublished ? 'Unpublish' : 'Publish'}
-                        className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-50 rounded-md transition-colors">
+                        className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-50 rounded-md transition-colors disabled:opacity-50">
                         {t.isPublished ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
                       </button>
                       <button onClick={() => openEdit(t)}
@@ -264,7 +314,7 @@ export default function AdminTestimonialsPage() {
 
       {/* Create / Edit modal */}
       {showForm && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 overflow-y-auto" onClick={() => setShowForm(false)}>
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 overflow-y-auto" onClick={closeForm}>
           <form onSubmit={handleSave}
             onClick={(e) => e.stopPropagation()}
             className="bg-white rounded-2xl max-w-2xl w-full shadow-xl my-8">
@@ -277,12 +327,19 @@ export default function AdminTestimonialsPage() {
                   {editingId ? 'Update the testimonial details below' : 'Record a client story to feature on the home page'}
                 </p>
               </div>
-              <button type="button" onClick={() => setShowForm(false)} className="text-gray-400 hover:text-gray-600 p-1">
+              <button type="button" onClick={closeForm} className="text-gray-400 hover:text-gray-600 p-1">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <div className="p-6 space-y-5 max-h-[60vh] overflow-y-auto">
+              {formError && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                  <span>{formError}</span>
+                </div>
+              )}
+
               {/* Name + Rating */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="sm:col-span-2">
@@ -308,7 +365,7 @@ export default function AdminTestimonialsPage() {
                 </div>
               </div>
 
-              {/* Location + Property area */}
+              {/* Location + Property detail */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">Location *</label>
@@ -319,8 +376,8 @@ export default function AdminTestimonialsPage() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">Property Detail</label>
-                  <input value={form.area}
-                    onChange={(e) => setForm({ ...form, area: e.target.value })}
+                  <input value={form.propertyDetail}
+                    onChange={(e) => setForm({ ...form, propertyDetail: e.target.value })}
                     placeholder="e.g. 15 cents · Open Land"
                     className="input-field" />
                 </div>
@@ -337,7 +394,7 @@ export default function AdminTestimonialsPage() {
                 <p className="text-xs text-gray-400 mt-1">Shown on the home page video card. Keep it under 150 characters for best layout.</p>
               </div>
 
-              {/* Video URL + Thumbnail + Duration */}
+              {/* Video asset */}
               <div className="space-y-4 p-4 rounded-xl border border-gray-100" style={{ backgroundColor: '#FAFAF8' }}>
                 <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Video Asset</p>
 
@@ -347,7 +404,7 @@ export default function AdminTestimonialsPage() {
                   </label>
                   <input value={form.videoUrl}
                     onChange={(e) => setForm({ ...form, videoUrl: e.target.value })}
-                    placeholder="https://... (MP4 or YouTube/Vimeo embed)"
+                    placeholder="https://… (MP4 or YouTube/Vimeo embed)"
                     className="input-field" />
                 </div>
 
@@ -358,7 +415,7 @@ export default function AdminTestimonialsPage() {
                     </label>
                     <input value={form.thumbnail}
                       onChange={(e) => setForm({ ...form, thumbnail: e.target.value })}
-                      placeholder="https://... or upload (TODO)"
+                      placeholder="https://… or upload (TODO)"
                       className="input-field" />
                   </div>
                   <div>
@@ -370,7 +427,6 @@ export default function AdminTestimonialsPage() {
                   </div>
                 </div>
 
-                {/* Live thumbnail preview */}
                 {form.thumbnail && (
                   <div className="rounded-lg overflow-hidden border border-gray-200 bg-gray-100 aspect-video max-w-xs">
                     <img src={form.thumbnail} alt="Preview"
@@ -401,18 +457,22 @@ export default function AdminTestimonialsPage() {
               </label>
             </div>
 
-            {/* Footer */}
             <div className="flex items-center justify-end gap-3 p-5 border-t border-gray-100 bg-gray-50">
-              <button type="button" onClick={() => setShowForm(false)} className="btn-ghost text-sm">
+              <button type="button" onClick={closeForm}
+                disabled={createMutation.isPending || updateMutation.isPending}
+                className="btn-ghost text-sm">
                 Cancel
               </button>
               <button type="submit"
-                className="flex items-center gap-2 px-5 py-2.5 text-white text-sm font-semibold rounded-lg transition-colors"
+                disabled={createMutation.isPending || updateMutation.isPending}
+                className="flex items-center gap-2 px-5 py-2.5 text-white text-sm font-semibold rounded-lg transition-colors disabled:opacity-60"
                 style={{ backgroundColor: '#FF5A5F' }}
                 onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#e04a4f')}
                 onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#FF5A5F')}>
-                <Save className="w-4 h-4" />
-                {editingId ? 'Update Testimonial' : 'Add Testimonial'}
+                {(createMutation.isPending || updateMutation.isPending)
+                  ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving…</>
+                  : <><Save className="w-4 h-4" /> {editingId ? 'Update Testimonial' : 'Add Testimonial'}</>
+                }
               </button>
             </div>
           </form>
@@ -428,12 +488,18 @@ export default function AdminTestimonialsPage() {
               This will remove the testimonial permanently. This action cannot be undone.
             </p>
             <div className="flex gap-3">
-              <button onClick={() => setDeleteId(null)} className="flex-1 btn-ghost border border-gray-200">
+              <button onClick={() => setDeleteId(null)}
+                disabled={deleteMutation.isPending}
+                className="flex-1 btn-ghost border border-gray-200">
                 Cancel
               </button>
-              <button onClick={() => confirmDelete(deleteId)}
-                className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700">
-                <Trash2 className="w-4 h-4" /> Delete
+              <button onClick={() => deleteMutation.mutate(deleteId)}
+                disabled={deleteMutation.isPending}
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 disabled:opacity-60">
+                {deleteMutation.isPending
+                  ? <><Loader2 className="w-4 h-4 animate-spin" /> Deleting…</>
+                  : <><Trash2 className="w-4 h-4" /> Delete</>
+                }
               </button>
             </div>
           </div>
@@ -449,11 +515,13 @@ export default function AdminTestimonialsPage() {
             <X className="w-5 h-5" />
           </button>
           <div onClick={(e) => e.stopPropagation()} className="w-full max-w-3xl bg-black rounded-2xl overflow-hidden">
-            <video src={previewing.videoUrl} poster={previewing.thumbnail} controls autoPlay
+            <video src={previewing.videoUrl ?? ''} poster={previewing.thumbnail ?? ''} controls autoPlay
               className="w-full aspect-video" />
             <div className="p-4 text-white">
               <div className="font-bold">{previewing.name}</div>
-              <div className="text-xs text-gray-400 mt-0.5">{previewing.location} · {previewing.area}</div>
+              <div className="text-xs text-gray-400 mt-0.5">
+                {previewing.location}{previewing.propertyDetail && ` · ${previewing.propertyDetail}`}
+              </div>
             </div>
           </div>
         </div>

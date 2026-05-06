@@ -1,167 +1,157 @@
-import { useState, useMemo } from 'react'
+import { useState } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
-  Search, Plus, Edit2, Trash2, Mail, Phone, Shield, UserPlus,
+  Search, Edit2, Trash2, Mail, Phone, Shield, UserPlus,
   X, Save, Eye, Users as UsersIcon, UserCheck, UserX, Calendar,
-  CheckCircle2, MapPin,
+  CheckCircle2, MapPin, Loader2, AlertCircle,
 } from 'lucide-react'
+import {
+  usersApi,
+  type AdminUser,
+  type AdminUserRole,
+  type UserCounts,
+  type UserQuery,
+  type CreateUserPayload,
+  type UpdateUserPayload,
+} from '../../services/api'
 
-type Role = 'buyer' | 'seller' | 'agent' | 'admin'
-type Status = 'active' | 'inactive'
+const ROLE_BADGE: Record<AdminUserRole, { bg: string; color: string; label: string }> = {
+  Admin:  { bg: 'rgba(255,90,95,0.10)',  color: '#FF5A5F', label: 'Admin' },
+  Agent:  { bg: 'rgba(41,50,55,0.08)',   color: '#293237', label: 'Agent' },
+  Seller: { bg: 'rgba(245,158,11,0.10)', color: '#B45309', label: 'Seller' },
+  Employee: { bg: 'rgba(106,151,57,0.10)', color: '#6A9739', label: 'Employee' },
+}
 
-interface AdminUser {
-  id: number
+interface FormState {
   firstName: string
   lastName: string
   email: string
   phone: string
-  city?: string
-  role: Role
-  status: Status
-  joinedAt: string
-  lastActive?: string
-  propertiesCount?: number   // for sellers/agents
-  inquiriesCount?: number    // for buyers
+  city: string
+  role: AdminUserRole
+  isActive: boolean
 }
-
-const INITIAL_USERS: AdminUser[] = [
-  {
-    id: 1, firstName: 'Admin', lastName: 'Jose', email: 'admin@joseforland.com',
-    phone: '+91 99944 88490', city: 'Nagercoil', role: 'admin', status: 'active',
-    joinedAt: '2023-06-12', lastActive: 'Just now',
-  },
-  {
-    id: 2, firstName: 'Rajan', lastName: 'Kumar', email: 'rajan.k@gmail.com',
-    phone: '+91 98765 43210', city: 'Nagercoil', role: 'buyer', status: 'active',
-    joinedAt: '2024-01-12', lastActive: '2 hours ago', inquiriesCount: 3,
-  },
-  {
-    id: 3, firstName: 'Priya', lastName: 'Selvam', email: 'priya.s@gmail.com',
-    phone: '+91 87654 32109', city: 'Marthandam', role: 'buyer', status: 'active',
-    joinedAt: '2024-01-15', lastActive: 'Yesterday', inquiriesCount: 5,
-  },
-  {
-    id: 4, firstName: 'Xavier', lastName: 'Joseph', email: 'xavier@yahoo.com',
-    phone: '+91 76543 21098', city: 'Colachel', role: 'seller', status: 'active',
-    joinedAt: '2023-11-22', lastActive: '5 days ago', propertiesCount: 4,
-  },
-  {
-    id: 5, firstName: 'Maria', lastName: 'Antony', email: 'maria.a@gmail.com',
-    phone: '+91 65432 10987', city: 'Kanyakumari', role: 'buyer', status: 'active',
-    joinedAt: '2024-02-02', lastActive: 'Today', inquiriesCount: 2,
-  },
-  {
-    id: 6, firstName: 'Sundaram', lastName: 'Pillai', email: 'sundaram@joseforland.com',
-    phone: '+91 99445 23210', city: 'Thuckalay', role: 'agent', status: 'active',
-    joinedAt: '2023-08-15', lastActive: '30 mins ago', propertiesCount: 12,
-  },
-  {
-    id: 7, firstName: 'Thomas', lastName: 'John', email: 'thomas.j@hotmail.com',
-    phone: '+91 90876 54321', city: 'Nagercoil', role: 'seller', status: 'inactive',
-    joinedAt: '2023-10-04', lastActive: '2 months ago', propertiesCount: 1,
-  },
-  {
-    id: 8, firstName: 'Selvi', lastName: 'Murugan', email: 'selvi.m@gmail.com',
-    phone: '+91 99776 12349', city: 'Padmanabhapuram', role: 'buyer', status: 'active',
-    joinedAt: '2024-03-01', lastActive: 'Today', inquiriesCount: 1,
-  },
-]
-
-const ROLE_BADGE: Record<Role, { bg: string; color: string; label: string }> = {
-  admin:  { bg: 'rgba(255,90,95,0.10)',  color: '#FF5A5F', label: 'Admin' },
-  agent:  { bg: 'rgba(41,50,55,0.08)',   color: '#293237', label: 'Agent' },
-  seller: { bg: 'rgba(245,158,11,0.10)', color: '#B45309', label: 'Seller' },
-  buyer:  { bg: 'rgba(106,151,57,0.10)', color: '#6A9739', label: 'Buyer' },
-}
-
-type FormState = Omit<AdminUser, 'id' | 'joinedAt' | 'lastActive' | 'propertiesCount' | 'inquiriesCount'>
 
 const EMPTY_FORM: FormState = {
   firstName: '', lastName: '', email: '', phone: '', city: '',
-  role: 'buyer', status: 'active',
+  role: 'Employee', isActive: true,
+}
+
+const ZERO_COUNTS: UserCounts = {
+  all: 0, employee: 0, seller: 0, agent: 0, admin: 0, active: 0, inactive: 0,
+}
+
+function relativeTime(iso: string | null) {
+  if (!iso) return '—'
+  const diff = Date.now() - new Date(iso).getTime()
+  const m = Math.floor(diff / 60000)
+  if (m < 1) return 'Just now'
+  if (m < 60) return `${m}m ago`
+  const h = Math.floor(m / 60)
+  if (h < 24) return `${h}h ago`
+  const d = Math.floor(h / 24)
+  if (d < 7) return `${d}d ago`
+  return new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
 export default function AdminUsersPage() {
-  const [users, setUsers] = useState<AdminUser[]>(INITIAL_USERS)
+  const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
-  const [roleFilter, setRoleFilter] = useState<Role | 'all'>('all')
-  const [statusFilter, setStatusFilter] = useState<Status | 'all'>('all')
+  const [roleFilter, setRoleFilter] = useState<NonNullable<UserQuery['role']>>('all')
+  const [statusFilter, setStatusFilter] = useState<NonNullable<UserQuery['status']>>('all')
 
   const [showForm, setShowForm] = useState(false)
-  const [editingId, setEditingId] = useState<number | null>(null)
+  const [editingUser, setEditingUser] = useState<AdminUser | null>(null)
   const [form, setForm] = useState<FormState>(EMPTY_FORM)
+  const [formError, setFormError] = useState<string | null>(null)
 
   const [viewing, setViewing] = useState<AdminUser | null>(null)
   const [deleteId, setDeleteId] = useState<number | null>(null)
 
-  const counts = useMemo(() => ({
-    all: users.length,
-    admin: users.filter(u => u.role === 'admin').length,
-    agent: users.filter(u => u.role === 'agent').length,
-    seller: users.filter(u => u.role === 'seller').length,
-    buyer: users.filter(u => u.role === 'buyer').length,
-    active: users.filter(u => u.status === 'active').length,
-    inactive: users.filter(u => u.status === 'inactive').length,
-  }), [users])
+  // ── Live query ───────────────────────────────────────────────────────
+  const query = useQuery({
+    queryKey: ['admin-users', { search, role: roleFilter, status: statusFilter }],
+    queryFn: () => usersApi.getAll({
+      search: search.trim() || undefined,
+      role: roleFilter,
+      status: statusFilter,
+    }),
+    placeholderData: (prev) => prev,
+  })
 
-  const filtered = useMemo(() => {
-    return users.filter(u => {
-      if (roleFilter !== 'all' && u.role !== roleFilter) return false
-      if (statusFilter !== 'all' && u.status !== statusFilter) return false
-      const q = search.trim().toLowerCase()
-      if (!q) return true
-      return (
-        u.firstName.toLowerCase().includes(q) ||
-        u.lastName.toLowerCase().includes(q) ||
-        u.email.toLowerCase().includes(q) ||
-        u.phone.toLowerCase().includes(q) ||
-        (u.city?.toLowerCase().includes(q) ?? false)
-      )
-    })
-  }, [users, search, roleFilter, statusFilter])
+  const items = query.data?.items ?? []
+  const counts = query.data?.counts ?? ZERO_COUNTS
 
-  /* ---------- handlers ---------- */
+  // ── Mutations ────────────────────────────────────────────────────────
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ['admin-users'] })
+
+  const createMutation = useMutation({
+    mutationFn: (payload: CreateUserPayload) => usersApi.create(payload),
+    onSuccess: () => { invalidate(); closeForm() },
+    onError: (err: any) => setFormError(err?.response?.data?.message ?? 'Failed to create user'),
+  })
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, payload }: { id: number; payload: UpdateUserPayload }) =>
+      usersApi.update(id, payload),
+    onSuccess: () => { invalidate(); closeForm() },
+    onError: (err: any) => setFormError(err?.response?.data?.message ?? 'Failed to update user'),
+  })
+
+  const toggleMutation = useMutation({
+    mutationFn: (id: number) => usersApi.toggleStatus(id),
+    onSuccess: (updated) => {
+      invalidate()
+      if (viewing?.id === updated.id) setViewing(updated)
+    },
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => usersApi.delete(id),
+    onSuccess: () => { invalidate(); setDeleteId(null) },
+    onError: (err: any) => alert(err?.response?.data?.message ?? 'Failed to delete user'),
+  })
+
+  // ── Handlers ─────────────────────────────────────────────────────────
   const openCreate = () => {
-    setEditingId(null)
+    setEditingUser(null)
     setForm(EMPTY_FORM)
+    setFormError(null)
     setShowForm(true)
   }
 
   const openEdit = (u: AdminUser) => {
-    setEditingId(u.id)
+    setEditingUser(u)
     setForm({
       firstName: u.firstName, lastName: u.lastName, email: u.email,
-      phone: u.phone, city: u.city ?? '', role: u.role, status: u.status,
+      phone: u.phone, city: u.city ?? '', role: u.role, isActive: u.isActive,
     })
+    setFormError(null)
     setShowForm(true)
+  }
+
+  const closeForm = () => {
+    setShowForm(false)
+    setEditingUser(null)
+    setForm(EMPTY_FORM)
+    setFormError(null)
   }
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault()
-    if (editingId !== null) {
-      setUsers(prev => prev.map(u => u.id === editingId ? { ...u, ...form } : u))
+    setFormError(null)
+    const payload = { ...form, city: form.city.trim() || null }
+
+    if (editingUser) {
+      updateMutation.mutate({ id: editingUser.id, payload: payload as UpdateUserPayload })
     } else {
-      const newUser: AdminUser = {
-        id: Math.max(...users.map(u => u.id), 0) + 1,
-        ...form,
-        joinedAt: new Date().toISOString().slice(0, 10),
-        lastActive: 'Just now',
-      }
-      setUsers(prev => [newUser, ...prev])
+      createMutation.mutate(payload as CreateUserPayload)
     }
-    setShowForm(false)
-    setForm(EMPTY_FORM)
-    setEditingId(null)
   }
 
-  const toggleStatus = (id: number) =>
-    setUsers(prev => prev.map(u =>
-      u.id === id ? { ...u, status: u.status === 'active' ? 'inactive' : 'active' } : u,
-    ))
-
-  const confirmDelete = (id: number) => {
-    setUsers(prev => prev.filter(u => u.id !== id))
-    setDeleteId(null)
-  }
+  const isMutating =
+    createMutation.isPending || updateMutation.isPending ||
+    toggleMutation.isPending || deleteMutation.isPending
 
   return (
     <div>
@@ -171,6 +161,9 @@ export default function AdminUsersPage() {
           <h2 className="text-xl font-bold text-gray-900">Users</h2>
           <p className="text-sm text-gray-500 mt-0.5">
             {counts.all} total · {counts.active} active · {counts.inactive} inactive
+            {query.isFetching && <span className="ml-2 inline-flex items-center gap-1" style={{ color: '#6A9739' }}>
+              <Loader2 className="w-3 h-3 animate-spin" /> updating
+            </span>}
           </p>
         </div>
         <button
@@ -187,7 +180,7 @@ export default function AdminUsersPage() {
       {/* Stat cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         {[
-          { label: 'Buyers',  value: counts.buyer,  color: '#6A9739', bg: 'rgba(106,151,57,0.08)', icon: UsersIcon },
+          { label: 'Employees',  value: counts.employee,  color: '#6A9739', bg: 'rgba(106,151,57,0.08)', icon: UsersIcon },
           { label: 'Sellers', value: counts.seller, color: '#B45309', bg: 'rgba(245,158,11,0.08)', icon: UserCheck },
           { label: 'Agents',  value: counts.agent,  color: '#293237', bg: 'rgba(41,50,55,0.06)',   icon: Shield },
           { label: 'Admins',  value: counts.admin,  color: '#FF5A5F', bg: 'rgba(255,90,95,0.08)',  icon: UserX },
@@ -226,7 +219,7 @@ export default function AdminUsersPage() {
           </div>
 
           <div className="flex flex-wrap gap-2">
-            {(['all', 'buyer', 'seller', 'agent', 'admin'] as const).map(r => (
+            {(['all', 'employee', 'seller', 'agent', 'admin'] as const).map(r => (
               <button
                 key={r}
                 onClick={() => setRoleFilter(r)}
@@ -243,7 +236,7 @@ export default function AdminUsersPage() {
 
           <select
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as Status | 'all')}
+            onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
             className="text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#FF5A5F]"
           >
             <option value="all">All Status</option>
@@ -252,8 +245,22 @@ export default function AdminUsersPage() {
           </select>
         </div>
 
-        {/* Users table */}
-        {filtered.length === 0 ? (
+        {/* Loading / error / empty / table */}
+        {query.isLoading ? (
+          <div className="py-16 text-center text-gray-400">
+            <Loader2 className="w-8 h-8 animate-spin mx-auto mb-3" />
+            <p className="text-sm">Loading users…</p>
+          </div>
+        ) : query.isError ? (
+          <div className="py-16 text-center">
+            <AlertCircle className="w-8 h-8 text-red-400 mx-auto mb-3" />
+            <p className="text-sm text-red-600">Failed to load users.</p>
+            <button onClick={() => query.refetch()}
+              className="mt-3 text-xs font-semibold underline" style={{ color: '#FF5A5F' }}>
+              Try again
+            </button>
+          </div>
+        ) : items.length === 0 ? (
           <div className="text-center py-16 px-4">
             <UsersIcon className="w-10 h-10 text-gray-300 mx-auto mb-3" />
             <p className="text-gray-400 text-sm">No users match your filters.</p>
@@ -272,10 +279,9 @@ export default function AdminUsersPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
-                {filtered.map((u) => {
+                {items.map((u) => {
                   const roleBadge = ROLE_BADGE[u.role]
                   const initials = (u.firstName[0] ?? '') + (u.lastName[0] ?? '')
-
                   return (
                     <tr key={u.id} className="hover:bg-gray-50 transition-colors">
                       <td className="px-4 py-3">
@@ -306,29 +312,30 @@ export default function AdminUsersPage() {
                       </td>
                       <td className="px-4 py-3 hidden lg:table-cell">
                         <div className="text-xs text-gray-700">
-                          {u.role === 'buyer' && u.inquiriesCount !== undefined && (
-                            <span>{u.inquiriesCount} inquir{u.inquiriesCount === 1 ? 'y' : 'ies'}</span>
+                          {u.role === 'Employee' && (
+                            <span>{u.inquiriesCount} assigned</span>
                           )}
-                          {(u.role === 'seller' || u.role === 'agent') && u.propertiesCount !== undefined && (
+                          {(u.role === 'Seller' || u.role === 'Agent') && (
                             <span>{u.propertiesCount} listings</span>
                           )}
-                          {u.role === 'admin' && <span className="text-gray-400">—</span>}
+                          {u.role === 'Admin' && <span className="text-gray-400">—</span>}
                         </div>
                         <div className="text-xs text-gray-400 mt-0.5 flex items-center gap-1">
-                          <Calendar className="w-3 h-3" /> {u.lastActive}
+                          <Calendar className="w-3 h-3" /> {relativeTime(u.lastActiveAt ?? u.createdAt)}
                         </div>
                       </td>
                       <td className="px-4 py-3 hidden sm:table-cell">
                         <button
-                          onClick={() => toggleStatus(u.id)}
+                          onClick={() => toggleMutation.mutate(u.id)}
+                          disabled={isMutating}
                           className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full transition-colors"
-                          style={u.status === 'active'
+                          style={u.isActive
                             ? { backgroundColor: 'rgba(106,151,57,0.10)', color: '#6A9739' }
                             : { backgroundColor: 'rgba(245,158,11,0.10)', color: '#B45309' }}
                         >
                           <span className="w-1.5 h-1.5 rounded-full"
-                            style={{ backgroundColor: u.status === 'active' ? '#6A9739' : '#B45309' }} />
-                          {u.status === 'active' ? 'Active' : 'Inactive'}
+                            style={{ backgroundColor: u.isActive ? '#6A9739' : '#B45309' }} />
+                          {u.isActive ? 'Active' : 'Inactive'}
                         </button>
                       </td>
                       <td className="px-4 py-3">
@@ -345,7 +352,7 @@ export default function AdminUsersPage() {
                           </button>
                           <button onClick={() => setDeleteId(u.id)}
                             title="Delete"
-                            disabled={u.role === 'admin'}
+                            disabled={u.role === 'Admin'}
                             className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -363,26 +370,33 @@ export default function AdminUsersPage() {
       {/* === Create/Edit modal === */}
       {showForm && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 overflow-y-auto"
-          onClick={() => setShowForm(false)}>
+          onClick={closeForm}>
           <form onSubmit={handleSave}
             onClick={(e) => e.stopPropagation()}
             className="bg-white rounded-2xl max-w-xl w-full shadow-xl my-8">
             <div className="flex items-center justify-between p-6 border-b border-gray-100">
               <div>
                 <h3 className="font-bold text-gray-900 text-lg">
-                  {editingId ? 'Edit User' : 'Add New User'}
+                  {editingUser ? 'Edit User' : 'Add New User'}
                 </h3>
                 <p className="text-xs text-gray-500 mt-0.5">
-                  {editingId ? 'Update the user details below' : 'Create a new account in the system'}
+                  {editingUser ? 'Update the user details below' : 'Create a new account in the system'}
                 </p>
               </div>
-              <button type="button" onClick={() => setShowForm(false)}
+              <button type="button" onClick={closeForm}
                 className="text-gray-400 hover:text-gray-600 p-1">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <div className="p-6 space-y-4 max-h-[60vh] overflow-y-auto">
+              {formError && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                  <span>{formError}</span>
+                </div>
+              )}
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">First Name *</label>
@@ -423,7 +437,7 @@ export default function AdminUsersPage() {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Role *</label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  {(['buyer', 'seller', 'agent', 'admin'] as const).map(r => {
+                  {(['Employee', 'Seller', 'Agent', 'Admin'] as const).map(r => {
                     const isActive = form.role === r
                     const badge = ROLE_BADGE[r]
                     return (
@@ -431,7 +445,7 @@ export default function AdminUsersPage() {
                         key={r}
                         type="button"
                         onClick={() => setForm({ ...form, role: r })}
-                        className="px-3 py-2 rounded-lg text-xs font-semibold border transition-colors capitalize"
+                        className="px-3 py-2 rounded-lg text-xs font-semibold border transition-colors"
                         style={isActive
                           ? { backgroundColor: badge.color, color: 'white', borderColor: badge.color }
                           : { backgroundColor: 'white', color: '#374151', borderColor: '#e5e7eb' }}
@@ -444,18 +458,18 @@ export default function AdminUsersPage() {
               </div>
 
               <label className="flex items-center gap-3 cursor-pointer p-3 rounded-xl border border-gray-200 hover:bg-gray-50">
-                <div onClick={() => setForm({ ...form, status: form.status === 'active' ? 'inactive' : 'active' })}
+                <div onClick={() => setForm({ ...form, isActive: !form.isActive })}
                   className="w-11 h-6 rounded-full transition-colors relative shrink-0"
-                  style={{ backgroundColor: form.status === 'active' ? '#6A9739' : '#E5E7EB' }}>
+                  style={{ backgroundColor: form.isActive ? '#6A9739' : '#E5E7EB' }}>
                   <div className="absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform"
-                    style={{ transform: form.status === 'active' ? 'translateX(22px)' : 'translateX(2px)' }} />
+                    style={{ transform: form.isActive ? 'translateX(22px)' : 'translateX(2px)' }} />
                 </div>
                 <div className="flex-1">
                   <div className="text-sm font-semibold text-gray-900">
-                    {form.status === 'active' ? 'Active account' : 'Inactive account'}
+                    {form.isActive ? 'Active account' : 'Inactive account'}
                   </div>
                   <div className="text-xs text-gray-500">
-                    {form.status === 'active'
+                    {form.isActive
                       ? 'User can log in and use the platform'
                       : 'User is suspended — cannot log in until reactivated'}
                   </div>
@@ -464,16 +478,21 @@ export default function AdminUsersPage() {
             </div>
 
             <div className="flex items-center justify-end gap-3 p-5 border-t border-gray-100 bg-gray-50">
-              <button type="button" onClick={() => setShowForm(false)} className="btn-ghost text-sm">
+              <button type="button" onClick={closeForm}
+                disabled={createMutation.isPending || updateMutation.isPending}
+                className="btn-ghost text-sm">
                 Cancel
               </button>
               <button type="submit"
-                className="flex items-center gap-2 px-5 py-2.5 text-white text-sm font-semibold rounded-lg transition-colors"
+                disabled={createMutation.isPending || updateMutation.isPending}
+                className="flex items-center gap-2 px-5 py-2.5 text-white text-sm font-semibold rounded-lg transition-colors disabled:opacity-60"
                 style={{ backgroundColor: '#6A9739' }}
                 onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#547a2d')}
                 onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#6A9739')}>
-                <Save className="w-4 h-4" />
-                {editingId ? 'Update User' : 'Create User'}
+                {(createMutation.isPending || updateMutation.isPending)
+                  ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving…</>
+                  : <><Save className="w-4 h-4" /> {editingUser ? 'Update User' : 'Create User'}</>
+                }
               </button>
             </div>
           </form>
@@ -486,7 +505,6 @@ export default function AdminUsersPage() {
           onClick={() => setViewing(null)}>
           <div onClick={(e) => e.stopPropagation()}
             className="bg-white rounded-2xl max-w-md w-full shadow-xl overflow-hidden">
-            {/* Header gradient */}
             <div className="p-6 text-white relative" style={{ backgroundColor: ROLE_BADGE[viewing.role].color }}>
               <button onClick={() => setViewing(null)}
                 className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center">
@@ -508,14 +526,14 @@ export default function AdminUsersPage() {
               <DetailRow icon={Phone} label="Phone" value={viewing.phone} />
               {viewing.city && <DetailRow icon={MapPin} label="Location" value={viewing.city} />}
               <DetailRow icon={Calendar} label="Joined"
-                value={new Date(viewing.joinedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })} />
-              {viewing.lastActive && (
-                <DetailRow icon={CheckCircle2} label="Last Active" value={viewing.lastActive} />
+                value={new Date(viewing.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })} />
+              {viewing.lastActiveAt && (
+                <DetailRow icon={CheckCircle2} label="Last Active" value={relativeTime(viewing.lastActiveAt)} />
               )}
-              {viewing.role === 'buyer' && viewing.inquiriesCount !== undefined && (
-                <DetailRow icon={UsersIcon} label="Total Inquiries" value={`${viewing.inquiriesCount}`} />
+              {viewing.role === 'Employee' && (
+                <DetailRow icon={UsersIcon} label="Inquiries Assigned" value={`${viewing.inquiriesCount}`} />
               )}
-              {(viewing.role === 'seller' || viewing.role === 'agent') && viewing.propertiesCount !== undefined && (
+              {(viewing.role === 'Seller' || viewing.role === 'Agent') && (
                 <DetailRow icon={UsersIcon} label="Properties Listed" value={`${viewing.propertiesCount}`} />
               )}
 
@@ -527,10 +545,11 @@ export default function AdminUsersPage() {
                   <Edit2 className="w-3.5 h-3.5" /> Edit
                 </button>
                 <button
-                  onClick={() => toggleStatus(viewing.id)}
-                  className="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-sm font-semibold border transition-colors"
+                  onClick={() => toggleMutation.mutate(viewing.id)}
+                  disabled={toggleMutation.isPending}
+                  className="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-sm font-semibold border transition-colors disabled:opacity-60"
                   style={{ borderColor: '#CFD8DC', color: '#374151' }}>
-                  {viewing.status === 'active' ? 'Deactivate' : 'Activate'}
+                  {viewing.isActive ? 'Deactivate' : 'Activate'}
                 </button>
               </div>
             </div>
@@ -547,12 +566,18 @@ export default function AdminUsersPage() {
               This will permanently remove the account from the system. This action cannot be undone.
             </p>
             <div className="flex gap-3">
-              <button onClick={() => setDeleteId(null)} className="flex-1 btn-ghost border border-gray-200">
+              <button onClick={() => setDeleteId(null)}
+                disabled={deleteMutation.isPending}
+                className="flex-1 btn-ghost border border-gray-200">
                 Cancel
               </button>
-              <button onClick={() => confirmDelete(deleteId)}
-                className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700">
-                <Trash2 className="w-4 h-4" /> Delete
+              <button onClick={() => deleteMutation.mutate(deleteId)}
+                disabled={deleteMutation.isPending}
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 disabled:opacity-60">
+                {deleteMutation.isPending
+                  ? <><Loader2 className="w-4 h-4 animate-spin" /> Deleting…</>
+                  : <><Trash2 className="w-4 h-4" /> Delete</>
+                }
               </button>
             </div>
           </div>

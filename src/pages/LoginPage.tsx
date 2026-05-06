@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { Eye, EyeOff, LogIn } from 'lucide-react'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { Eye, EyeOff, LogIn, Loader2, AlertCircle } from 'lucide-react'
+import { useAuth } from '../context/AuthContext'
 
 export default function LoginPage() {
   const [form, setForm] = useState({ email: '', password: '' })
@@ -8,20 +9,40 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
+  const location = useLocation()
+  const { login } = useAuth()
+
+  // After login, send admins to /admin and everyone else to where they came from (or /)
+  const from = (location.state as { from?: string } | null)?.from ?? null
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError('')
+
     try {
-      await new Promise((r) => setTimeout(r, 800))
-      if (form.email === 'admin@joseforland.com' && form.password === 'admin123') {
-        navigate('/admin')
+      await login({ email: form.email.trim(), password: form.password })
+
+      // Read the freshly stored user to decide where to redirect
+      const stored = localStorage.getItem('user')
+      const role = stored ? (JSON.parse(stored)?.role as string) : null
+
+      if (from) {
+        navigate(from, { replace: true })
+      } else if (role === 'Admin') {
+        navigate('/admin', { replace: true })
       } else {
-        navigate('/')
+        navigate('/', { replace: true })
       }
-    } catch {
-      setError('Invalid email or password. Please try again.')
+    } catch (err: any) {
+      const status = err?.response?.status
+      if (status === 401) {
+        setError('Invalid email or password.')
+      } else if (status === 0 || err?.code === 'ERR_NETWORK') {
+        setError('Cannot reach the server. Make sure the API is running.')
+      } else {
+        setError(err?.response?.data?.message ?? 'Sign-in failed. Please try again.')
+      }
     } finally {
       setLoading(false)
     }
@@ -42,8 +63,9 @@ export default function LoginPage() {
           <p className="text-gray-500 text-sm mb-6">Sign in to your account</p>
 
           {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
-              {error}
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+              <span>{error}</span>
             </div>
           )}
 
@@ -57,6 +79,7 @@ export default function LoginPage() {
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
                 placeholder="you@example.com"
                 className="input-field"
+                autoComplete="email"
               />
             </div>
 
@@ -75,6 +98,7 @@ export default function LoginPage() {
                   onChange={(e) => setForm({ ...form, password: e.target.value })}
                   placeholder="Enter your password"
                   className="input-field pr-11"
+                  autoComplete="current-password"
                 />
                 <button
                   type="button"
@@ -89,30 +113,26 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full btn-primary py-3 text-base mt-2"
+              className="w-full btn-primary py-3 text-base mt-2 disabled:opacity-60"
             >
-              {loading ? (
-                <span className="flex items-center gap-2">
-                  <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                  </svg>
-                  Signing in...
-                </span>
-              ) : (
-                <span className="flex items-center gap-2">
-                  <LogIn className="w-4 h-4" /> Sign in
-                </span>
-              )}
+              {loading
+                ? <span className="flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> Signing in…</span>
+                : <span className="flex items-center gap-2"><LogIn className="w-4 h-4" /> Sign in</span>
+              }
             </button>
           </form>
 
-          <p className="mt-5 text-center text-sm text-gray-500">
-            Don't have an account?{' '}
-            <Link to="/register" className="font-semibold hover:underline" style={{ color: '#FF5A5F' }}>
-              Register
-            </Link>
-          </p>
+          <div className="mt-5 text-center">
+            <p className="text-sm text-gray-500">
+              Don't have an account?{' '}
+              <Link to="/register" className="font-semibold hover:underline" style={{ color: '#FF5A5F' }}>
+                Register
+              </Link>
+            </p>
+            <p className="text-[11px] text-gray-400 mt-3">
+              Demo admin · admin@joseforland.com / Admin@123
+            </p>
+          </div>
         </div>
       </div>
     </main>

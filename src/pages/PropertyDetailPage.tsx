@@ -5,6 +5,9 @@ import {
 } from 'lucide-react'
 import PropertyGallery from '../components/properties/PropertyGallery'
 import { PropertyDocumentsView } from '../components/properties/PropertyDocuments'
+import PropertyDocumentsPublic from '../components/properties/PropertyDocumentsPublic'
+import PropertyLocationMap from '../components/properties/PropertyLocationMap'
+import { useAuth } from '../context/AuthContext'
 import type { Property } from '../types'
 
 function formatLakhs(amount: number) {
@@ -75,6 +78,8 @@ This property is personally verified by our agents. Reach out for a free site vi
 
 export default function PropertyDetailPage() {
   const property = MOCK_PROPERTY
+  const { user } = useAuth()
+  const canSeeDocuments = user?.role === 'Admin' || user?.role === 'Employee'
 
   return (
     <main className="min-h-screen bg-gray-50">
@@ -172,6 +177,9 @@ export default function PropertyDetailPage() {
               </div>
             </div>
 
+            {/* Location map */}
+            <PropertyLocationMap property={property} />
+
             {property.features.length > 0 && (
               <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
                 <h2 className="font-semibold text-gray-900 mb-3">Features &amp; Amenities</h2>
@@ -219,13 +227,24 @@ export default function PropertyDetailPage() {
                 </h2>
                 <span className="text-xs px-2 py-0.5 rounded-full"
                   style={{ backgroundColor: 'rgba(106,151,57,0.1)', color: '#6A9739' }}>
-                  {(property.documents ?? []).filter(d => d.isPublic).length} available
+                  {(property.documents ?? []).filter(d => d.isPublic).length} verified
                 </span>
               </div>
-              <p className="text-xs text-gray-500 mb-4">
-                Click to preview or download. All documents shown here have been verified by our agents.
-              </p>
-              <PropertyDocumentsView documents={property.documents ?? []} />
+
+              {canSeeDocuments ? (
+                <>
+                  <p className="text-xs text-gray-500 mb-4">
+                    Internal access · {user?.role}. Click to preview or download verified copies.
+                  </p>
+                  <PropertyDocumentsView documents={property.documents ?? []} />
+                </>
+              ) : (
+                <PropertyDocumentsPublic
+                  documents={property.documents ?? []}
+                  propertyId={property.id}
+                  propertyTitle={property.title}
+                />
+              )}
             </div>
           </div>
 

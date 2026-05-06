@@ -1,56 +1,19 @@
 import { useState } from 'react'
-import { Play, Pause, Quote, Star, MapPin, X } from 'lucide-react'
-
-interface Testimonial {
-  id: number
-  name: string
-  location: string
-  area: string           // e.g. "10 cents"
-  rating: number
-  excerpt: string        // pull-quote shown on card
-  thumbnail: string      // poster image
-  videoUrl: string       // mp4 / external embed url
-  duration: string       // e.g. "1:24"
-}
-
-const TESTIMONIALS: Testimonial[] = [
-  {
-    id: 1,
-    name: 'Rajan Kumar',
-    location: 'Nagercoil',
-    area: '15 cents · Open Land',
-    rating: 5,
-    excerpt: 'They visited the site with us, explained every document, and stayed honest throughout. Bought my first land through Jose For Land — no regrets.',
-    thumbnail: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=900&q=80&auto=format&fit=crop',
-    videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-    duration: '1:24',
-  },
-  {
-    id: 2,
-    name: 'Priya Selvam',
-    location: 'Marthandam',
-    area: '10 cents · Residential Plot',
-    rating: 5,
-    excerpt: 'The free doorstep consultation is real — they came to our village, walked the plot with us, and answered every question. Genuine team.',
-    thumbnail: 'https://images.unsplash.com/photo-1464082354059-27db6ce50048?w=900&q=80&auto=format&fit=crop',
-    videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
-    duration: '0:58',
-  },
-  {
-    id: 3,
-    name: 'Xavier Joseph',
-    location: 'Colachel',
-    area: '50 cents · Agricultural',
-    rating: 5,
-    excerpt: 'Compared with three other agents — Jose For Land had the cleanest documentation and the most transparent pricing. Highly recommend.',
-    thumbnail: 'https://images.unsplash.com/photo-1500076656116-558758c991c1?w=900&q=80&auto=format&fit=crop',
-    videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
-    duration: '1:42',
-  },
-]
+import { useQuery } from '@tanstack/react-query'
+import { Play, Pause, Quote, Star, MapPin, X, Loader2 } from 'lucide-react'
+import { testimonialsApi, type Testimonial } from '../../services/api'
 
 export default function VideoTestimonials() {
   const [active, setActive] = useState<Testimonial | null>(null)
+
+  const { data: testimonials = [], isLoading } = useQuery({
+    queryKey: ['testimonials', 'published'],
+    queryFn: () => testimonialsApi.getPublished(),
+    staleTime: 1000 * 60 * 5,
+  })
+
+  // Hide entire section when there are no published testimonials
+  if (!isLoading && testimonials.length === 0) return null
 
   return (
     <section className="py-20 md:py-24 bg-white">
@@ -76,9 +39,17 @@ export default function VideoTestimonials() {
           </div>
         </div>
 
+        {/* Loading state */}
+        {isLoading && (
+          <div className="py-12 text-center text-gray-400">
+            <Loader2 className="w-8 h-8 animate-spin mx-auto mb-3" />
+            <p className="text-sm">Loading testimonials…</p>
+          </div>
+        )}
+
         {/* Video grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {TESTIMONIALS.map((t) => (
+          {testimonials.map((t) => (
             <article
               key={t.id}
               className="group cursor-pointer"
@@ -87,7 +58,7 @@ export default function VideoTestimonials() {
               {/* Thumbnail with play button */}
               <div className="relative overflow-hidden rounded-2xl aspect-[4/5] mb-5">
                 <img
-                  src={t.thumbnail}
+                  src={t.thumbnail ?? ''}
                   alt={t.name}
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
@@ -106,10 +77,12 @@ export default function VideoTestimonials() {
                 </div>
 
                 {/* Duration badge (top-right) */}
-                <div className="absolute top-4 right-4 px-2.5 py-1 rounded-md text-[11px] font-semibold text-white"
-                  style={{ backgroundColor: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)' }}>
-                  {t.duration}
-                </div>
+                {t.duration && (
+                  <div className="absolute top-4 right-4 px-2.5 py-1 rounded-md text-[11px] font-semibold text-white"
+                    style={{ backgroundColor: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)' }}>
+                    {t.duration}
+                  </div>
+                )}
 
                 {/* Quote on bottom of thumbnail */}
                 <div className="absolute bottom-0 left-0 right-0 p-5 text-white">
@@ -127,8 +100,10 @@ export default function VideoTestimonials() {
                   <div className="flex items-center gap-1.5 text-xs text-gray-500 mt-0.5">
                     <MapPin className="w-3 h-3" />
                     {t.location}
-                    <span className="text-gray-300">·</span>
-                    <span>{t.area}</span>
+                    {t.propertyDetail && <>
+                      <span className="text-gray-300">·</span>
+                      <span>{t.propertyDetail}</span>
+                    </>}
                   </div>
                 </div>
                 <div className="flex gap-0.5 shrink-0">
@@ -194,8 +169,8 @@ function VideoModal({ testimonial, onClose }: { testimonial: Testimonial; onClos
         <div className="relative aspect-video">
           <video
             key={testimonial.id}
-            src={testimonial.videoUrl}
-            poster={testimonial.thumbnail}
+            src={testimonial.videoUrl ?? ''}
+            poster={testimonial.thumbnail ?? ''}
             controls
             autoPlay
             playsInline
@@ -220,8 +195,10 @@ function VideoModal({ testimonial, onClose }: { testimonial: Testimonial; onClos
               <div className="flex items-center gap-2 text-sm text-gray-400 mt-1">
                 <MapPin className="w-3.5 h-3.5" />
                 {testimonial.location}
-                <span className="text-gray-600">·</span>
-                <span>{testimonial.area}</span>
+                {testimonial.propertyDetail && <>
+                  <span className="text-gray-600">·</span>
+                  <span>{testimonial.propertyDetail}</span>
+                </>}
               </div>
             </div>
             <div className="flex gap-0.5 shrink-0">
