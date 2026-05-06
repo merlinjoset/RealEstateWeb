@@ -1,0 +1,82 @@
+@import "tailwindcss";
+
+@theme {
+  /* === Jose For Land Brand Colors === */
+  --color-brand-coral: #FF5A5F;
+  --color-brand-coral-dark: #e04a4f;
+  --color-brand-coral-light: #ff7a7e;
+
+  --color-brand-olive: #6A9739;
+  --color-brand-olive-dark: #547a2d;
+  --color-brand-olive-light: #8BC34A;
+
+  --color-brand-cream: #F8F6F3;
+  --color-brand-slate: #293237;
+  --color-brand-dark: #111111;
+  --color-brand-gray: #333333;
+
+  --color-brand-wa: #25D366;
+}
+
+@layer base {
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    margin: 0;
+    color: #333333;
+    background: #ffffff;
+  }
+  h1, h2, h3, h4, h5, h6 { color: #111111; }
+}
+
+@layer components {
+  /* Primary CTA — coral */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 font-semibold rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-white;
+    background-color: #FF5A5F;
+  }
+  .btn-primary:hover { background-color: #e04a4f; }
+
+  /* Secondary — olive green */
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 font-semibold rounded-lg border-2 transition-colors duration-200 text-white;
+    background-color: #6A9739;
+    border-color: #6A9739;
+  }
+  .btn-secondary:hover { background-color: #547a2d; border-color: #547a2d; }
+
+  /* Outline olive */
+  .btn-outline {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 font-semibold rounded-lg border-2 transition-colors duration-200;
+    color: #6A9739;
+    border-color: #6A9739;
+    background: white;
+  }
+  .btn-outline:hover { background-color: #f0f7e8; }
+
+  /* Ghost */
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 text-gray-600 font-medium rounded-lg hover:bg-gray-100 transition-colors duration-200;
+  }
+
+  /* WhatsApp */
+  .btn-wa {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 font-semibold rounded-lg text-white transition-colors duration-200;
+    background-color: #25D366;
+  }
+  .btn-wa:hover { background-color: #1da851; }
+
+  /* Input */
+  .input-field {
+    @apply w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 transition-all duration-200 bg-white text-gray-900 placeholder-gray-400;
+    --tw-ring-color: #FF5A5F;
+    border-color: #CFD8DC;
+  }
+  .input-field:focus { border-color: #FF5A5F; }
+
+  /* Card */
+  .card {
+    @apply bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow duration-200;
+  }
+}
