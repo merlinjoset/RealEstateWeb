@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Navigate, useNavigate, Link } from 'react-router-dom'
 import {
   User as UserIcon, Mail, Phone, MapPin, Calendar, Shield, LogOut,
-  Edit2, Save, X, Lock, Eye, EyeOff, Loader2, AlertCircle, CheckCircle2,
+  Edit2, Save, Lock, Eye, EyeOff, Loader2, AlertCircle, CheckCircle2,
   Building2,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
