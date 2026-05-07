@@ -11,8 +11,18 @@ import type {
   Agent,
 } from '../types'
 
+/**
+ * Resolve the API base URL with the following precedence:
+ *   1. `VITE_API_BASE_URL` env var (set on Render Static Site / Web Service)
+ *      → e.g. "https://realestateapi-2k2n.onrender.com/api"
+ *   2. Fallback to "/api" for local dev (proxied by vite.config.ts to the
+ *      .NET API on https://localhost:7080).
+ */
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? '/api')
+  .replace(/\/$/, '') // strip trailing slash if present
+
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: API_BASE_URL,
   headers: { 'Content-Type': 'application/json' },
 })
 
