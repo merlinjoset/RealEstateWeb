@@ -14,12 +14,21 @@ import type {
 /**
  * Resolve the API base URL with the following precedence:
  *   1. `VITE_API_BASE_URL` env var (set on Render Static Site / Web Service)
- *      → e.g. "https://realestateapi-2k2n.onrender.com/api"
+ *      → e.g. "https://realestateapi-2k2n.onrender.com" or
+ *             "https://realestateapi-2k2n.onrender.com/api" (both work)
  *   2. Fallback to "/api" for local dev (proxied by vite.config.ts to the
  *      .NET API on https://localhost:7080).
+ *
+ * Auto-appends "/api" if the env var was set without it — every controller
+ * is mounted under [Route("api/...")] on the backend, so the prefix is
+ * required regardless of how the operator typed the URL.
  */
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? '/api')
-  .replace(/\/$/, '') // strip trailing slash if present
+const rawBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? '/api')
+  .replace(/\/$/, '') // strip trailing slash
+
+const API_BASE_URL = /\/api(\/|$)/.test(rawBaseUrl)
+  ? rawBaseUrl
+  : `${rawBaseUrl}/api`
 
 const api = axios.create({
   baseURL: API_BASE_URL,
