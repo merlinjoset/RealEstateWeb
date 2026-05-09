@@ -116,8 +116,27 @@ export const propertiesApi = {
 }
 
 export const authApi = {
-  login: (credentials: LoginCredentials) =>
-    api.post<{ user: User; tokens: AuthTokens }>('/auth/login', credentials).then((r) => r.data),
+  /**
+   * Sign-in: encrypts the password client-side with the server's RSA public
+   * key and posts the ciphertext, so DevTools' Network tab can't reveal the
+   * plaintext password. Falls back to plaintext if encryption fails (e.g.
+   * older server without /auth/public-key).
+   */
+  login: async (credentials: LoginCredentials) => {
+    const { encryptPassword } = await import('./crypto')
+    let body: { email: string; password?: string; encryptedPassword?: string }
+    try {
+      body = {
+        email: credentials.email,
+        encryptedPassword: await encryptPassword(credentials.password),
+      }
+    } catch {
+      // RSA encryption failed (e.g. old server, browser without WebCrypto) —
+      // fall back to plaintext over HTTPS.
+      body = credentials
+    }
+    return api.post<{ user: User; tokens: AuthTokens }>('/auth/login', body).then((r) => r.data)
+  },
 
   register: (data: RegisterData) =>
     api.post<{ user: User; tokens: AuthTokens }>('/auth/register', data).then((r) => r.data),
