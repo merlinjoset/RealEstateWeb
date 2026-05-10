@@ -18,12 +18,14 @@ export default defineConfig({
     },
   },
   // `vite preview` (used by `npm start` on Render) blocks unknown hosts by
-  // default. Whitelist Render's *.onrender.com subdomains plus localhost so
-  // production deploys aren't rejected with "Blocked request".
+  // default. Whitelist Render's *.onrender.com subdomains, our custom
+  // *.joseforland.com domains, and localhost so production deploys aren't
+  // rejected with "Blocked request".
   preview: {
     host: '0.0.0.0',
     allowedHosts: [
-      '.onrender.com', // any Render subdomain (leading dot = wildcard)
+      '.onrender.com',     // any Render subdomain (leading dot = wildcard)
+      '.joseforland.com',  // joseforland.com + any subdomain (demo, www, etc.)
       'localhost',
     ],
   },
