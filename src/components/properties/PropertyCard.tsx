@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { MapPin, Heart, Ruler, Home, CheckCircle, Phone } from 'lucide-react'
 import type { Property } from '../../types'
+import ShareButton from './ShareButton'
 
 interface Props {
   property: Property
@@ -117,15 +118,25 @@ export default function PropertyCard({ property, onFavorite, isFavorited }: Prop
           {property.roadAccess && (
             <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">Road Access</span>
           )}
-          <a
-            href="tel:+919994488490"
+          <div className="ml-auto flex items-center gap-2"
             onClick={(e) => e.stopPropagation()}
-            className="ml-auto flex items-center gap-1 text-xs font-medium hover:underline"
-            style={{ color: '#FF5A5F' }}
           >
-            <Phone className="w-3.5 h-3.5" />
-            Call
-          </a>
+            <ShareButton
+              variant="icon"
+              title={property.title}
+              description={`${property.areaInCents} cents in ${property.city} – ${formatLakhs(property.totalPrice)}`}
+              url={`${typeof window !== 'undefined' ? window.location.origin : ''}/properties/${property.id}`}
+            />
+            <a
+              href="tel:+919994488490"
+              onClick={(e) => e.stopPropagation()}
+              className="flex items-center gap-1 text-xs font-medium hover:underline"
+              style={{ color: '#FF5A5F' }}
+            >
+              <Phone className="w-3.5 h-3.5" />
+              Call
+            </a>
+          </div>
         </div>
       </div>
     </div>

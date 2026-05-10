@@ -1,12 +1,13 @@
 import { Link } from 'react-router-dom'
 import {
-  MapPin, Ruler, Phone, MessageCircle, Heart, Share2, ChevronLeft,
+  MapPin, Ruler, Phone, MessageCircle, Heart, ChevronLeft,
   CheckCircle, Home, FileText, Calendar, FolderOpen,
 } from 'lucide-react'
 import PropertyGallery from '../components/properties/PropertyGallery'
 import { PropertyDocumentsView } from '../components/properties/PropertyDocuments'
 import PropertyDocumentsPublic from '../components/properties/PropertyDocumentsPublic'
 import PropertyLocationMap from '../components/properties/PropertyLocationMap'
+import ShareButton from '../components/properties/ShareButton'
 import { useAuth } from '../context/AuthContext'
 import type { Property } from '../types'
 
@@ -132,9 +133,11 @@ export default function PropertyDetailPage() {
                   <button className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
                     <Heart className="w-4 h-4 text-gray-400" />
                   </button>
-                  <button className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
-                    <Share2 className="w-4 h-4 text-gray-400" />
-                  </button>
+                  <ShareButton
+                    variant="icon"
+                    title={property.title}
+                    description={`${property.areaInCents} cents · ${formatLakhs(property.totalPrice)} · ${property.address}, ${property.city}`}
+                  />
                 </div>
               </div>
 
