@@ -249,6 +249,7 @@ export default function MapViewPage() {
   const [priceFilter, setPriceFilter] = useState<string>('')
   const [areaFilter, setAreaFilter] = useState<string>('')
   const [showAdvanced, setShowAdvanced] = useState(false)
+  const [listOpen, setListOpen] = useState(false)
 
   const filtered = useMemo(() => {
     return MOCK_PROPERTIES.filter(p => {
@@ -421,17 +422,33 @@ export default function MapViewPage() {
         </div>
       </div>
 
-      <div className="flex h-[calc(100vh-180px)]">
-        {/* Left sidebar — property list */}
-        <div className="w-80 shrink-0 bg-white border-r border-gray-200 overflow-y-auto">
-          <div className="p-3 border-b border-gray-100">
+      <div className="flex flex-col md:flex-row h-[70vh] md:h-[calc(100vh-180px)] min-h-[480px] relative">
+        {/* Left sidebar — property list (drawer on mobile) */}
+        <div
+          className={`bg-white border-r border-gray-200 overflow-y-auto
+            md:w-80 md:shrink-0 md:relative md:translate-x-0
+            absolute inset-y-0 left-0 z-[1100] w-[85%] max-w-xs shadow-2xl md:shadow-none
+            transition-transform duration-200
+            ${listOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}
+        >
+          <div className="p-3 border-b border-gray-100 flex items-center justify-between">
             <p className="text-xs text-gray-500 font-medium">{filtered.length} properties</p>
+            <button
+              onClick={() => setListOpen(false)}
+              className="md:hidden p-1 -m-1 text-gray-400 hover:text-gray-600"
+              aria-label="Close list"
+            >
+              <X className="w-4 h-4" />
+            </button>
           </div>
           <div className="divide-y divide-gray-100">
             {filtered.map((property) => (
               <button
                 key={property.id}
-                onClick={() => setSelected(selected?.id === property.id ? null : property)}
+                onClick={() => {
+                  setSelected(selected?.id === property.id ? null : property)
+                  setListOpen(false) // collapse drawer on mobile after picking
+                }}
                 className="w-full text-left p-3 hover:bg-gray-50 transition-colors"
                 style={selected?.id === property.id ? { backgroundColor: 'rgba(255,90,95,0.06)' } : {}}
               >
@@ -466,8 +483,16 @@ export default function MapViewPage() {
           </div>
         </div>
 
+        {/* Drawer scrim (mobile only) */}
+        {listOpen && (
+          <div
+            className="md:hidden fixed inset-0 bg-black/40 z-[1099]"
+            onClick={() => setListOpen(false)}
+          />
+        )}
+
         {/* Map area */}
-        <div className="flex-1 relative">
+        <div className="flex-1 relative min-h-0">
           <MapContainer
             center={[8.18, 77.41]}
             zoom={11}
@@ -528,9 +553,23 @@ export default function MapViewPage() {
             })}
           </MapContainer>
 
+          {/* Floating "Show list" button (mobile only) */}
+          <button
+            onClick={() => setListOpen(true)}
+            className="md:hidden absolute top-3 left-3 z-[1000] inline-flex items-center gap-2 px-3 py-2 rounded-full bg-white shadow-md border border-gray-200 text-sm font-semibold"
+            style={{ color: '#FF5A5F' }}
+          >
+            <ListIcon className="w-4 h-4" />
+            {filtered.length} listings
+          </button>
+
           {/* Selected property side card */}
           {selected && (
-            <div className="absolute top-4 right-4 w-72 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-[1000]">
+            <div
+              className="absolute z-[1000] bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden
+                left-3 right-3 bottom-3
+                md:left-auto md:right-4 md:top-4 md:bottom-auto md:w-72"
+            >
               <div className="p-4">
                 <div className="flex items-start justify-between gap-2 mb-3">
                   <div>
@@ -602,8 +641,8 @@ export default function MapViewPage() {
             </div>
           )}
 
-          {/* Legend */}
-          <div className="absolute bottom-4 left-4 bg-white rounded-xl shadow-md border border-gray-100 p-3 z-[1000]">
+          {/* Legend (hidden on mobile to free up screen space) */}
+          <div className="hidden md:block absolute bottom-4 left-4 bg-white rounded-xl shadow-md border border-gray-100 p-3 z-[1000]">
             <p className="text-xs font-semibold text-gray-700 mb-2">Property Types</p>
             <div className="space-y-1.5">
               {[

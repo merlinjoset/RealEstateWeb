@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, Home, Plus, ClipboardList, Users,
@@ -22,8 +22,23 @@ const NAV_ITEMS = [
 export default function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const userMenuRef = useRef<HTMLDivElement>(null)
   const navigate = useNavigate()
   const { user, logout } = useAuth()
+
+  // Close the user dropdown when clicking anywhere outside it. We can't use
+  // onBlur + setTimeout — closing the menu on mousedown unmounts the <Link>
+  // child before its click event fires, so navigation never happens.
+  useEffect(() => {
+    if (!userMenuOpen) return
+    const onClick = (e: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setUserMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', onClick)
+    return () => document.removeEventListener('mousedown', onClick)
+  }, [userMenuOpen])
 
   const initials = user
     ? ((user.firstName[0] ?? '') + (user.lastName[0] ?? '')).toUpperCase() || 'A'
@@ -136,10 +151,9 @@ export default function AdminLayout() {
             <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500" />
           </button>
 
-          <div className="relative">
+          <div className="relative" ref={userMenuRef}>
             <button
               onClick={() => setUserMenuOpen(!userMenuOpen)}
-              onBlur={() => setTimeout(() => setUserMenuOpen(false), 200)}
               className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-gray-50 transition-colors"
             >
               <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-semibold"
@@ -168,20 +182,20 @@ export default function AdminLayout() {
                 )}
                 <Link
                   to="/profile"
-                  onMouseDown={() => setUserMenuOpen(false)}
+                  onClick={() => setUserMenuOpen(false)}
                   className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                 >
                   <UserIcon className="w-4 h-4" /> Profile
                 </Link>
                 <button
-                  onMouseDown={handleExitToSite}
+                  onClick={handleExitToSite}
                   className="flex items-center gap-3 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 text-left"
                 >
                   <ExternalLink className="w-4 h-4" /> Exit to Site
                 </button>
                 <hr className="my-1 border-gray-100" />
                 <button
-                  onMouseDown={handleSignOut}
+                  onClick={handleSignOut}
                   className="flex items-center gap-3 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 text-left font-semibold"
                 >
                   <LogOut className="w-4 h-4" /> Sign out
