@@ -4,11 +4,13 @@ import { useMutation } from '@tanstack/react-query'
 import {
   Save, CheckCircle2, Phone, Mail, User, MapPin, IndianRupee,
   Sparkles, Loader2, AlertCircle, ArrowLeft, Trees, Home as HomeIcon,
-  Wheat, Building2, Map as MapPinIcon, FileText,
+  Wheat, Building2, Map as MapPinIcon, FileText, Video,
 } from 'lucide-react'
 import PageHeader from '../components/layout/PageHeader'
 import LocationPicker from '../components/properties/LocationPicker'
+import MarketingPlanPicker from '../components/properties/MarketingPlanPicker'
 import { propertiesApi, type PropertySubmission } from '../services/api'
+import type { MarketingPlan } from '../types'
 
 const CITIES = [
   'Nagercoil', 'Marthandam', 'Thuckalay', 'Kanyakumari', 'Colachel',
@@ -49,6 +51,8 @@ interface FormState {
   // Optional Google-Maps coordinates (stored as strings to ease input)
   latitude: string
   longitude: string
+  // Marketing tier — Free (default) or VideoPromotion (2% brokerage)
+  marketingPlan: MarketingPlan
   // Required by API but not surfaced as UI
   district: string
   state: string
@@ -60,6 +64,7 @@ const INITIAL: FormState = {
   totalPrice: '', areaInCents: '', city: '', address: '', pinCode: '',
   legalStatus: '', roadAccess: false, features: [],
   latitude: '', longitude: '',
+  marketingPlan: 'Free',
   district: 'Kanyakumari', state: 'Tamil Nadu',
 }
 
@@ -133,6 +138,7 @@ export default function SubmitPropertyPage() {
       features: form.features,
       legalStatus: form.legalStatus || undefined,
       roadAccess: form.roadAccess,
+      marketingPlan: form.marketingPlan,
       latitude: form.latitude ? Number(form.latitude) : undefined,
       longitude: form.longitude ? Number(form.longitude) : undefined,
       submitterName: form.submitterName.trim(),
@@ -414,6 +420,29 @@ export default function SubmitPropertyPage() {
             </label>
           </Section>
 
+          {/* === Marketing plan === */}
+          <Section
+            icon={Video}
+            title="Marketing Plan"
+            desc="Choose how you'd like your property promoted"
+          >
+            <MarketingPlanPicker
+              value={form.marketingPlan}
+              onChange={(plan) => set('marketingPlan', plan)}
+              totalPriceStr={form.totalPrice}
+            />
+            {form.marketingPlan === 'VideoPromotion' && (
+              <div className="mt-3 rounded-xl p-3 text-xs flex items-start gap-2.5"
+                style={{ backgroundColor: 'rgba(255,90,95,0.06)', border: '1px solid rgba(255,90,95,0.2)', color: '#7F1D1D' }}>
+                <Sparkles className="w-3.5 h-3.5 shrink-0 mt-0.5" style={{ color: '#FF5A5F' }} />
+                <span>
+                  <strong>2% brokerage</strong> will be deducted from the final sale price. Our agent will
+                  contact you to schedule the video shoot. <em>You pay nothing upfront.</em>
+                </span>
+              </div>
+            )}
+          </Section>
+
           {/* === Trust strip === */}
           <div className="rounded-xl p-5 flex items-start gap-3"
             style={{ backgroundColor: 'rgba(106,151,57,0.06)', border: '1px solid rgba(106,151,57,0.2)' }}>
@@ -421,7 +450,9 @@ export default function SubmitPropertyPage() {
             <div className="text-xs leading-relaxed" style={{ color: '#374151' }}>
               <strong style={{ color: '#111111' }}>What happens next:</strong> Our team will call you within 24 hours
               to verify the details, schedule a free site visit, and prepare professional photographs.
-              Listing fees are <strong>₹0 — zero brokerage</strong>. We earn only when your property sells.
+              {form.marketingPlan === 'Free'
+                ? <> Listing fees are <strong>₹0 — zero brokerage</strong>. We earn only when your property sells.</>
+                : <> You picked the <strong>Video Promotion</strong> plan — we'll coordinate the shoot and only charge the 2% fee on a successful sale.</>}
             </div>
           </div>
 

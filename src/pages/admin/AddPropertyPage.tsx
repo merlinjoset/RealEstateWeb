@@ -3,12 +3,13 @@ import { useNavigate, useParams } from 'react-router-dom'
 import {
   Save, X, Upload, FolderOpen, Info, IndianRupee, MapPin, Sparkles,
   Image as ImageIcon, Settings as SettingsIcon, Check, Star, GripVertical,
-  Trash2, Eye, AlertCircle, ArrowLeft,
+  Trash2, Eye, AlertCircle, ArrowLeft, Video,
   Home as HomeIcon, Trees, Wheat, Building2, Map as MapPinIcon,
 } from 'lucide-react'
 import { PropertyDocumentsEditor } from '../../components/properties/PropertyDocuments'
 import LocationPicker from '../../components/properties/LocationPicker'
-import type { PropertyDocument } from '../../types'
+import MarketingPlanPicker from '../../components/properties/MarketingPlanPicker'
+import type { MarketingPlan, PropertyDocument } from '../../types'
 
 const CITIES = [
   'Nagercoil', 'Marthandam', 'Thuckalay', 'Kanyakumari', 'Colachel',
@@ -49,6 +50,7 @@ interface FormState {
   features: string[]
   latitude: string
   longitude: string
+  marketingPlan: MarketingPlan
 }
 
 const INITIAL: FormState = {
@@ -58,6 +60,7 @@ const INITIAL: FormState = {
   roadAccess: false, isFeatured: false, isVerified: false, legalStatus: '',
   nearbyLandmarks: '', features: [],
   latitude: '', longitude: '',
+  marketingPlan: 'Free',
 }
 
 interface SectionDef {
@@ -73,6 +76,7 @@ const SECTIONS: SectionDef[] = [
   { id: 'pricing',  label: 'Pricing & Area', icon: IndianRupee,  isComplete: (f) => f.totalPrice !== '' && f.areaInCents !== '' },
   { id: 'location', label: 'Location',       icon: MapPin,       isComplete: (f) => f.city.length > 0 },
   { id: 'features', label: 'Features',       icon: Sparkles,     isComplete: (f) => f.features.length > 0, isOptional: true },
+  { id: 'marketing', label: 'Marketing',     icon: Video,        isComplete: (f) => f.marketingPlan === 'VideoPromotion' || f.marketingPlan === 'Free', isOptional: true },
   { id: 'images',   label: 'Images',         icon: ImageIcon,    isComplete: (_f) => false, isOptional: true },
   { id: 'documents', label: 'Documents',     icon: FolderOpen,   isComplete: (_f) => false, isOptional: true },
   { id: 'options',  label: 'Options',        icon: SettingsIcon, isComplete: (_f) => true,  isOptional: true },
@@ -210,6 +214,7 @@ export default function AddPropertyPage() {
       features: ['Road Access', 'Clear Title', 'Near Market'],
       latitude: '8.183300',
       longitude: '77.411900',
+      marketingPlan: 'Free',
     })
   }, [isEditMode, id])
 
@@ -724,6 +729,21 @@ export default function AddPropertyPage() {
                 )
               })}
             </div>
+          </Section>
+
+          {/* Marketing plan */}
+          <Section
+            title="Marketing Plan"
+            desc="Free listing vs Video Promotion (2% brokerage on sale)"
+            icon={Video}
+            sectionRef={(el) => (sectionRefs.current.marketing = el)}
+            id="marketing"
+            badge={form.marketingPlan === 'VideoPromotion' ? 'Video · 2%' : 'Free'}>
+            <MarketingPlanPicker
+              value={form.marketingPlan}
+              onChange={(plan) => set('marketingPlan', plan)}
+              totalPriceStr={form.totalPrice}
+            />
           </Section>
 
           {/* Images */}

@@ -1,6 +1,16 @@
 export type PropertyType = 'open_land' | 'land_with_building' | 'agricultural' | 'commercial' | 'residential_plot'
 export type ListingStatus = 'for_sale' | 'for_rent' | 'sold'
 
+/**
+ * Marketing tier chosen by the seller at submission time.
+ * - Free            → zero brokerage, basic listing
+ * - VideoPromotion  → 2% brokerage on sale price; includes promotional video
+ */
+export type MarketingPlan = 'Free' | 'VideoPromotion'
+
+/** 2% brokerage on Video Promotion plan */
+export const VIDEO_PROMOTION_FEE_RATE = 0.02
+
 export type DocumentType =
   | 'ec'              // Encumbrance Certificate
   | 'patta'           // Patta document
@@ -56,6 +66,7 @@ export interface Property {
   nearbyLandmarks?: string[]
   legalStatus?: string
   documents?: PropertyDocument[]
+  marketingPlan?: MarketingPlan
 }
 
 export interface Agent {

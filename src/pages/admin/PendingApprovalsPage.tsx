@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
-import { Check, X, MapPin, Ruler, User, Calendar, Phone, FolderOpen } from 'lucide-react'
+import { Check, X, MapPin, Ruler, User, Calendar, Phone, FolderOpen, Video } from 'lucide-react'
 import { PropertyDocumentsView } from '../../components/properties/PropertyDocuments'
-import type { PropertyDocument } from '../../types'
+import { VIDEO_PROMOTION_FEE_RATE, type MarketingPlan, type PropertyDocument } from '../../types'
 
 type Status = 'pending' | 'approved' | 'rejected'
 
@@ -21,6 +21,7 @@ interface PendingProperty {
   address: string
   features: string[]
   documents: PropertyDocument[]
+  marketingPlan: MarketingPlan
 }
 
 function formatLakhs(amount: number) {
@@ -39,6 +40,7 @@ const INITIAL_PENDING: PendingProperty[] = [
     submitterPhone: '+91 98765 43210', submittedAt: '2024-01-20',
     status: 'pending', description: 'Good land near main road with clear documents.',
     address: 'Kottar, Nagercoil', features: ['Road Access', 'Clear Title'],
+    marketingPlan: 'VideoPromotion',
     documents: [
       { id: 1011, propertyId: 101, type: 'ec', name: 'EC for last 13 years (2010 – 2023)',
         fileName: 'ec-2010-2023.pdf', fileUrl: SAMPLE_PDF, fileSize: 248000,
@@ -57,6 +59,7 @@ const INITIAL_PENDING: PendingProperty[] = [
     submitterPhone: '+91 87654 32109', submittedAt: '2024-01-19',
     status: 'pending', description: 'Corner plot with road frontage.',
     address: 'Town Center, Marthandam', features: ['Corner Plot', 'Road Access'],
+    marketingPlan: 'Free',
     documents: [
       { id: 1021, propertyId: 102, type: 'ec', name: 'EC (15 years)',
         fileName: 'ec.pdf', fileUrl: SAMPLE_PDF, fileSize: 312000,
@@ -75,6 +78,7 @@ const INITIAL_PENDING: PendingProperty[] = [
     submitterPhone: '+91 76543 21098', submittedAt: '2024-01-18',
     status: 'pending', description: 'Fertile land near river, water source available.',
     address: 'Pechipparai Road, Thuckalay', features: ['Water Source', 'Electricity'],
+    marketingPlan: 'VideoPromotion',
     documents: [
       { id: 1031, propertyId: 103, type: 'patta', name: 'Patta',
         fileName: 'patta.pdf', fileUrl: SAMPLE_PDF, fileSize: 124000,
@@ -90,6 +94,7 @@ const INITIAL_PENDING: PendingProperty[] = [
     submitterPhone: '+91 65432 10987', submittedAt: '2024-01-17',
     status: 'pending', description: 'Premium plot with sea view, close to tourist zone.',
     address: 'Beach Road, Kanyakumari', features: ['Road Access'],
+    marketingPlan: 'Free',
     documents: [],   // Submitted with no documents — admin should request them
   },
 ]
@@ -101,6 +106,7 @@ export default function PendingApprovalsPage() {
   const [rejectReason, setRejectReason] = useState('')
   const [showRejectModal, setShowRejectModal] = useState<number | null>(null)
   const [filter, setFilter] = useState<'all' | Status>('all')
+  const [videoOnly, setVideoOnly] = useState(false)
 
   // Pre-select item when navigated with /admin/pending/:id
   useEffect(() => {
@@ -123,7 +129,10 @@ export default function PendingApprovalsPage() {
     if (selected?.id === id) setSelected(null)
   }
 
-  const displayed = items.filter((p) => filter === 'all' || p.status === filter)
+  const displayed = items.filter((p) =>
+    (filter === 'all' || p.status === filter)
+    && (!videoOnly || p.marketingPlan === 'VideoPromotion'),
+  )
 
   const counts = {
     all: items.length,
@@ -131,6 +140,7 @@ export default function PendingApprovalsPage() {
     approved: items.filter((p) => p.status === 'approved').length,
     rejected: items.filter((p) => p.status === 'rejected').length,
   }
+  const videoCount = items.filter((p) => p.marketingPlan === 'VideoPromotion').length
 
   return (
     <div>
@@ -141,7 +151,7 @@ export default function PendingApprovalsPage() {
         </div>
       </div>
 
-      <div className="flex gap-2 mb-5">
+      <div className="flex gap-2 mb-5 flex-wrap">
         {(['all', 'pending', 'approved', 'rejected'] as const).map((s) => (
           <button
             key={s}
@@ -160,6 +170,25 @@ export default function PendingApprovalsPage() {
             </span>
           </button>
         ))}
+
+        {/* Video-only filter — let admin focus on revenue listings */}
+        <button
+          onClick={() => setVideoOnly(!videoOnly)}
+          className="ml-auto inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors border-2"
+          style={videoOnly
+            ? { backgroundColor: '#FF5A5F', borderColor: '#FF5A5F', color: 'white' }
+            : { backgroundColor: 'white', borderColor: 'rgba(255,90,95,0.35)', color: '#FF5A5F' }}
+          title="Show only Video Promotion submissions"
+        >
+          <Video className="w-3.5 h-3.5" />
+          Video Promotion
+          <span className="text-xs px-1.5 py-0.5 rounded-full"
+            style={videoOnly
+              ? { backgroundColor: 'rgba(255,255,255,0.25)', color: 'white' }
+              : { backgroundColor: 'rgba(255,90,95,0.10)', color: '#FF5A5F' }}>
+            {videoCount}
+          </span>
+        </button>
       </div>
 
       <div className={`grid gap-5 ${selected ? 'grid-cols-1 lg:grid-cols-3' : 'grid-cols-1'}`}>
@@ -181,6 +210,11 @@ export default function PendingApprovalsPage() {
                 onClick={() => setSelected(selected?.id === item.id ? null : item)}
               >
                 <div className="flex items-start gap-4">
+                  {/* Left ribbon for Video Promotion — impossible to miss in a long list */}
+                  {item.marketingPlan === 'VideoPromotion' && (
+                    <div className="self-stretch -my-5 -ml-5 mr-1 w-1.5 rounded-r"
+                      style={{ backgroundColor: '#FF5A5F' }} />
+                  )}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <h3 className="font-semibold text-gray-900">{item.title}</h3>
@@ -191,6 +225,16 @@ export default function PendingApprovalsPage() {
                       }`}>
                         {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
                       </span>
+                      {item.marketingPlan === 'VideoPromotion' && (
+                        <span
+                          className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full font-bold text-white"
+                          style={{ backgroundColor: '#FF5A5F' }}
+                          title={`2% brokerage = ${formatLakhs(item.totalPrice * VIDEO_PROMOTION_FEE_RATE)}`}
+                        >
+                          <Video className="w-2.5 h-2.5" />
+                          Video · 2%
+                        </span>
+                      )}
                     </div>
 
                     <div className="flex flex-wrap gap-4 mt-2 text-sm text-gray-500">
@@ -245,6 +289,36 @@ export default function PendingApprovalsPage() {
             </div>
 
             <div className="space-y-3 text-sm">
+              {/* Marketing-plan callout — first thing the admin sees in the detail panel */}
+              {selected.marketingPlan === 'VideoPromotion' ? (
+                <div
+                  className="rounded-xl p-3 border-2 flex items-start gap-3"
+                  style={{ backgroundColor: 'rgba(255,90,95,0.06)', borderColor: 'rgba(255,90,95,0.35)' }}
+                >
+                  <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 text-white"
+                    style={{ backgroundColor: '#FF5A5F' }}>
+                    <Video className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-xs font-bold uppercase tracking-wider" style={{ color: '#FF5A5F' }}>
+                      Video Promotion · 2% brokerage
+                    </div>
+                    <div className="text-sm text-gray-900 font-semibold mt-0.5">
+                      Approx. fee: {formatLakhs(selected.totalPrice * VIDEO_PROMOTION_FEE_RATE)}
+                    </div>
+                    <div className="text-[11px] text-gray-500 mt-0.5 leading-snug">
+                      Schedule the video shoot once approved.
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded-xl p-2.5 border flex items-center gap-2 text-xs"
+                  style={{ backgroundColor: '#FAFAF8', borderColor: '#EAEAE5', color: '#6B7280' }}>
+                  <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#6A9739' }} />
+                  Free Listing · no brokerage
+                </div>
+              )}
+
               <div>
                 <div className="text-xs text-gray-400 uppercase tracking-wide">Title</div>
                 <div className="font-medium text-gray-900 mt-0.5">{selected.title}</div>

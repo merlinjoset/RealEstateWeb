@@ -73,6 +73,8 @@ export interface PropertySubmission {
   features: string[]
   legalStatus?: string
   roadAccess: boolean
+  /** "Free" (zero brokerage) or "VideoPromotion" (2% brokerage). */
+  marketingPlan?: 'Free' | 'VideoPromotion'
   /** Optional Google-Maps pin coordinates */
   latitude?: number
   longitude?: number
