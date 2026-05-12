@@ -33,7 +33,7 @@ interface FormState {
 }
 
 const INITIAL: FormState = {
-  firstName: '', lastName: '', email: '', phone: '',
+  firstName: '', lastName: '', email: '', phone: '+91 ',
   password: '', confirmPassword: '', role: 'Seller',
 }
 
