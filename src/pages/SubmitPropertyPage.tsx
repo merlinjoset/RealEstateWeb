@@ -7,6 +7,7 @@ import {
   Wheat, Building2, Map as MapPinIcon, FileText,
 } from 'lucide-react'
 import PageHeader from '../components/layout/PageHeader'
+import LocationPicker from '../components/properties/LocationPicker'
 import { propertiesApi, type PropertySubmission } from '../services/api'
 
 const CITIES = [
@@ -45,6 +46,9 @@ interface FormState {
   legalStatus: string
   roadAccess: boolean
   features: string[]
+  // Optional Google-Maps coordinates (stored as strings to ease input)
+  latitude: string
+  longitude: string
   // Required by API but not surfaced as UI
   district: string
   state: string
@@ -55,6 +59,7 @@ const INITIAL: FormState = {
   title: '', description: '', propertyType: 'open_land',
   totalPrice: '', areaInCents: '', city: '', address: '', pinCode: '',
   legalStatus: '', roadAccess: false, features: [],
+  latitude: '', longitude: '',
   district: 'Kanyakumari', state: 'Tamil Nadu',
 }
 
@@ -128,6 +133,8 @@ export default function SubmitPropertyPage() {
       features: form.features,
       legalStatus: form.legalStatus || undefined,
       roadAccess: form.roadAccess,
+      latitude: form.latitude ? Number(form.latitude) : undefined,
+      longitude: form.longitude ? Number(form.longitude) : undefined,
       submitterName: form.submitterName.trim(),
       submitterPhone: form.submitterPhone.trim(),
       submitterEmail: form.submitterEmail.trim() || undefined,
@@ -356,6 +363,17 @@ export default function SubmitPropertyPage() {
               <input required value={form.address}
                 onChange={(e) => set('address', e.target.value)}
                 className="input-field" placeholder="Street, area, or local landmark name" />
+            </Field>
+
+            <Field
+              label="Pin on Google Maps"
+              hint="Optional — helps buyers find the plot quickly"
+            >
+              <LocationPicker
+                latitude={form.latitude}
+                longitude={form.longitude}
+                onChange={(lat, lng) => setForm((f) => ({ ...f, latitude: lat, longitude: lng }))}
+              />
             </Field>
           </Section>
 

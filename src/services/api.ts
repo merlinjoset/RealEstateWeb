@@ -73,6 +73,9 @@ export interface PropertySubmission {
   features: string[]
   legalStatus?: string
   roadAccess: boolean
+  /** Optional Google-Maps pin coordinates */
+  latitude?: number
+  longitude?: number
   submitterName: string
   submitterPhone: string
   submitterEmail?: string
