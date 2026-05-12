@@ -7,6 +7,7 @@ import {
   Home as HomeIcon, Trees, Wheat, Building2, Map as MapPinIcon,
 } from 'lucide-react'
 import { PropertyDocumentsEditor } from '../../components/properties/PropertyDocuments'
+import LocationPicker from '../../components/properties/LocationPicker'
 import type { PropertyDocument } from '../../types'
 
 const CITIES = [
@@ -46,6 +47,8 @@ interface FormState {
   legalStatus: string
   nearbyLandmarks: string
   features: string[]
+  latitude: string
+  longitude: string
 }
 
 const INITIAL: FormState = {
@@ -54,6 +57,7 @@ const INITIAL: FormState = {
   propertyType: 'open_land', bedrooms: '', bathrooms: '',
   roadAccess: false, isFeatured: false, isVerified: false, legalStatus: '',
   nearbyLandmarks: '', features: [],
+  latitude: '', longitude: '',
 }
 
 interface SectionDef {
@@ -80,6 +84,7 @@ const FIELD_SECTION: Partial<Record<keyof FormState, string>> = {
   areaInCents: 'pricing', totalPrice: 'pricing', pricePerCent: 'pricing',
   city: 'location', address: 'location', pinCode: 'location',
   nearbyLandmarks: 'location', bedrooms: 'location', bathrooms: 'location',
+  latitude: 'location', longitude: 'location',
 }
 
 function formatLakhs(amountStr: string) {
@@ -139,6 +144,20 @@ function validate(form: FormState): Errors {
     e.pinCode = 'PIN code must be 6 digits'
   }
 
+  // Coordinates — optional, but if one is set both must be valid
+  const latRaw = form.latitude.trim()
+  const lngRaw = form.longitude.trim()
+  if (latRaw || lngRaw) {
+    const lat = Number(latRaw)
+    const lng = Number(lngRaw)
+    if (!latRaw || isNaN(lat) || lat < -90 || lat > 90) {
+      e.latitude = 'Latitude must be between -90 and 90'
+    }
+    if (!lngRaw || isNaN(lng) || lng < -180 || lng > 180) {
+      e.longitude = 'Longitude must be between -180 and 180'
+    }
+  }
+
   // Bedrooms/Bathrooms (only if Land + Building)
   if (form.propertyType === 'land_with_building') {
     if (form.bedrooms && (isNaN(Number(form.bedrooms)) || Number(form.bedrooms) <= 0)) {
@@ -189,6 +208,8 @@ export default function AddPropertyPage() {
       legalStatus: 'Clear — EC, Patta, Chitta available',
       nearbyLandmarks: 'NH 44 (200m), Nagercoil Railway Station (2km)',
       features: ['Road Access', 'Clear Title', 'Near Market'],
+      latitude: '8.183300',
+      longitude: '77.411900',
     })
   }, [isEditMode, id])
 
@@ -635,6 +656,29 @@ export default function AddPropertyPage() {
                 </Field>
               </div>
             </div>
+
+            {/* Google Maps location picker */}
+            <Field
+              label="Map Location"
+              hint="Optional — pin the plot on the map so buyers can see exactly where it is"
+              error={errorFor('latitude') || errorFor('longitude')}
+            >
+              <LocationPicker
+                latitude={form.latitude}
+                longitude={form.longitude}
+                onChange={(lat, lng) => {
+                  setForm((f) => ({ ...f, latitude: lat, longitude: lng }))
+                  // Clear lat/lng errors as user picks
+                  setErrors((prev) => {
+                    if (!prev.latitude && !prev.longitude) return prev
+                    const next = { ...prev }
+                    delete next.latitude
+                    delete next.longitude
+                    return next
+                  })
+                }}
+              />
+            </Field>
 
             {form.propertyType === 'land_with_building' && (
               <div className="mt-4 p-4 rounded-xl border" style={{ backgroundColor: '#FAFAF8', borderColor: '#EAEAE5' }}>
