@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react'
 import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
-import { MapPin, Link as LinkIcon, X, AlertCircle, Crosshair, ExternalLink } from 'lucide-react'
+import { MapPin, Link as LinkIcon, X, AlertCircle, Crosshair, ExternalLink, Loader2 } from 'lucide-react'
+import { mapsApi } from '../../services/api'
 
 interface Props {
   latitude: string
@@ -84,25 +85,52 @@ export default function LocationPicker({
 }: Props) {
   const [url, setUrl] = useState('')
   const [urlError, setUrlError] = useState<string | null>(null)
+  const [resolving, setResolving] = useState(false)
+
+  /**
+   * Try to parse the URL locally first (instant, no network). If that fails
+   * AND it looks like a Google Maps URL we can't parse offline (short links
+   * are the obvious case), fall back to the backend resolver which follows
+   * the redirect chain server-side.
+   */
+  const tryParseOrResolve = async (raw: string) => {
+    const trimmed = raw.trim()
+    if (!trimmed) return
+
+    // 1) Local parse first
+    const local = parseGoogleMapsUrl(trimmed)
+    if (local) {
+      onChange(local.lat.toFixed(6), local.lng.toFixed(6))
+      setUrlError(null)
+      return
+    }
+
+    // 2) If it's a known Google host, try the server-side resolver
+    const looksLikeGoogleMaps = /(?:maps\.app\.goo\.gl|goo\.gl\/maps|g\.co|google\.com\/maps|maps\.google\.com)/i.test(trimmed)
+    if (!looksLikeGoogleMaps) {
+      setUrlError('Could not find coordinates in that URL. Paste the full Google Maps URL or the lat,lng directly.')
+      return
+    }
+
+    setResolving(true)
+    setUrlError(null)
+    try {
+      const res = await mapsApi.resolve(trimmed)
+      onChange(res.latitude.toFixed(6), res.longitude.toFixed(6))
+    } catch (err: unknown) {
+      const apiMsg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error
+      setUrlError(apiMsg ?? 'Could not resolve that link. Please open it in Google Maps and copy the long URL.')
+    } finally {
+      setResolving(false)
+    }
+  }
 
   const lat = latitude ? parseFloat(latitude) : null
   const lng = longitude ? parseFloat(longitude) : null
   const hasCoords = lat != null && !isNaN(lat) && lng != null && !isNaN(lng)
   const markerPos: [number, number] | null = hasCoords ? [lat!, lng!] : null
 
-  const handleUrlParse = () => {
-    const parsed = parseGoogleMapsUrl(url)
-    if (!parsed) {
-      setUrlError(
-        url.includes('maps.app.goo.gl')
-          ? 'Short links can\'t be auto-parsed. Open the link, then copy the full URL from your browser bar.'
-          : 'Could not find coordinates in that URL. Paste the full Google Maps URL or the lat,lng directly.',
-      )
-      return
-    }
-    setUrlError(null)
-    onChange(parsed.lat.toFixed(6), parsed.lng.toFixed(6))
-  }
+  const handleUrlParse = () => tryParseOrResolve(url)
 
   const useMyLocation = () => {
     if (typeof navigator === 'undefined' || !navigator.geolocation) {
@@ -139,26 +167,21 @@ export default function LocationPicker({
             value={url}
             onChange={(e) => { setUrl(e.target.value); setUrlError(null) }}
             onPaste={(e) => {
-              // Auto-parse on paste for convenience
+              // Auto-parse / auto-resolve on paste for convenience
               const pasted = e.clipboardData.getData('text')
-              setTimeout(() => {
-                const parsed = parseGoogleMapsUrl(pasted)
-                if (parsed) {
-                  onChange(parsed.lat.toFixed(6), parsed.lng.toFixed(6))
-                  setUrlError(null)
-                }
-              }, 0)
+              setTimeout(() => { tryParseOrResolve(pasted) }, 0)
             }}
             onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleUrlParse() } }}
             placeholder="e.g. https://www.google.com/maps/@8.1833,77.4119,15z or 8.1833, 77.4119"
             className="input-field flex-1"
           />
           <button type="button" onClick={handleUrlParse}
-            className="px-4 py-2 text-sm font-semibold text-white rounded-lg transition-colors shrink-0"
+            disabled={resolving}
+            className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white rounded-lg transition-colors shrink-0 disabled:opacity-60 disabled:cursor-not-allowed"
             style={{ backgroundColor: '#6A9739' }}
-            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#547a2d')}
-            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#6A9739')}>
-            Extract
+            onMouseEnter={(e) => { if (!resolving) e.currentTarget.style.backgroundColor = '#547a2d' }}
+            onMouseLeave={(e) => { if (!resolving) e.currentTarget.style.backgroundColor = '#6A9739' }}>
+            {resolving ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Resolving…</> : 'Extract'}
           </button>
         </div>
         {urlError && (
@@ -168,7 +191,7 @@ export default function LocationPicker({
           </p>
         )}
         <p className="text-[11px] text-gray-400 mt-1.5 leading-snug">
-          On Google Maps: right-click the spot → click the coordinates to copy → paste here.
+          Works with both long URLs and short links (maps.app.goo.gl/…). Tip: on Google Maps, right-click the spot → click the coordinates to copy them.
         </p>
       </div>
 

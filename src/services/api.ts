@@ -175,6 +175,24 @@ export const agentsApi = {
     api.get<Property[]>(`/agents/${id}/properties`).then((r) => r.data),
 }
 
+/* -------------------- Maps: short-link resolver -------------------- */
+
+export interface ResolveMapUrlResponse {
+  latitude: number
+  longitude: number
+  resolvedUrl: string
+}
+
+export const mapsApi = {
+  /**
+   * Resolve a Google Maps URL (long or short) to lat/lng coordinates.
+   * The backend follows the redirect chain on short links like
+   * `maps.app.goo.gl/...` since the browser can't due to CORS.
+   */
+  resolve: (url: string) =>
+    api.post<ResolveMapUrlResponse>('/maps/resolve', { url }).then((r) => r.data),
+}
+
 export const contactApi = {
   /** Submits an inquiry (used by the contact form, property pages,
    *  and document-request modals). Hits /api/inquiries on the backend. */
