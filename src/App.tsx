@@ -4,6 +4,7 @@ import { AuthProvider } from './context/AuthContext'
 
 import Navbar from './components/layout/Navbar'
 import Footer from './components/layout/Footer'
+import FreeListingsBanner from './components/layout/FreeListingsBanner'
 import ScrollToTop from './components/common/ScrollToTop'
 
 import HomePage from './pages/HomePage'
@@ -40,6 +41,7 @@ const queryClient = new QueryClient({
 function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen flex flex-col">
+      <FreeListingsBanner />
       <Navbar />
       <div className="flex-1">{children}</div>
       <Footer />
