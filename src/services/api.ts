@@ -118,6 +118,44 @@ export const propertiesApi = {
   /** Properties submitted by (or assigned to) the current user. */
   getMine: () =>
     api.get<Property[]>('/properties/mine').then((r) => r.data),
+
+  /** Admin: pending-approval queue. */
+  getPending: () =>
+    api.get<Property[]>('/properties/pending').then((r) => r.data),
+}
+
+/* ------------------- Admin inquiries (notifications feed) ------------------- */
+
+export interface AdminInquiry {
+  id: number
+  name: string
+  phone: string
+  email?: string | null
+  message: string
+  preferredContact: string
+  type: string
+  isRead: boolean
+  status: string
+  notes?: string | null
+  propertyId?: number | null
+  propertyTitle?: string | null
+  userId?: number | null
+  assignedToUserId?: number | null
+  createdAt: string
+  assignedAt?: string | null
+  lastUpdatedAt?: string | null
+}
+
+export const inquiriesApi = {
+  /** Admin: unread inquiries — used for the notification bell feed. */
+  getUnread: () =>
+    api.get<AdminInquiry[]>('/inquiries', { params: { unreadOnly: true } }).then((r) => r.data),
+
+  getAll: () =>
+    api.get<AdminInquiry[]>('/inquiries').then((r) => r.data),
+
+  markRead: (id: number) =>
+    api.patch(`/inquiries/${id}/read`).then((r) => r.data),
 }
 
 export const authApi = {

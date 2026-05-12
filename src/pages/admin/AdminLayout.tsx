@@ -2,11 +2,12 @@ import { useState, useEffect, useRef } from 'react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, Home, Plus, ClipboardList, Users,
-  MessageSquare, Settings, Menu, X, LogOut, Bell, Video, Send,
+  MessageSquare, Settings, Menu, X, LogOut, Video, Send,
   ChevronDown, User as UserIcon, ExternalLink,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import ConfirmDialog from '../../components/common/ConfirmDialog'
+import NotificationsBell from './NotificationsBell'
 
 const NAV_ITEMS = [
   { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, end: true },
@@ -163,10 +164,7 @@ export default function AdminLayout() {
             Admin Dashboard
           </h1>
 
-          <button className="relative p-2 text-gray-500 hover:bg-gray-100 rounded-lg">
-            <Bell className="w-4 h-4" />
-            <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500" />
-          </button>
+          <NotificationsBell />
 
           <div className="relative" ref={userMenuRef}>
             <button

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { Search, SlidersHorizontal, X, Grid3X3, List, ChevronLeft, ChevronRight, Map as MapIcon } from 'lucide-react'
 import PropertyCard from '../components/properties/PropertyCard'
@@ -59,6 +59,17 @@ export default function PropertiesPage() {
   const [view, setView] = useState<'grid' | 'list'>('grid')
   const [page, setPage] = useState(1)
   const PAGE_SIZE = 9
+
+  // Scroll to top whenever the page number changes (skip the very first
+  // mount so loading the route doesn't auto-scroll the user).
+  const initialMount = useRef(true)
+  useEffect(() => {
+    if (initialMount.current) {
+      initialMount.current = false
+      return
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [page])
 
   const filtered = MOCK_PROPERTIES.filter((p) => {
     const q = search.toLowerCase()
