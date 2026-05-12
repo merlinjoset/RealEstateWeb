@@ -4,6 +4,7 @@ import { AuthProvider } from './context/AuthContext'
 
 import Navbar from './components/layout/Navbar'
 import Footer from './components/layout/Footer'
+import ScrollToTop from './components/common/ScrollToTop'
 
 import HomePage from './pages/HomePage'
 import PropertiesPage from './pages/PropertiesPage'
@@ -50,6 +51,7 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <BrowserRouter>
+          <ScrollToTop />
           <Routes>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
