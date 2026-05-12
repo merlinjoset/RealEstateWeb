@@ -146,13 +146,22 @@ export interface AdminInquiry {
   lastUpdatedAt?: string | null
 }
 
+/** Server returns `{ data, total, page, pageSize }` from GET /api/inquiries. */
+interface InquiriesEnvelope {
+  data: AdminInquiry[]
+  total: number
+  page: number
+  pageSize: number
+}
+
 export const inquiriesApi = {
   /** Admin: unread inquiries — used for the notification bell feed. */
   getUnread: () =>
-    api.get<AdminInquiry[]>('/inquiries', { params: { unreadOnly: true } }).then((r) => r.data),
+    api.get<InquiriesEnvelope>('/inquiries', { params: { unreadOnly: true } })
+      .then((r) => r.data.data),
 
   getAll: () =>
-    api.get<AdminInquiry[]>('/inquiries').then((r) => r.data),
+    api.get<InquiriesEnvelope>('/inquiries').then((r) => r.data.data),
 
   markRead: (id: number) =>
     api.patch(`/inquiries/${id}/read`).then((r) => r.data),

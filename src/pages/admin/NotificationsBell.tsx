@@ -32,8 +32,12 @@ export default function NotificationsBell() {
     staleTime: 30_000,
   })
 
-  const pendingCount = pendingQuery.data?.length ?? 0
-  const inquiryCount = inquiriesQuery.data?.length ?? 0
+  // Defensively coerce both queries to arrays — if either endpoint ever
+  // returns a paginated envelope or null, we won't crash on `.slice()` / `.length`.
+  const pendingItems = Array.isArray(pendingQuery.data) ? pendingQuery.data : []
+  const inquiryItems = Array.isArray(inquiriesQuery.data) ? inquiriesQuery.data : []
+  const pendingCount = pendingItems.length
+  const inquiryCount = inquiryItems.length
   const totalCount = pendingCount + inquiryCount
   const isLoading = pendingQuery.isLoading || inquiriesQuery.isLoading
 
@@ -70,7 +74,7 @@ export default function NotificationsBell() {
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-1">
+        <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-1">
           {/* Header */}
           <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -93,7 +97,7 @@ export default function NotificationsBell() {
               count={pendingCount}
               viewAllTo="/admin/pending"
               onItemClick={() => setOpen(false)}
-              items={(pendingQuery.data ?? []).slice(0, 5).map((p) => ({
+              items={pendingItems.slice(0, 5).map((p) => ({
                 key: p.id,
                 to: `/admin/pending/${p.id}`,
                 title: p.title,
@@ -108,7 +112,7 @@ export default function NotificationsBell() {
               count={inquiryCount}
               viewAllTo="/admin/inquiries"
               onItemClick={() => setOpen(false)}
-              items={(inquiriesQuery.data ?? []).slice(0, 5).map((i) => ({
+              items={inquiryItems.slice(0, 5).map((i) => ({
                 key: i.id,
                 to: '/admin/inquiries',
                 title: i.name,
