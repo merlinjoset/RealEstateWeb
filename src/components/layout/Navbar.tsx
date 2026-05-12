@@ -2,16 +2,32 @@ import { useState } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { Menu, X, Phone, Heart, ChevronDown, LogOut, User, Building2, Shield } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
+import ConfirmDialog from '../common/ConfirmDialog'
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const [confirmSignOut, setConfirmSignOut] = useState(false)
+  const [signingOut, setSigningOut] = useState(false)
   const { user, isAuthenticated, logout } = useAuth()
   const navigate = useNavigate()
 
-  const handleLogout = async () => {
-    await logout()
-    navigate('/')
+  // Open the confirmation modal instead of signing out immediately.
+  const handleLogout = () => {
+    setUserMenuOpen(false)
+    setIsOpen(false)
+    setConfirmSignOut(true)
+  }
+
+  const performLogout = async () => {
+    setSigningOut(true)
+    try {
+      await logout()
+      navigate('/')
+    } finally {
+      setSigningOut(false)
+      setConfirmSignOut(false)
+    }
   }
 
   const navLinks = [
@@ -203,6 +219,19 @@ export default function Navbar() {
           </div>
         )}
       </nav>
+
+      <ConfirmDialog
+        open={confirmSignOut}
+        title="Sign out?"
+        message="You'll need to sign in again to access your saved properties and profile."
+        confirmLabel="Sign out"
+        cancelLabel="Stay signed in"
+        tone="danger"
+        icon={LogOut}
+        loading={signingOut}
+        onConfirm={performLogout}
+        onCancel={() => setConfirmSignOut(false)}
+      />
     </>
   )
 }

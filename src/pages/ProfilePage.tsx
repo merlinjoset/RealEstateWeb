@@ -8,6 +8,7 @@ import {
 import { useAuth } from '../context/AuthContext'
 import { authApi } from '../services/api'
 import PageHeader from '../components/layout/PageHeader'
+import ConfirmDialog from '../components/common/ConfirmDialog'
 
 const ROLE_BADGE: Record<string, { bg: string; color: string; label: string }> = {
   Admin:    { bg: 'rgba(255,90,95,0.10)',  color: '#FF5A5F', label: 'Admin' },
@@ -121,9 +122,19 @@ export default function ProfilePage() {
     }
   }
 
-  const handleLogout = async () => {
-    await logout()
-    navigate('/')
+  const [confirmSignOut, setConfirmSignOut] = useState(false)
+  const [signingOut, setSigningOut] = useState(false)
+
+  const handleLogout = () => setConfirmSignOut(true)
+  const performLogout = async () => {
+    setSigningOut(true)
+    try {
+      await logout()
+      navigate('/')
+    } finally {
+      setSigningOut(false)
+      setConfirmSignOut(false)
+    }
   }
 
   const isAdmin = user.role === 'Admin'
@@ -345,6 +356,19 @@ export default function ProfilePage() {
           </aside>
         </div>
       </div>
+
+      <ConfirmDialog
+        open={confirmSignOut}
+        title="Sign out?"
+        message="You'll need to sign in again to manage your profile or access saved listings."
+        confirmLabel="Sign out"
+        cancelLabel="Stay signed in"
+        tone="danger"
+        icon={LogOut}
+        loading={signingOut}
+        onConfirm={performLogout}
+        onCancel={() => setConfirmSignOut(false)}
+      />
     </main>
   )
 }

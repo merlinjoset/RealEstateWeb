@@ -6,6 +6,7 @@ import {
   ChevronDown, User as UserIcon, ExternalLink,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
+import ConfirmDialog from '../../components/common/ConfirmDialog'
 
 const NAV_ITEMS = [
   { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, end: true },
@@ -22,6 +23,8 @@ const NAV_ITEMS = [
 export default function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const [confirmSignOut, setConfirmSignOut] = useState(false)
+  const [signingOut, setSigningOut] = useState(false)
   const userMenuRef = useRef<HTMLDivElement>(null)
   const navigate = useNavigate()
   const { user, logout } = useAuth()
@@ -44,10 +47,23 @@ export default function AdminLayout() {
     ? ((user.firstName[0] ?? '') + (user.lastName[0] ?? '')).toUpperCase() || 'A'
     : 'A'
 
-  const handleSignOut = async () => {
+  // First step — close any open menus and surface the confirmation dialog.
+  const handleSignOut = () => {
     setUserMenuOpen(false)
-    await logout()
-    navigate('/login', { replace: true })
+    setSidebarOpen(false)
+    setConfirmSignOut(true)
+  }
+
+  // Second step — only runs once the user actually confirms.
+  const performSignOut = async () => {
+    setSigningOut(true)
+    try {
+      await logout()
+      navigate('/login', { replace: true })
+    } finally {
+      setSigningOut(false)
+      setConfirmSignOut(false)
+    }
   }
 
   const handleExitToSite = () => {
@@ -209,6 +225,19 @@ export default function AdminLayout() {
           <Outlet />
         </main>
       </div>
+
+      <ConfirmDialog
+        open={confirmSignOut}
+        title="Sign out of admin?"
+        message="You'll need to log in again to access the admin panel."
+        confirmLabel="Sign out"
+        cancelLabel="Stay signed in"
+        tone="danger"
+        icon={LogOut}
+        loading={signingOut}
+        onConfirm={performSignOut}
+        onCancel={() => setConfirmSignOut(false)}
+      />
     </div>
   )
 }
