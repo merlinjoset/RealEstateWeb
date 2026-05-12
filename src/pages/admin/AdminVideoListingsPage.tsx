@@ -60,6 +60,12 @@ const MOCK_VIDEOS: VideoListing[] = [
     stage: 'shoot_scheduled', marketingPlan: 'VideoPromotion',
   },
   {
+    id: 145, title: '18 Cents Highway-facing Plot - Colachel', city: 'Colachel', areaInCents: 18,
+    totalPrice: 2700000, propertyType: 'Open Land', submittedBy: 'Karthik V.',
+    submitterPhone: '+91 90876 54321', submittedAt: '2024-01-16',
+    stage: 'editing', marketingPlan: 'VideoPromotion',
+  },
+  {
     id: 201, title: '12 Cents Plot with sea view - Kanyakumari', city: 'Kanyakumari', areaInCents: 12,
     totalPrice: 4200000, propertyType: 'Residential Plot', submittedBy: 'Priya S.',
     submitterPhone: '+91 87654 32109', submittedAt: '2024-01-15',
@@ -83,9 +89,14 @@ const STAGE_FILTERS: Array<{ value: VideoStage | 'all'; label: string }> = [
 ]
 
 export default function AdminVideoListingsPage() {
-  const [items] = useState<VideoListing[]>(MOCK_VIDEOS)
+  const [items, setItems] = useState<VideoListing[]>(MOCK_VIDEOS)
   const [search, setSearch] = useState('')
   const [stage, setStage] = useState<VideoStage | 'all'>('all')
+
+  /** Updates the production stage of a listing. When the API is wired,
+   *  this should call PATCH /api/properties/:id with the new stage. */
+  const updateStage = (id: number, next: VideoStage) =>
+    setItems((prev) => prev.map((p) => (p.id === id ? { ...p, stage: next } : p)))
 
   const filtered = useMemo(
     () => items.filter((p) => {
@@ -211,12 +222,38 @@ export default function AdminVideoListingsPage() {
                 <div className="pl-3">
                   <div className="flex items-start justify-between gap-3 mb-2">
                     <h3 className="font-semibold text-gray-900 line-clamp-1 pr-2">{p.title}</h3>
-                    <span
-                      className="text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full shrink-0"
-                      style={{ backgroundColor: stageMeta.bg, color: stageMeta.color }}
+                    {/* Editable stage — wrapped in a div that swallows the
+                        Link's click so changing status doesn't navigate */}
+                    <div
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation() }}
+                      className="relative shrink-0"
                     >
-                      {stageMeta.label}
-                    </span>
+                      <select
+                        value={p.stage}
+                        onChange={(e) => updateStage(p.id, e.target.value as VideoStage)}
+                        className="appearance-none cursor-pointer text-[10px] uppercase tracking-wider font-bold pl-2.5 pr-7 py-1 rounded-full border-0 outline-none focus:ring-2 transition-all"
+                        style={{
+                          backgroundColor: stageMeta.bg,
+                          color: stageMeta.color,
+                          // tailwind's --tw-ring-color so the focus ring matches
+                          ['--tw-ring-color' as never]: stageMeta.color,
+                        }}
+                        title="Click to change stage"
+                      >
+                        {(Object.keys(STAGE_META) as VideoStage[]).map((s) => (
+                          <option key={s} value={s}>{STAGE_META[s].label}</option>
+                        ))}
+                      </select>
+                      {/* Custom caret since appearance-none hides the native one */}
+                      <svg
+                        className="w-2.5 h-2.5 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none"
+                        viewBox="0 0 12 12"
+                        fill="none"
+                        style={{ color: stageMeta.color }}
+                      >
+                        <path d="M3 5l3 3 3-3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </div>
                   </div>
 
                   <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500 mb-3">

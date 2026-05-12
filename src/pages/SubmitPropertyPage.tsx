@@ -436,8 +436,9 @@ export default function SubmitPropertyPage() {
                 style={{ backgroundColor: 'rgba(255,90,95,0.06)', border: '1px solid rgba(255,90,95,0.2)', color: '#7F1D1D' }}>
                 <Sparkles className="w-3.5 h-3.5 shrink-0 mt-0.5" style={{ color: '#FF5A5F' }} />
                 <span>
-                  <strong>2% brokerage</strong> will be deducted from the final sale price. Our agent will
-                  contact you to schedule the video shoot. <em>You pay nothing upfront.</em>
+                  <strong>Sells faster — often sooner than expected.</strong> Our videos reach more buyers and our agent personally
+                  follows up on every enquiry. <strong>2% brokerage</strong> only applies on a successful sale,
+                  so <em>you pay nothing upfront</em>.
                 </span>
               </div>
             )}

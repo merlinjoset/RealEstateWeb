@@ -51,11 +51,16 @@ export default function MarketingPlanPicker({ value, onChange, totalPriceStr }: 
             <span className="text-xs font-medium text-gray-500">on sale</span>
           </span>
         }
-        badge="Recommended"
+        badge="Sells Faster"
         bullets={[
+          // Lead with the headline benefit so it's the first thing the seller reads
+          <span key="fast" className="inline-flex items-start gap-1">
+            <span className="font-bold" style={{ color: '#FF5A5F' }}>Often sold sooner than expected</span>
+            {' '}— premium reach &amp; agent follow-up
+          </span>,
           'Professional walkthrough video',
           'Featured at the top of listings',
-          'Shared on Instagram & WhatsApp',
+          'Shared on Instagram &amp; WhatsApp',
           price > 0
             ? `Approx. fee on this property: ${formatLakhs(fee)}`
             : 'Add the price to preview your 2% fee',
