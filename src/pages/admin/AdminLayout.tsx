@@ -11,6 +11,7 @@ import ConfirmDialog from '../../components/common/ConfirmDialog'
 const NAV_ITEMS = [
   { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, end: true },
   { to: '/admin/properties', label: 'All Properties', icon: Home },
+  { to: '/admin/video-listings', label: 'Video Listings', icon: Video, badge: 2 },
   { to: '/admin/add-property', label: 'Add Property', icon: Plus },
   { to: '/admin/pending', label: 'Pending Approvals', icon: ClipboardList, badge: 4 },
   { to: '/admin/testimonials', label: 'Testimonials', icon: Video },

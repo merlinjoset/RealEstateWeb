@@ -89,7 +89,7 @@ export interface User {
   lastName: string
   email: string
   phone?: string
-  role: 'Employee' | 'Seller' | 'Agent' | 'Admin'
+  role: 'Employee' | 'Seller' | 'Agent' | 'Admin' | 'Buyer'
   avatar?: string
   createdAt: string
 }
@@ -111,7 +111,7 @@ export interface RegisterData {
   email: string
   password: string
   phone?: string
-  role: 'Agent' | 'Seller'
+  role: 'Agent' | 'Seller' | 'Buyer'
 }
 
 export interface PropertyFilters {

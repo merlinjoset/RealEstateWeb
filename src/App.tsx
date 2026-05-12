@@ -31,6 +31,7 @@ import AdminUsersPage from './pages/admin/AdminUsersPage'
 import AdminInquiriesPage from './pages/admin/AdminInquiriesPage'
 import AdminSettingsPage from './pages/admin/AdminSettingsPage'
 import AdminSmsTemplatesPage from './pages/admin/AdminSmsTemplatesPage'
+import AdminVideoListingsPage from './pages/admin/AdminVideoListingsPage'
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 1000 * 60 * 5 } },
@@ -140,6 +141,7 @@ export default function App() {
             <Route path="/admin" element={<RequireAdmin><AdminLayout /></RequireAdmin>}>
               <Route index element={<DashboardPage />} />
               <Route path="properties" element={<AdminPropertiesPage />} />
+              <Route path="video-listings" element={<AdminVideoListingsPage />} />
               <Route path="add-property" element={<AddPropertyPage />} />
               <Route path="pending" element={<PendingApprovalsPage />} />
               <Route path="pending/:id" element={<PendingApprovalsPage />} />

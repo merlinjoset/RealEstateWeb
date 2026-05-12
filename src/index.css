@@ -80,3 +80,35 @@
     @apply bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow duration-200;
   }
 }
+
+/* === Attention-grabbing buyer-callout animations === */
+@keyframes jfl-blink {
+  0%, 60%, 100% { opacity: 1; transform: scale(1); }
+  30% { opacity: 0.55; transform: scale(0.96); }
+}
+.jfl-blink {
+  animation: jfl-blink 1.6s ease-in-out infinite;
+}
+
+/* Softer, slower pulse — for the "Premium" ribbon */
+@keyframes jfl-blink-soft {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(255, 90, 95, 0.45); }
+  50%      { opacity: 0.95; box-shadow: 0 0 0 8px rgba(255, 90, 95, 0); }
+}
+.jfl-blink-soft {
+  animation: jfl-blink-soft 2.2s ease-in-out infinite;
+}
+
+/* Card glow — subtle outer ring that breathes */
+@keyframes jfl-buyer-glow {
+  0%, 100% { box-shadow: 0 4px 18px rgba(255, 90, 95, 0.08); }
+  50%      { box-shadow: 0 8px 28px rgba(255, 90, 95, 0.18); }
+}
+.jfl-buyer-card {
+  animation: jfl-buyer-glow 3s ease-in-out infinite;
+}
+
+/* Respect reduced-motion users — turn the blinking off */
+@media (prefers-reduced-motion: reduce) {
+  .jfl-blink, .jfl-blink-soft, .jfl-buyer-card { animation: none; }
+}
