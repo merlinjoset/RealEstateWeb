@@ -1,39 +1,75 @@
 import { Link } from 'react-router-dom'
-import { Gift, Video, Phone, Sparkles, ArrowRight, ShieldCheck } from 'lucide-react'
+import { Gift, Video, Phone, Sparkles, ArrowRight, ShieldCheck, ArrowDown } from 'lucide-react'
+import { useAuth } from '../../context/AuthContext'
 
 /**
  * Homepage attention-grabber for buyers. Two paths:
  *  - Free: anyone can sign up and see the seller's direct contact
  *  - Premium (Video Promotion): hand-picked listings with a walkthrough video
  *
- * Both CTAs route to /register?intent=buyer so we can prefill the buyer copy
- * on the registration screen.
+ * Hidden once the user signs in — at that point the rest of the site already
+ * exposes contacts on free listings, so the call-to-action is redundant.
  */
 export default function BuyerCallout() {
+  const { isAuthenticated } = useAuth()
+  if (isAuthenticated) return null
+
   return (
-    <section className="py-12 px-4 sm:px-6 lg:px-8" style={{ backgroundColor: '#F8F6F3' }}>
-      <div className="max-w-7xl mx-auto">
-        {/* Eyebrow — pulsing */}
+    <section
+      className="relative py-16 px-4 sm:px-6 lg:px-8 overflow-hidden"
+      style={{
+        background:
+          'radial-gradient(circle at 18% 15%, rgba(255,90,95,0.10) 0%, transparent 55%),' +
+          'radial-gradient(circle at 82% 85%, rgba(106,151,57,0.10) 0%, transparent 55%),' +
+          '#F8F6F3',
+      }}
+    >
+      {/* Subtle stripes in the background for extra visual weight */}
+      <div
+        aria-hidden
+        className="absolute inset-0 opacity-[0.04] pointer-events-none"
+        style={{
+          backgroundImage:
+            'repeating-linear-gradient(45deg, #FF5A5F 0 2px, transparent 2px 14px)',
+        }}
+      />
+
+      <div className="relative max-w-7xl mx-auto">
+        {/* Eyebrow — pulsing, larger, with arrows pointing inward */}
         <div className="flex justify-center mb-4">
           <span
-            className="jfl-blink inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider text-white"
+            className="jfl-blink inline-flex items-center gap-2 px-5 py-2 rounded-full text-sm font-extrabold uppercase tracking-wider text-white shadow-lg"
             style={{ backgroundColor: '#FF5A5F' }}
           >
-            <span className="relative flex h-2 w-2">
+            <span className="relative flex h-2.5 w-2.5">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-white" />
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-white" />
             </span>
-            For Buyers
+            ★ Are you a Buyer?
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-white" />
+            </span>
           </span>
         </div>
 
-        <h2 className="text-center text-3xl sm:text-4xl font-bold tracking-tight mb-2" style={{ color: '#111111' }}>
-          Looking to buy land?
+        <h2 className="text-center text-3xl sm:text-5xl font-extrabold tracking-tight mb-3" style={{ color: '#111111' }}>
+          Looking to buy land?{' '}
+          <span style={{ color: '#FF5A5F' }}>Start here.</span>
         </h2>
-        <p className="text-center text-base text-gray-500 mb-8 max-w-2xl mx-auto">
-          Two ways to start — both free for buyers. Sign up to unlock seller contacts on free
-          listings, or browse our premium video tours.
+        <p className="text-center text-base sm:text-lg text-gray-600 mb-3 max-w-2xl mx-auto">
+          <strong>Two ways to start</strong> — both free for buyers. Sign up to unlock seller
+          contacts on free listings, or browse our premium video tours.
         </p>
+
+        {/* Bouncing arrow pointing at the cards — guides the eye downward */}
+        <div className="flex justify-center mb-8">
+          <ArrowDown
+            className="w-6 h-6 jfl-bounce"
+            style={{ color: '#FF5A5F' }}
+            aria-hidden
+          />
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {/* === Free path === */}

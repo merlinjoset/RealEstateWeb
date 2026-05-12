@@ -108,7 +108,21 @@
   animation: jfl-buyer-glow 3s ease-in-out infinite;
 }
 
-/* Respect reduced-motion users — turn the blinking off */
+/* Down-arrow nudge that guides the eye to the buyer cards */
+@keyframes jfl-bounce {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(8px); }
+}
+.jfl-bounce {
+  animation: jfl-bounce 1.4s ease-in-out infinite;
+}
+
+/* Buyer-card hover — slight lift on top of the breathing glow */
+.jfl-buyer-card:hover { transform: translateY(-4px); }
+.jfl-buyer-card { transition: transform 0.25s ease, box-shadow 0.25s ease; }
+
+/* Respect reduced-motion users — turn all the buyer-callout animations off */
 @media (prefers-reduced-motion: reduce) {
-  .jfl-blink, .jfl-blink-soft, .jfl-buyer-card { animation: none; }
+  .jfl-blink, .jfl-blink-soft, .jfl-buyer-card, .jfl-bounce { animation: none; }
+  .jfl-buyer-card:hover { transform: none; }
 }
