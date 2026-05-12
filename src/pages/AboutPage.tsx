@@ -119,7 +119,7 @@ export default function AboutPage() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
             {[
               { icon: Phone, label: 'Call Us', value: '+91 99944 88490', href: 'tel:+919994488490' },
-              { icon: Phone, label: 'Alternate', value: '+91 96987 12904', href: 'tel:+919698712904' },
+              { icon: Phone, label: 'Alternate', value: '+91 99448 85542', href: 'tel:+919944885542' },
               { icon: Mail, label: 'Email', value: 'josepowerj@gmail.com', href: 'mailto:josepowerj@gmail.com' },
             ].map(({ icon: Icon, label, value, href }) => (
               <a

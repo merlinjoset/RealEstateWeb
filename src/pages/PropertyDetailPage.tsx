@@ -288,14 +288,14 @@ export default function PropertyDetailPage() {
                   WhatsApp Inquiry
                 </a>
                 <a
-                  href="tel:+919698712904"
+                  href="tel:+919944885542"
                   className="flex items-center justify-center gap-2 w-full py-3 border-2 font-semibold rounded-xl transition-colors"
                   style={{ borderColor: '#6A9739', color: '#6A9739' }}
                   onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(106,151,57,0.06)' }}
                   onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent' }}
                 >
                   <Phone className="w-4 h-4" />
-                  Alt: +91 96987 12904
+                  Alt: +91 99448 85542
                 </a>
               </div>
 

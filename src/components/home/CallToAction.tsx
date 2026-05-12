@@ -52,7 +52,7 @@ export default function CallToAction() {
         </div>
 
         <p className="mt-7 text-sm" style={{ color: '#6B7280' }}>
-          Available Mon–Sat, 9 AM – 7 PM IST &nbsp;·&nbsp; Also reachable at <strong style={{ color: '#111111' }}>+91 96987 12904</strong>
+          Available Mon–Sat, 9 AM – 7 PM IST &nbsp;·&nbsp; Also reachable at <strong style={{ color: '#111111' }}>+91 99448 85542</strong>
         </p>
       </div>
     </section>

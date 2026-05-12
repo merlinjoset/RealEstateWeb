@@ -98,7 +98,7 @@ export default function HeroSection() {
               </Link>
 
               {/* Phone numbers */}
-              {['+91 99944 88490', '+91 96987 12904'].map(num => (
+              {['+91 99944 88490', '+91 99448 85542'].map(num => (
                 <a key={num} href={`tel:${num.replace(/\s/g,'')}`}
                   className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium border transition-colors bg-white hover:bg-gray-50"
                   style={{ borderColor: '#CFD8DC', color: '#263238' }}>

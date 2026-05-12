@@ -68,7 +68,7 @@ const INITIAL: SettingsState = {
   registrationNumber: 'TN/REA/2014/00428',
 
   primaryPhone: '+91 99944 88490',
-  altPhone: '+91 96987 12904',
+  altPhone: '+91 99448 85542',
   whatsapp: '+91 99944 88490',
   email: 'josepowerj@gmail.com',
   addressLine: 'Appattuvilai, Thuckalay',

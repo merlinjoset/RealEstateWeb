@@ -51,9 +51,9 @@ export default function Navbar() {
               <Phone className="w-3.5 h-3.5" style={{ color: '#FF5A5F' }} />
               +91 99944 88490
             </a>
-            <a href="tel:+919698712904" className="flex items-center gap-1.5 hover:text-gray-300 transition-colors">
+            <a href="tel:+919944885542" className="flex items-center gap-1.5 hover:text-gray-300 transition-colors">
               <Phone className="w-3.5 h-3.5" style={{ color: '#FF5A5F' }} />
-              +91 96987 12904
+              +91 99448 85542
             </a>
           </div>
         </div>

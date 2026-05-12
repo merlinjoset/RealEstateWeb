@@ -58,6 +58,11 @@ export default function MarketingPlanPicker({ value, onChange, totalPriceStr }: 
             <span className="font-bold" style={{ color: '#FF5A5F' }}>Often sold sooner than expected</span>
             {' '}— premium reach &amp; agent follow-up
           </span>,
+          // End-to-end support — the second-most-important pitch for sellers/dealers
+          <span key="e2e" className="inline-flex items-start gap-1">
+            <span className="font-bold" style={{ color: '#FF5A5F' }}>End-to-end support</span>
+            {' '}— buyer screening, site visits, paperwork &amp; registration
+          </span>,
           'Professional walkthrough video',
           'Featured at the top of listings',
           'Shared on Instagram &amp; WhatsApp',

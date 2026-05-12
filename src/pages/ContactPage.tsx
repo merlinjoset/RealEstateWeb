@@ -44,7 +44,7 @@ export default function ContactPage() {
               <div className="space-y-4">
                 {[
                   { icon: Phone, label: 'Primary', value: '+91 99944 88490', href: 'tel:+919994488490' },
-                  { icon: Phone, label: 'Alternate', value: '+91 96987 12904', href: 'tel:+919698712904' },
+                  { icon: Phone, label: 'Alternate', value: '+91 99448 85542', href: 'tel:+919944885542' },
                   { icon: MessageCircle, label: 'WhatsApp', value: '+91 99944 88490', href: 'https://wa.me/919994488490' },
                   { icon: Mail, label: 'Email', value: 'josepowerj@gmail.com', href: 'mailto:josepowerj@gmail.com' },
                 ].map(({ icon: Icon, label, value, href }) => (

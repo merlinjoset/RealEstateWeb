@@ -83,9 +83,9 @@ export default function Footer() {
                 </a>
               </li>
               <li>
-                <a href="tel:+919698712904" className="flex items-center gap-3 hover:text-white transition-colors">
+                <a href="tel:+919944885542" className="flex items-center gap-3 hover:text-white transition-colors">
                   <Phone className="w-4 h-4 shrink-0" style={{ color: '#FF5A5F' }} />
-                  +91 96987 12904
+                  +91 99448 85542
                 </a>
               </li>
               <li>
