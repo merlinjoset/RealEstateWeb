@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   Search, Edit2, Trash2, Mail, Phone, Shield, UserPlus,
   X, Save, Eye, Users as UsersIcon, UserCheck, UserX, Calendar,
-  CheckCircle2, MapPin, Loader2, AlertCircle,
+  CheckCircle2, MapPin, Loader2, AlertCircle, ShoppingBag,
 } from 'lucide-react'
 import {
   usersApi,
@@ -16,11 +16,16 @@ import {
 } from '../../services/api'
 
 const ROLE_BADGE: Record<AdminUserRole, { bg: string; color: string; label: string }> = {
-  Admin:  { bg: 'rgba(255,90,95,0.10)',  color: '#FF5A5F', label: 'Admin' },
-  Agent:  { bg: 'rgba(41,50,55,0.08)',   color: '#293237', label: 'Agent' },
-  Seller: { bg: 'rgba(245,158,11,0.10)', color: '#B45309', label: 'Seller' },
+  Admin:    { bg: 'rgba(255,90,95,0.10)',  color: '#FF5A5F', label: 'Admin' },
+  Agent:    { bg: 'rgba(41,50,55,0.08)',   color: '#293237', label: 'Agent' },
+  Seller:   { bg: 'rgba(245,158,11,0.10)', color: '#B45309', label: 'Seller' },
   Employee: { bg: 'rgba(106,151,57,0.10)', color: '#6A9739', label: 'Employee' },
+  Buyer:    { bg: 'rgba(99,102,241,0.10)', color: '#4F46E5', label: 'Buyer' },
 }
+
+/** Fallback used if the API returns an unknown role — prevents the whole
+ *  page from crashing on a stale role value. */
+const UNKNOWN_BADGE = { bg: '#F3F4F6', color: '#6B7280', label: 'Unknown' }
 
 interface FormState {
   firstName: string
@@ -38,7 +43,7 @@ const EMPTY_FORM: FormState = {
 }
 
 const ZERO_COUNTS: UserCounts = {
-  all: 0, employee: 0, seller: 0, agent: 0, admin: 0, active: 0, inactive: 0,
+  all: 0, employee: 0, seller: 0, agent: 0, admin: 0, buyer: 0, active: 0, inactive: 0,
 }
 
 function relativeTime(iso: string | null) {
@@ -178,12 +183,13 @@ export default function AdminUsersPage() {
       </div>
 
       {/* Stat cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
         {[
-          { label: 'Employees',  value: counts.employee,  color: '#6A9739', bg: 'rgba(106,151,57,0.08)', icon: UsersIcon },
-          { label: 'Sellers', value: counts.seller, color: '#B45309', bg: 'rgba(245,158,11,0.08)', icon: UserCheck },
-          { label: 'Agents',  value: counts.agent,  color: '#293237', bg: 'rgba(41,50,55,0.06)',   icon: Shield },
-          { label: 'Admins',  value: counts.admin,  color: '#FF5A5F', bg: 'rgba(255,90,95,0.08)',  icon: UserX },
+          { label: 'Employees', value: counts.employee, color: '#6A9739', bg: 'rgba(106,151,57,0.08)', icon: UsersIcon },
+          { label: 'Sellers',   value: counts.seller,   color: '#B45309', bg: 'rgba(245,158,11,0.08)', icon: UserCheck },
+          { label: 'Buyers',    value: counts.buyer,    color: '#4F46E5', bg: 'rgba(99,102,241,0.08)', icon: ShoppingBag },
+          { label: 'Agents',    value: counts.agent,    color: '#293237', bg: 'rgba(41,50,55,0.06)',   icon: Shield },
+          { label: 'Admins',    value: counts.admin,    color: '#FF5A5F', bg: 'rgba(255,90,95,0.08)',  icon: UserX },
         ].map(({ label, value, color, bg, icon: Icon }) => (
           <div key={label} className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm">
             <div className="flex items-center gap-3">
@@ -219,7 +225,7 @@ export default function AdminUsersPage() {
           </div>
 
           <div className="flex flex-wrap gap-2">
-            {(['all', 'employee', 'seller', 'agent', 'admin'] as const).map(r => (
+            {(['all', 'employee', 'seller', 'buyer', 'agent', 'admin'] as const).map(r => (
               <button
                 key={r}
                 onClick={() => setRoleFilter(r)}
@@ -280,7 +286,7 @@ export default function AdminUsersPage() {
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {items.map((u) => {
-                  const roleBadge = ROLE_BADGE[u.role]
+                  const roleBadge = ROLE_BADGE[u.role] ?? UNKNOWN_BADGE
                   const initials = (u.firstName[0] ?? '') + (u.lastName[0] ?? '')
                   return (
                     <tr key={u.id} className="hover:bg-gray-50 transition-colors">
@@ -437,7 +443,7 @@ export default function AdminUsersPage() {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Role *</label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  {(['Employee', 'Seller', 'Agent', 'Admin'] as const).map(r => {
+                  {(['Employee', 'Seller', 'Buyer', 'Agent', 'Admin'] as const).map(r => {
                     const isActive = form.role === r
                     const badge = ROLE_BADGE[r]
                     return (

@@ -15,6 +15,7 @@ const ROLE_BADGE: Record<string, { bg: string; color: string; label: string }> =
   Agent:    { bg: 'rgba(41,50,55,0.08)',   color: '#293237', label: 'Agent' },
   Seller:   { bg: 'rgba(245,158,11,0.10)', color: '#B45309', label: 'Seller' },
   Employee: { bg: 'rgba(106,151,57,0.10)', color: '#6A9739', label: 'Employee' },
+  Buyer:    { bg: 'rgba(99,102,241,0.10)', color: '#4F46E5', label: 'Buyer' },
 }
 
 interface FormState {

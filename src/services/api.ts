@@ -249,7 +249,7 @@ export const smsTemplatesApi = {
 
 /* ----------------------------- Admin: Users ----------------------------- */
 
-export type AdminUserRole = 'Employee' | 'Seller' | 'Agent' | 'Admin'
+export type AdminUserRole = 'Employee' | 'Seller' | 'Agent' | 'Admin' | 'Buyer'
 
 export interface AdminUser {
   id: number
@@ -267,7 +267,7 @@ export interface AdminUser {
 }
 
 export interface UserCounts {
-  all: number; employee: number; seller: number; agent: number; admin: number
+  all: number; employee: number; seller: number; agent: number; admin: number; buyer: number
   active: number; inactive: number
 }
 
@@ -279,7 +279,7 @@ export interface UserListResponse {
 
 export interface UserQuery {
   search?: string
-  role?: 'all' | 'employee' | 'seller' | 'agent' | 'admin'
+  role?: 'all' | 'employee' | 'seller' | 'agent' | 'admin' | 'buyer'
   status?: 'all' | 'active' | 'inactive'
 }
 
