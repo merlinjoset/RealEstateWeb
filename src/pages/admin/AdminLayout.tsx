@@ -36,7 +36,7 @@ const NAV_ITEMS: NavItem[] = [
   { to: '/admin/add-property', label: 'Add Property', icon: Plus, roles: ['Admin'] },
   { to: '/admin/pending', label: 'Pending Approvals', icon: ClipboardList, badgeKey: 'pending', roles: ['Admin'] },
   { to: '/admin/testimonials', label: 'Testimonials', icon: Video, roles: ['Admin'] },
-  { to: '/admin/inquiries', label: 'Inquiries', icon: MessageSquare, badgeKey: 'unread', roles: ['Admin'] },
+  { to: '/admin/inquiries', label: 'Inquiries', icon: MessageSquare, badgeKey: 'unread', roles: ['Admin', 'Employee'] },
   { to: '/admin/users', label: 'Users', icon: Users, roles: ['Admin'] },
   { to: '/admin/sms-templates', label: 'SMS Templates', icon: Send, roles: ['Admin'] },
   { to: '/admin/settings', label: 'Settings', icon: Settings, roles: ['Admin'] },
@@ -71,24 +71,35 @@ export default function AdminLayout() {
 
   // Live counts that drive the sidebar badges. Both refresh on a 60s cadence
   // and are shared (via the same query keys) with the NotificationsBell so
-  // we don't double-fetch.
+  // we don't double-fetch — for Admins. Employees get role-scoped queries
+  // (their own unread inquiries) under different keys.
+  const isEmployee = user?.role === 'Employee'
+
   const pendingQuery = useQuery({
     queryKey: ['admin-notifications', 'pending'],
     queryFn: propertiesApi.getPending,
     refetchInterval: 60_000,
     staleTime: 30_000,
+    enabled: !isEmployee,  // Pending queue is admin-only — skip the call for employees
   })
   const inquiriesQuery = useQuery({
-    queryKey: ['admin-notifications', 'unread-inquiries'],
-    queryFn: inquiriesApi.getUnread,
+    queryKey: isEmployee
+      ? ['my-work', 'inquiries']  // shares MyWorkPage's cache
+      : ['admin-notifications', 'unread-inquiries'],
+    queryFn: isEmployee ? inquiriesApi.getMine : inquiriesApi.getUnread,
     refetchInterval: 60_000,
     staleTime: 30_000,
   })
   const pendingList = Array.isArray(pendingQuery.data) ? pendingQuery.data : []
+  const myInquiries = Array.isArray(inquiriesQuery.data) ? inquiriesQuery.data : []
   const badges: Record<'pending' | 'video' | 'unread', number> = {
     pending: pendingList.length,
     video: pendingList.filter((p) => p.marketingPlan === 'VideoPromotion').length,
-    unread: Array.isArray(inquiriesQuery.data) ? inquiriesQuery.data.length : 0,
+    // For employees the badge shows their unread; for admins it's the global
+    // unread queue (already filtered to unread by getUnread()).
+    unread: isEmployee
+      ? myInquiries.filter((i) => !i.isRead).length
+      : myInquiries.length,
   }
 
   // First step — close any open menus and surface the confirmation dialog.

@@ -161,7 +161,11 @@ export default function App() {
               <Route path="edit-property/:id" element={<RequireAdmin><AddPropertyPage /></RequireAdmin>} />
               <Route path="testimonials" element={<RequireAdmin><AdminTestimonialsPage /></RequireAdmin>} />
               <Route path="users" element={<RequireAdmin><AdminUsersPage /></RequireAdmin>} />
-              <Route path="inquiries" element={<RequireAdmin><AdminInquiriesPage /></RequireAdmin>} />
+              {/* Inquiries page is shared — AdminInquiriesPage detects the
+                  current role and fetches /inquiries (admin) or
+                  /inquiries/mine (employee), hiding admin-only controls
+                  for the employee variant. */}
+              <Route path="inquiries" element={<RequireStaff><AdminInquiriesPage /></RequireStaff>} />
               <Route path="settings" element={<RequireAdmin><AdminSettingsPage /></RequireAdmin>} />
               <Route path="sms-templates" element={<RequireAdmin><AdminSmsTemplatesPage /></RequireAdmin>} />
               <Route path="*" element={<NotFoundPage />} />

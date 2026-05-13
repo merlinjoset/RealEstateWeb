@@ -6,6 +6,7 @@ import {
   Filter, ExternalLink, Loader2, AlertCircle, UserPlus, UserCheck, Check,
 } from 'lucide-react'
 import { inquiriesApi, usersApi, type AdminInquiry, type AdminUser } from '../../services/api'
+import { useAuth } from '../../context/AuthContext'
 
 /**
  * Backend statuses are PascalCase ("New" | "Assigned" | "InProgress" |
@@ -45,6 +46,12 @@ function timeAgo(iso: string) {
 
 export default function AdminInquiriesPage() {
   const queryClient = useQueryClient()
+  const { user } = useAuth()
+  // The same page serves two roles:
+  //  - Admin    → fetches every inquiry, can assign / filter / etc.
+  //  - Employee → fetches only inquiries assigned to them, admin-only
+  //               controls are hidden so the page reads as a personal queue.
+  const isEmployee = user?.role === 'Employee'
 
   // ── Filters ──────────────────────────────────────────────────────────
   const [search, setSearch] = useState('')
@@ -55,15 +62,16 @@ export default function AdminInquiriesPage() {
 
   // ── Data ─────────────────────────────────────────────────────────────
   const inquiriesQuery = useQuery({
-    queryKey: ['admin-inquiries'],
-    queryFn: inquiriesApi.getAll,
+    queryKey: isEmployee ? ['my-work', 'inquiries'] : ['admin-inquiries'],
+    queryFn: isEmployee ? inquiriesApi.getMine : inquiriesApi.getAll,
     refetchInterval: 60_000,
   })
 
-  // Used to populate the "Assign to..." dropdown — Employees + Agents + Admins
+  // Used to populate the admin-only "Assign to..." dropdown.
   const usersQuery = useQuery({
     queryKey: ['admin-users', 'assignees'],
     queryFn: () => usersApi.getAll(),
+    enabled: !isEmployee,  // Employees can't reassign, so skip the request.
   })
 
   const items = inquiriesQuery.data ?? []
@@ -132,12 +140,22 @@ export default function AdminInquiriesPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-            Inquiries
+            {isEmployee ? 'My Inquiries' : 'Inquiries'}
             {inquiriesQuery.isFetching && <Loader2 className="w-4 h-4 animate-spin text-gray-400" />}
           </h2>
           <p className="text-sm text-gray-500 mt-0.5">
-            {counts.all} total · <span style={{ color: '#FF5A5F' }} className="font-semibold">{counts.unread} unread</span> ·
-            <span style={{ color: '#B45309' }} className="font-semibold"> {counts.unassigned} unassigned</span>
+            {isEmployee ? (
+              <>
+                {counts.all} assigned to you ·{' '}
+                <span style={{ color: '#FF5A5F' }} className="font-semibold">{counts.unread} unread</span>
+              </>
+            ) : (
+              <>
+                {counts.all} total ·{' '}
+                <span style={{ color: '#FF5A5F' }} className="font-semibold">{counts.unread} unread</span> ·
+                <span style={{ color: '#B45309' }} className="font-semibold"> {counts.unassigned} unassigned</span>
+              </>
+            )}
           </p>
         </div>
       </div>
@@ -194,15 +212,17 @@ export default function AdminInquiriesPage() {
                     <span className="ml-1.5 opacity-75">({counts[s === 'all' ? 'all' : s]})</span>
                   </button>
                 ))}
-                <button
-                  onClick={() => setAssignedFilter(assignedFilter === 'unassigned' ? 'all' : 'unassigned')}
-                  className="px-3 py-1.5 rounded-full text-xs font-medium border transition-colors inline-flex items-center gap-1"
-                  style={assignedFilter === 'unassigned'
-                    ? { backgroundColor: '#B45309', color: 'white', borderColor: '#B45309' }
-                    : { backgroundColor: 'white', color: '#B45309', borderColor: 'rgba(180,83,9,0.3)' }}
-                  title="Show only inquiries not yet assigned to an employee">
-                  <UserPlus className="w-3 h-3" /> Unassigned ({counts.unassigned})
-                </button>
+                {!isEmployee && (
+                  <button
+                    onClick={() => setAssignedFilter(assignedFilter === 'unassigned' ? 'all' : 'unassigned')}
+                    className="px-3 py-1.5 rounded-full text-xs font-medium border transition-colors inline-flex items-center gap-1"
+                    style={assignedFilter === 'unassigned'
+                      ? { backgroundColor: '#B45309', color: 'white', borderColor: '#B45309' }
+                      : { backgroundColor: 'white', color: '#B45309', borderColor: 'rgba(180,83,9,0.3)' }}
+                    title="Show only inquiries not yet assigned to an employee">
+                    <UserPlus className="w-3 h-3" /> Unassigned ({counts.unassigned})
+                  </button>
+                )}
                 <button
                   onClick={() => setReadFilter(readFilter === 'unread' ? 'all' : 'unread')}
                   className="ml-auto px-3 py-1.5 rounded-full text-xs font-medium border transition-colors inline-flex items-center gap-1"
@@ -334,22 +354,40 @@ export default function AdminInquiriesPage() {
 
               <div className="p-5 space-y-4 max-h-[55vh] overflow-y-auto">
                 {/* === Assignment === */}
-                <div>
-                  <div className="text-[10px] text-gray-400 uppercase tracking-wider font-semibold mb-2">
-                    Assigned to
+                {isEmployee ? (
+                  /* Employee view — read-only banner that this is on their queue */
+                  <div className="rounded-xl p-3 border-2 flex items-start gap-3"
+                    style={{ backgroundColor: 'rgba(99,102,241,0.06)', borderColor: 'rgba(99,102,241,0.25)' }}>
+                    <UserCheck className="w-4 h-4 shrink-0 mt-0.5" style={{ color: '#4F46E5' }} />
+                    <div className="min-w-0">
+                      <div className="text-xs font-bold uppercase tracking-wider" style={{ color: '#4F46E5' }}>
+                        Assigned to you
+                      </div>
+                      {selected.assignedAt && (
+                        <p className="text-[11px] text-gray-500 mt-0.5">
+                          Assigned {timeAgo(selected.assignedAt)} — call the buyer to follow up.
+                        </p>
+                      )}
+                    </div>
                   </div>
-                  <AssignPicker
-                    selected={selected}
-                    assignees={assignees}
-                    onAssign={(userId) => assignMutation.mutate({ id: selected.id, userId })}
-                    isPending={assignMutation.isPending}
-                  />
-                  {selected.assignedAt && (
-                    <p className="text-[11px] text-gray-400 mt-1.5">
-                      Assigned {timeAgo(selected.assignedAt)} · the assignee was notified via SMS / WhatsApp.
-                    </p>
-                  )}
-                </div>
+                ) : (
+                  <div>
+                    <div className="text-[10px] text-gray-400 uppercase tracking-wider font-semibold mb-2">
+                      Assigned to
+                    </div>
+                    <AssignPicker
+                      selected={selected}
+                      assignees={assignees}
+                      onAssign={(userId) => assignMutation.mutate({ id: selected.id, userId })}
+                      isPending={assignMutation.isPending}
+                    />
+                    {selected.assignedAt && (
+                      <p className="text-[11px] text-gray-400 mt-1.5">
+                        Assigned {timeAgo(selected.assignedAt)} · the assignee was notified via SMS / WhatsApp.
+                      </p>
+                    )}
+                  </div>
+                )}
 
                 {/* Contact info */}
                 <div className="space-y-2">
