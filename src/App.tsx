@@ -156,8 +156,12 @@ export default function App() {
               <Route path="properties" element={<RequireAdmin><AdminPropertiesPage /></RequireAdmin>} />
               <Route path="video-listings" element={<RequireAdmin><AdminVideoListingsPage /></RequireAdmin>} />
               <Route path="add-property" element={<RequireAdmin><AddPropertyPage /></RequireAdmin>} />
-              <Route path="pending" element={<RequireAdmin><PendingApprovalsPage /></RequireAdmin>} />
-              <Route path="pending/:id" element={<RequireAdmin><PendingApprovalsPage /></RequireAdmin>} />
+              {/* Pending properties — shared. Admins see the full queue with
+                  approve/reject + assign powers; Employees see only the
+                  properties assigned to them to verify, with those actions
+                  hidden. */}
+              <Route path="pending" element={<RequireStaff><PendingApprovalsPage /></RequireStaff>} />
+              <Route path="pending/:id" element={<RequireStaff><PendingApprovalsPage /></RequireStaff>} />
               <Route path="edit-property/:id" element={<RequireAdmin><AddPropertyPage /></RequireAdmin>} />
               <Route path="testimonials" element={<RequireAdmin><AdminTestimonialsPage /></RequireAdmin>} />
               <Route path="users" element={<RequireAdmin><AdminUsersPage /></RequireAdmin>} />

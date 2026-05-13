@@ -34,7 +34,7 @@ const NAV_ITEMS: NavItem[] = [
   { to: '/admin/properties', label: 'All Properties', icon: Home, roles: ['Admin'] },
   { to: '/admin/video-listings', label: 'Video Listings', icon: Video, badgeKey: 'video', roles: ['Admin'] },
   { to: '/admin/add-property', label: 'Add Property', icon: Plus, roles: ['Admin'] },
-  { to: '/admin/pending', label: 'Pending Approvals', icon: ClipboardList, badgeKey: 'pending', roles: ['Admin'] },
+  { to: '/admin/pending', label: 'Pending Approvals', icon: ClipboardList, badgeKey: 'pending', roles: ['Admin', 'Employee'] },
   { to: '/admin/testimonials', label: 'Testimonials', icon: Video, roles: ['Admin'] },
   { to: '/admin/inquiries', label: 'Inquiries', icon: MessageSquare, badgeKey: 'unread', roles: ['Admin', 'Employee'] },
   { to: '/admin/users', label: 'Users', icon: Users, roles: ['Admin'] },
@@ -75,12 +75,16 @@ export default function AdminLayout() {
   // (their own unread inquiries) under different keys.
   const isEmployee = user?.role === 'Employee'
 
+  // Admins call /pending (the whole queue); Employees call
+  // /assigned-to-verify (just their share). Different cache keys so they
+  // can coexist if a session ever flips role.
   const pendingQuery = useQuery({
-    queryKey: ['admin-notifications', 'pending'],
-    queryFn: propertiesApi.getPending,
+    queryKey: isEmployee
+      ? ['my-work', 'properties']
+      : ['admin-notifications', 'pending'],
+    queryFn: isEmployee ? propertiesApi.getAssignedToVerify : propertiesApi.getPending,
     refetchInterval: 60_000,
     staleTime: 30_000,
-    enabled: !isEmployee,  // Pending queue is admin-only — skip the call for employees
   })
   const inquiriesQuery = useQuery({
     queryKey: isEmployee

@@ -6,6 +6,7 @@ import {
   Loader2, Inbox, UserPlus, UserCheck, Sparkles,
 } from 'lucide-react'
 import { propertiesApi, usersApi, type AdminUser } from '../../services/api'
+import { useAuth } from '../../context/AuthContext'
 import { VIDEO_PROMOTION_FEE_RATE, type Property } from '../../types'
 
 function formatLakhs(amount: number) {
@@ -30,6 +31,11 @@ const TYPE_LABELS: Record<string, string> = {
 export default function PendingApprovalsPage() {
   const { id: routeId } = useParams<{ id?: string }>()
   const queryClient = useQueryClient()
+  const { user } = useAuth()
+  // Same page, two flavours:
+  //   Admin    → full queue, can approve/reject/assign
+  //   Employee → just their own verification list, action buttons hidden.
+  const isEmployee = user?.role === 'Employee'
 
   const [selected, setSelected] = useState<Property | null>(null)
   const [rejectReason, setRejectReason] = useState('')
@@ -38,14 +44,18 @@ export default function PendingApprovalsPage() {
 
   // ── Data ─────────────────────────────────────────────────────────────
   const pendingQuery = useQuery({
-    queryKey: ['admin-pending-properties'],
-    queryFn: propertiesApi.getPending,
+    queryKey: isEmployee
+      ? ['my-work', 'properties']  // shares MyWorkPage cache
+      : ['admin-pending-properties'],
+    queryFn: isEmployee ? propertiesApi.getAssignedToVerify : propertiesApi.getPending,
     refetchInterval: 60_000,
   })
 
+  // Assignee picker is admin-only — don't fire usersApi.getAll for employees.
   const usersQuery = useQuery({
     queryKey: ['admin-users', 'assignees'],
     queryFn: () => usersApi.getAll(),
+    enabled: !isEmployee,
   })
 
   const items = pendingQuery.data ?? []
@@ -112,11 +122,15 @@ export default function PendingApprovalsPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-            Pending Approvals
+            {isEmployee ? 'Properties to verify' : 'Pending Approvals'}
             {pendingQuery.isFetching && <Loader2 className="w-4 h-4 animate-spin text-gray-400" />}
           </h2>
           <p className="text-sm text-gray-500 mt-0.5">
-            {items.length} awaiting approval · <strong style={{ color: '#B45309' }}>{unassignedCount} unassigned</strong>
+            {isEmployee ? (
+              <>{items.length} assigned to you · do a site visit and report back to an admin.</>
+            ) : (
+              <>{items.length} awaiting approval · <strong style={{ color: '#B45309' }}>{unassignedCount} unassigned</strong></>
+            )}
           </p>
         </div>
       </div>
@@ -176,12 +190,18 @@ export default function PendingApprovalsPage() {
               <div className="bg-white rounded-xl p-10 text-center text-gray-400 shadow-sm border border-gray-100">
                 <Inbox className="w-10 h-10 text-gray-300 mx-auto mb-3" />
                 <p className="text-sm text-gray-600 font-semibold">
-                  {videoOnly ? 'No Video Promotion properties pending.' : 'Approval queue is empty.'}
+                  {videoOnly
+                    ? 'No Video Promotion properties pending.'
+                    : isEmployee
+                      ? 'No properties assigned to you right now.'
+                      : 'Approval queue is empty.'}
                 </p>
                 <p className="text-xs text-gray-400 mt-1">
                   {videoOnly
                     ? 'Switch off the Video Promotion filter to see all pending submissions.'
-                    : 'New seller submissions land here for review.'}
+                    : isEmployee
+                      ? 'The admin will notify you via WhatsApp / SMS when a property is handed to you.'
+                      : 'New seller submissions land here for review.'}
                 </p>
               </div>
             ) : displayed.map((item) => (
@@ -242,24 +262,26 @@ export default function PendingApprovalsPage() {
                     </div>
                   </div>
 
-                  <div className="flex gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
-                    <button
-                      onClick={() => approveMutation.mutate({ id: item.id, action: 'approve' })}
-                      disabled={approveMutation.isPending}
-                      className="flex items-center gap-1.5 px-3 py-2 text-white text-sm font-semibold rounded-lg transition-colors disabled:opacity-60"
-                      style={{ backgroundColor: '#6A9739' }}
-                      onMouseEnter={(e) => { if (!approveMutation.isPending) e.currentTarget.style.backgroundColor = '#547a2d' }}
-                      onMouseLeave={(e) => { if (!approveMutation.isPending) e.currentTarget.style.backgroundColor = '#6A9739' }}
-                    >
-                      <Check className="w-3.5 h-3.5" /> Approve
-                    </button>
-                    <button
-                      onClick={() => setShowRejectModal(item.id)}
-                      className="flex items-center gap-1.5 px-3 py-2 bg-red-50 text-red-600 text-sm font-semibold rounded-lg hover:bg-red-100 transition-colors border border-red-200"
-                    >
-                      <X className="w-3.5 h-3.5" /> Reject
-                    </button>
-                  </div>
+                  {!isEmployee && (
+                    <div className="flex gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        onClick={() => approveMutation.mutate({ id: item.id, action: 'approve' })}
+                        disabled={approveMutation.isPending}
+                        className="flex items-center gap-1.5 px-3 py-2 text-white text-sm font-semibold rounded-lg transition-colors disabled:opacity-60"
+                        style={{ backgroundColor: '#6A9739' }}
+                        onMouseEnter={(e) => { if (!approveMutation.isPending) e.currentTarget.style.backgroundColor = '#547a2d' }}
+                        onMouseLeave={(e) => { if (!approveMutation.isPending) e.currentTarget.style.backgroundColor = '#6A9739' }}
+                      >
+                        <Check className="w-3.5 h-3.5" /> Approve
+                      </button>
+                      <button
+                        onClick={() => setShowRejectModal(item.id)}
+                        className="flex items-center gap-1.5 px-3 py-2 bg-red-50 text-red-600 text-sm font-semibold rounded-lg hover:bg-red-100 transition-colors border border-red-200"
+                      >
+                        <X className="w-3.5 h-3.5" /> Reject
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
@@ -306,24 +328,43 @@ export default function PendingApprovalsPage() {
               )}
 
               {/* === Verification assignment === */}
-              <div>
-                <div className="text-xs text-gray-400 uppercase tracking-wide mb-1.5">
-                  Verification — assign to
+              {isEmployee ? (
+                <div className="rounded-xl p-3 border-2 flex items-start gap-3"
+                  style={{ backgroundColor: 'rgba(99,102,241,0.06)', borderColor: 'rgba(99,102,241,0.25)' }}>
+                  <UserCheck className="w-4 h-4 shrink-0 mt-0.5" style={{ color: '#4F46E5' }} />
+                  <div className="min-w-0">
+                    <div className="text-xs font-bold uppercase tracking-wider" style={{ color: '#4F46E5' }}>
+                      Assigned to you for verification
+                    </div>
+                    {selected.assignedToVerifyAt && (
+                      <p className="text-[11px] text-gray-500 mt-0.5">
+                        Assigned {new Date(selected.assignedToVerifyAt).toLocaleString('en-IN', {
+                          day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit',
+                        })}. Approval is admin-only — report back once your site visit is complete.
+                      </p>
+                    )}
+                  </div>
                 </div>
-                <AssignPicker
-                  property={selected}
-                  assignees={assignees}
-                  onAssign={(userId) => assignMutation.mutate({ id: selected.id, userId })}
-                  isPending={assignMutation.isPending}
-                />
-                {selected.assignedToVerifyAt && (
-                  <p className="text-[11px] text-gray-400 mt-1.5">
-                    Assigned {new Date(selected.assignedToVerifyAt).toLocaleString('en-IN', {
-                      day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit',
-                    })}. Assignee was notified via WhatsApp / SMS.
-                  </p>
-                )}
-              </div>
+              ) : (
+                <div>
+                  <div className="text-xs text-gray-400 uppercase tracking-wide mb-1.5">
+                    Verification — assign to
+                  </div>
+                  <AssignPicker
+                    property={selected}
+                    assignees={assignees}
+                    onAssign={(userId) => assignMutation.mutate({ id: selected.id, userId })}
+                    isPending={assignMutation.isPending}
+                  />
+                  {selected.assignedToVerifyAt && (
+                    <p className="text-[11px] text-gray-400 mt-1.5">
+                      Assigned {new Date(selected.assignedToVerifyAt).toLocaleString('en-IN', {
+                        day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit',
+                      })}. Assignee was notified via WhatsApp / SMS.
+                    </p>
+                  )}
+                </div>
+              )}
 
               <div>
                 <div className="text-xs text-gray-400 uppercase tracking-wide">Title</div>
@@ -384,25 +425,28 @@ export default function PendingApprovalsPage() {
               )}
             </div>
 
-            {/* Quick approve/reject in the panel too */}
-            <div className="flex gap-2 mt-5 pt-5 border-t border-gray-100">
-              <button
-                onClick={() => approveMutation.mutate({ id: selected.id, action: 'approve' })}
-                disabled={approveMutation.isPending}
-                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 text-white text-sm font-semibold rounded-lg transition-colors disabled:opacity-60"
-                style={{ backgroundColor: '#6A9739' }}
-              >
-                {approveMutation.isPending
-                  ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Approving…</>
-                  : <><Check className="w-3.5 h-3.5" /> Approve</>}
-              </button>
-              <button
-                onClick={() => setShowRejectModal(selected.id)}
-                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-red-50 text-red-600 text-sm font-semibold rounded-lg hover:bg-red-100 transition-colors border border-red-200"
-              >
-                <X className="w-3.5 h-3.5" /> Reject
-              </button>
-            </div>
+            {/* Approve/reject — admin-only. Employees see only the read-only
+                detail above plus the seller's phone CTA. */}
+            {!isEmployee && (
+              <div className="flex gap-2 mt-5 pt-5 border-t border-gray-100">
+                <button
+                  onClick={() => approveMutation.mutate({ id: selected.id, action: 'approve' })}
+                  disabled={approveMutation.isPending}
+                  className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 text-white text-sm font-semibold rounded-lg transition-colors disabled:opacity-60"
+                  style={{ backgroundColor: '#6A9739' }}
+                >
+                  {approveMutation.isPending
+                    ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Approving…</>
+                    : <><Check className="w-3.5 h-3.5" /> Approve</>}
+                </button>
+                <button
+                  onClick={() => setShowRejectModal(selected.id)}
+                  className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-red-50 text-red-600 text-sm font-semibold rounded-lg hover:bg-red-100 transition-colors border border-red-200"
+                >
+                  <X className="w-3.5 h-3.5" /> Reject
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
