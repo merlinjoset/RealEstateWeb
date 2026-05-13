@@ -130,6 +130,10 @@ export const propertiesApi = {
   /** Admin: assign a pending property to an Employee/Agent for verification. */
   assignToVerify: (id: number, assignedToUserId: number) =>
     api.patch<Property>(`/properties/${id}/assign`, { assignedToUserId }).then((r) => r.data),
+
+  /** Employee: pending properties assigned to me for verification. */
+  getAssignedToVerify: () =>
+    api.get<Property[]>('/properties/assigned-to-verify').then((r) => r.data),
 }
 
 /* ------------------- Admin inquiries (notifications feed) ------------------- */
@@ -179,6 +183,10 @@ export const inquiriesApi = {
   /** Hand an inquiry off to an Employee / Agent / Admin for follow-up. */
   assign: (id: number, assignedToUserId: number) =>
     api.patch<AdminInquiry>(`/inquiries/${id}/assign`, { assignedToUserId }).then((r) => r.data),
+
+  /** Employee: inquiries assigned to me. */
+  getMine: () =>
+    api.get<AdminInquiry[]>('/inquiries/mine').then((r) => r.data),
 }
 
 export const authApi = {

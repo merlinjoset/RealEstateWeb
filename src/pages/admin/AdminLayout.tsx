@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import {
   LayoutDashboard, Home, Plus, ClipboardList, Users,
   MessageSquare, Settings, Menu, X, LogOut, Video, Send,
-  ChevronDown, User as UserIcon, ExternalLink,
+  ChevronDown, User as UserIcon, ExternalLink, Briefcase,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { propertiesApi, inquiriesApi } from '../../services/api'
@@ -15,17 +15,31 @@ import NotificationsBell from './NotificationsBell'
 // numbers next to "Pending Approvals" / "Inquiries" / "Video Listings"
 // actually reflect what's in the DB, not the static 4 / 7 / 2 we used
 // to ship.
-const NAV_ITEMS = [
-  { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, end: true },
-  { to: '/admin/properties', label: 'All Properties', icon: Home },
-  { to: '/admin/video-listings', label: 'Video Listings', icon: Video, badgeKey: 'video' as const },
-  { to: '/admin/add-property', label: 'Add Property', icon: Plus },
-  { to: '/admin/pending', label: 'Pending Approvals', icon: ClipboardList, badgeKey: 'pending' as const },
-  { to: '/admin/testimonials', label: 'Testimonials', icon: Video },
-  { to: '/admin/inquiries', label: 'Inquiries', icon: MessageSquare, badgeKey: 'unread' as const },
-  { to: '/admin/users', label: 'Users', icon: Users },
-  { to: '/admin/sms-templates', label: 'SMS Templates', icon: Send },
-  { to: '/admin/settings', label: 'Settings', icon: Settings },
+//
+// `roles` controls who sees each entry. Routes themselves are guarded by
+// RequireAdmin inside App.tsx so an Employee who types a URL directly
+// still gets bounced — this is just the UI affordance.
+type NavItem = {
+  to: string
+  label: string
+  icon: React.ComponentType<{ className?: string }>
+  end?: boolean
+  badgeKey?: 'pending' | 'video' | 'unread'
+  roles?: Array<'Admin' | 'Employee'>
+}
+
+const NAV_ITEMS: NavItem[] = [
+  { to: '/admin/my-work', label: 'My Work', icon: Briefcase, roles: ['Admin', 'Employee'] },
+  { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, end: true, roles: ['Admin'] },
+  { to: '/admin/properties', label: 'All Properties', icon: Home, roles: ['Admin'] },
+  { to: '/admin/video-listings', label: 'Video Listings', icon: Video, badgeKey: 'video', roles: ['Admin'] },
+  { to: '/admin/add-property', label: 'Add Property', icon: Plus, roles: ['Admin'] },
+  { to: '/admin/pending', label: 'Pending Approvals', icon: ClipboardList, badgeKey: 'pending', roles: ['Admin'] },
+  { to: '/admin/testimonials', label: 'Testimonials', icon: Video, roles: ['Admin'] },
+  { to: '/admin/inquiries', label: 'Inquiries', icon: MessageSquare, badgeKey: 'unread', roles: ['Admin'] },
+  { to: '/admin/users', label: 'Users', icon: Users, roles: ['Admin'] },
+  { to: '/admin/sms-templates', label: 'SMS Templates', icon: Send, roles: ['Admin'] },
+  { to: '/admin/settings', label: 'Settings', icon: Settings, roles: ['Admin'] },
 ]
 
 export default function AdminLayout() {
@@ -125,7 +139,11 @@ export default function AdminLayout() {
         </div>
 
         <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
-          {NAV_ITEMS.map((item) => {
+          {NAV_ITEMS
+            // Filter to the items this role is allowed to see. If `roles`
+            // is omitted on an item, both roles see it.
+            .filter((item) => !item.roles || (user?.role && item.roles.includes(user.role as 'Admin' | 'Employee')))
+            .map((item) => {
             const badge = item.badgeKey ? badges[item.badgeKey] : undefined
             return (
               <NavLink

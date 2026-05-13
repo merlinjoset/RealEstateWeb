@@ -31,6 +31,9 @@ export default function LoginPage() {
         navigate(from, { replace: true })
       } else if (role === 'Admin') {
         navigate('/admin', { replace: true })
+      } else if (role === 'Employee') {
+        // Employees land directly on their assigned work queue.
+        navigate('/admin/my-work', { replace: true })
       } else {
         navigate('/', { replace: true })
       }

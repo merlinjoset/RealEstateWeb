@@ -24,8 +24,10 @@ import FavoritesPage from './pages/FavoritesPage'
 import MyPropertiesPage from './pages/MyPropertiesPage'
 import NotFoundPage from './pages/NotFoundPage'
 import RequireAdmin from './components/auth/RequireAdmin'
+import RequireStaff from './components/auth/RequireStaff'
 import AdminLayout from './pages/admin/AdminLayout'
 import DashboardPage from './pages/admin/DashboardPage'
+import MyWorkPage from './pages/admin/MyWorkPage'
 import AdminPropertiesPage from './pages/admin/AdminPropertiesPage'
 import AddPropertyPage from './pages/admin/AddPropertyPage'
 import PendingApprovalsPage from './pages/admin/PendingApprovalsPage'
@@ -144,19 +146,24 @@ export default function App() {
               }
             />
 
-            <Route path="/admin" element={<RequireAdmin><AdminLayout /></RequireAdmin>}>
-              <Route index element={<DashboardPage />} />
-              <Route path="properties" element={<AdminPropertiesPage />} />
-              <Route path="video-listings" element={<AdminVideoListingsPage />} />
-              <Route path="add-property" element={<AddPropertyPage />} />
-              <Route path="pending" element={<PendingApprovalsPage />} />
-              <Route path="pending/:id" element={<PendingApprovalsPage />} />
-              <Route path="edit-property/:id" element={<AddPropertyPage />} />
-              <Route path="testimonials" element={<AdminTestimonialsPage />} />
-              <Route path="users" element={<AdminUsersPage />} />
-              <Route path="inquiries" element={<AdminInquiriesPage />} />
-              <Route path="settings" element={<AdminSettingsPage />} />
-              <Route path="sms-templates" element={<AdminSmsTemplatesPage />} />
+            {/* The /admin layout itself is open to both Admin and Employee
+                accounts (RequireStaff). Admin-only routes are individually
+                gated by RequireAdmin inside the element prop — Employees
+                only get through to /admin/my-work. */}
+            <Route path="/admin" element={<RequireStaff><AdminLayout /></RequireStaff>}>
+              <Route index element={<RequireAdmin><DashboardPage /></RequireAdmin>} />
+              <Route path="my-work" element={<MyWorkPage />} />
+              <Route path="properties" element={<RequireAdmin><AdminPropertiesPage /></RequireAdmin>} />
+              <Route path="video-listings" element={<RequireAdmin><AdminVideoListingsPage /></RequireAdmin>} />
+              <Route path="add-property" element={<RequireAdmin><AddPropertyPage /></RequireAdmin>} />
+              <Route path="pending" element={<RequireAdmin><PendingApprovalsPage /></RequireAdmin>} />
+              <Route path="pending/:id" element={<RequireAdmin><PendingApprovalsPage /></RequireAdmin>} />
+              <Route path="edit-property/:id" element={<RequireAdmin><AddPropertyPage /></RequireAdmin>} />
+              <Route path="testimonials" element={<RequireAdmin><AdminTestimonialsPage /></RequireAdmin>} />
+              <Route path="users" element={<RequireAdmin><AdminUsersPage /></RequireAdmin>} />
+              <Route path="inquiries" element={<RequireAdmin><AdminInquiriesPage /></RequireAdmin>} />
+              <Route path="settings" element={<RequireAdmin><AdminSettingsPage /></RequireAdmin>} />
+              <Route path="sms-templates" element={<RequireAdmin><AdminSmsTemplatesPage /></RequireAdmin>} />
               <Route path="*" element={<NotFoundPage />} />
             </Route>
 
