@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
@@ -100,6 +100,24 @@ export default function AdminInquiriesPage() {
     onSuccess: invalidate,
   })
 
+  // Local draft for the notes textarea — kept separate from `selected` so
+  // we don't issue a PATCH on every keystroke. Submitted via the Save button.
+  const [noteDraft, setNoteDraft] = useState('')
+  const updateMutation = useMutation({
+    mutationFn: ({ id, status, notes }: {
+      id: number
+      status: 'New' | 'Assigned' | 'InProgress' | 'Resolved' | 'Closed'
+      notes?: string | null
+    }) => inquiriesApi.update(id, status, notes),
+    onSuccess: (updated) => {
+      invalidate()
+      if (selected?.id === updated.id) {
+        setSelected(updated)
+        setNoteDraft(updated.notes ?? '')
+      }
+    },
+  })
+
   // ── Derived state ────────────────────────────────────────────────────
   const counts = useMemo(() => ({
     all:        items.length,
@@ -131,6 +149,7 @@ export default function AdminInquiriesPage() {
 
   const openInquiry = (i: AdminInquiry) => {
     setSelected(i)
+    setNoteDraft(i.notes ?? '')
     if (!i.isRead) readMutation.mutate(i.id)
   }
 
@@ -447,16 +466,22 @@ export default function AdminInquiriesPage() {
                   </div>
                 </div>
 
-                {/* Internal notes — read-only view; full edit UI lives on the
-                    backend's PATCH /update endpoint and isn't wired here yet. */}
-                {selected.notes && (
-                  <div>
-                    <div className="text-[10px] text-gray-400 uppercase tracking-wider font-semibold mb-1.5">Internal Notes</div>
-                    <div className="rounded-xl p-3 text-xs text-gray-700 bg-gray-50 border border-gray-100 leading-relaxed">
-                      {selected.notes}
-                    </div>
-                  </div>
-                )}
+                {/* === Update status + notes === */}
+                <StatusEditor
+                  selected={selected}
+                  noteDraft={noteDraft}
+                  onNoteChange={setNoteDraft}
+                  onSave={(nextStatus) => updateMutation.mutate({
+                    id: selected.id,
+                    status: nextStatus,
+                    notes: noteDraft.trim() || null,
+                  })}
+                  isSaving={updateMutation.isPending}
+                  saveError={updateMutation.isError
+                    ? ((updateMutation.error as { response?: { data?: { message?: string } } })
+                        ?.response?.data?.message ?? 'Failed to update.')
+                    : null}
+                />
               </div>
             </div>
           </div>
@@ -552,4 +577,125 @@ function roleAccent(role: string) {
     case 'Agent':    return '#293237'
     default:         return '#9CA3AF'
   }
+}
+
+/* ─────────────────── Status editor ─────────────────── */
+
+const STATUS_OPTIONS: Array<{
+  key: 'New' | 'InProgress' | 'Resolved' | 'Closed'
+  label: string
+  color: string
+}> = [
+  { key: 'New',        label: 'New',         color: '#FF5A5F' },
+  { key: 'InProgress', label: 'In Progress', color: '#B45309' },
+  { key: 'Resolved',   label: 'Resolved',    color: '#6A9739' },
+  { key: 'Closed',     label: 'Closed',      color: '#293237' },
+]
+
+function StatusEditor({
+  selected, noteDraft, onNoteChange, onSave, isSaving, saveError,
+}: {
+  selected: AdminInquiry
+  noteDraft: string
+  onNoteChange: (s: string) => void
+  onSave: (nextStatus: 'New' | 'InProgress' | 'Resolved' | 'Closed') => void
+  isSaving: boolean
+  saveError: string | null
+}) {
+  const currentStatusKey = normalizeStatus(selected.status)
+  // We map the page's case-insensitive key back to the backend's PascalCase
+  // when we send the PATCH. "Assigned" is auto-set on assign and not picked
+  // manually here, so the chooser only shows the four meaningful options.
+  const [chosen, setChosen] = useState<'New' | 'InProgress' | 'Resolved' | 'Closed'>(
+    currentStatusKey === 'in_progress' ? 'InProgress'
+    : currentStatusKey === 'resolved'  ? 'Resolved'
+    : currentStatusKey === 'closed'    ? 'Closed'
+    : 'New',
+  )
+
+  // When the user switches between inquiries in the list, reset the chosen
+  // status to match the new selection.
+  useEffect(() => {
+    setChosen(
+      currentStatusKey === 'in_progress' ? 'InProgress'
+      : currentStatusKey === 'resolved'  ? 'Resolved'
+      : currentStatusKey === 'closed'    ? 'Closed'
+      : 'New',
+    )
+  }, [selected.id, currentStatusKey])
+
+  // Detect dirty state — only enable Save when something actually changed.
+  const statusChanged = (() => {
+    if (chosen === 'New' && currentStatusKey === 'new') return false
+    if (chosen === 'InProgress' && currentStatusKey === 'in_progress') return false
+    if (chosen === 'Resolved' && currentStatusKey === 'resolved') return false
+    if (chosen === 'Closed' && currentStatusKey === 'closed') return false
+    return true
+  })()
+  const notesChanged = (noteDraft.trim() || '') !== (selected.notes?.trim() ?? '')
+  const dirty = statusChanged || notesChanged
+
+  return (
+    <div className="rounded-xl border border-gray-100 p-4 space-y-3 bg-gray-50/40">
+      <div>
+        <div className="text-[10px] text-gray-400 uppercase tracking-wider font-semibold mb-2">
+          Update status
+        </div>
+        <div className="grid grid-cols-2 gap-1.5">
+          {STATUS_OPTIONS.map((s) => {
+            const isActive = chosen === s.key
+            return (
+              <button
+                key={s.key}
+                type="button"
+                onClick={() => setChosen(s.key)}
+                disabled={isSaving}
+                className="px-3 py-2 rounded-lg text-xs font-semibold border-2 transition-colors disabled:opacity-60"
+                style={isActive
+                  ? { backgroundColor: s.color, borderColor: s.color, color: 'white' }
+                  : { backgroundColor: 'white', borderColor: '#e5e7eb', color: s.color }}>
+                {s.label}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      <div>
+        <div className="text-[10px] text-gray-400 uppercase tracking-wider font-semibold mb-1.5">
+          Internal notes (optional)
+        </div>
+        <textarea
+          value={noteDraft}
+          onChange={(e) => onNoteChange(e.target.value)}
+          disabled={isSaving}
+          rows={3}
+          placeholder="What did you do? Site visit notes, the call's outcome, next steps…"
+          className="input-field resize-none text-sm disabled:opacity-60"
+        />
+      </div>
+
+      {saveError && (
+        <div className="text-xs text-red-600 flex items-start gap-1.5">
+          <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+          {saveError}
+        </div>
+      )}
+
+      <button
+        type="button"
+        onClick={() => onSave(chosen)}
+        disabled={!dirty || isSaving}
+        className="w-full inline-flex items-center justify-center gap-2 px-3 py-2.5 text-white text-sm font-semibold rounded-lg transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+        style={{ backgroundColor: '#6A9739' }}>
+        {isSaving
+          ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving…</>
+          : dirty ? 'Save update' : 'No changes to save'}
+      </button>
+
+      <p className="text-[10px] text-gray-400 leading-snug">
+        Saving notifies the admin team via SMS so they can see your progress.
+      </p>
+    </div>
+  )
 }

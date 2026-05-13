@@ -187,6 +187,14 @@ export const inquiriesApi = {
   /** Employee: inquiries assigned to me. */
   getMine: () =>
     api.get<AdminInquiry[]>('/inquiries/mine').then((r) => r.data),
+
+  /**
+   * Update the status (and optionally the notes) of an inquiry. The backend
+   * broadcasts an SMS to admins on every status change so they can track
+   * what the assignee is doing.
+   */
+  update: (id: number, status: 'New' | 'Assigned' | 'InProgress' | 'Resolved' | 'Closed', notes?: string | null) =>
+    api.patch<AdminInquiry>(`/inquiries/${id}/update`, { status, notes }).then((r) => r.data),
 }
 
 export const authApi = {
