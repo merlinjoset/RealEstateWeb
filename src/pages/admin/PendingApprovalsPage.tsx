@@ -153,7 +153,20 @@ export default function PendingApprovalsPage() {
             ) : pendingQuery.isError ? (
               <div className="bg-white rounded-xl p-10 text-center shadow-sm border border-gray-100">
                 <AlertCircle className="w-8 h-8 text-red-400 mx-auto mb-3" />
-                <p className="text-sm text-red-600 mb-3">Failed to load pending properties.</p>
+                <p className="text-sm text-red-600 mb-1 font-semibold">Failed to load pending properties.</p>
+                <p className="text-xs text-gray-500 mb-3">
+                  {(() => {
+                    // Surface the actual HTTP status so 403 (role check failed)
+                    // is visibly different from 500 (server crash) etc.
+                    const e = pendingQuery.error as { response?: { status?: number; data?: { message?: string } } } | null
+                    const status = e?.response?.status
+                    const message = e?.response?.data?.message
+                    if (status === 401) return 'Your session expired. Please sign in again.'
+                    if (status === 403) return 'Your account is not authorised to view this page. Try signing out and back in.'
+                    if (status) return `Server returned ${status}${message ? `: ${message}` : ''}`
+                    return 'Network error — check that the API is reachable.'
+                  })()}
+                </p>
                 <button onClick={() => pendingQuery.refetch()}
                   className="text-xs font-semibold underline" style={{ color: '#FF5A5F' }}>
                   Try again
@@ -162,7 +175,14 @@ export default function PendingApprovalsPage() {
             ) : displayed.length === 0 ? (
               <div className="bg-white rounded-xl p-10 text-center text-gray-400 shadow-sm border border-gray-100">
                 <Inbox className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-                <p className="text-sm">{videoOnly ? 'No video-promotion properties pending.' : 'Nothing in the approval queue right now.'}</p>
+                <p className="text-sm text-gray-600 font-semibold">
+                  {videoOnly ? 'No Video Promotion properties pending.' : 'Approval queue is empty.'}
+                </p>
+                <p className="text-xs text-gray-400 mt-1">
+                  {videoOnly
+                    ? 'Switch off the Video Promotion filter to see all pending submissions.'
+                    : 'New seller submissions land here for review.'}
+                </p>
               </div>
             ) : displayed.map((item) => (
               <div
