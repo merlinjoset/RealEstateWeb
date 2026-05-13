@@ -16,7 +16,8 @@ export default function FreeListingsBanner() {
   const { pathname } = useLocation()
 
   if (isAuthenticated) return null
-  if (pathname.startsWith('/login') || pathname.startsWith('/register')) return null
+  if (pathname.startsWith('/login') || pathname.startsWith('/register')
+      || pathname.startsWith('/forgot-password') || pathname.startsWith('/reset-password')) return null
 
   return (
     <Link

@@ -211,6 +211,14 @@ export const authApi = {
 
   changePassword: (currentPassword: string, newPassword: string) =>
     api.post('/auth/change-password', { currentPassword, newPassword }).then((r) => r.data),
+
+  /** Step 1 of the forgot-password flow — sends an OTP via SMS + email. */
+  forgotPassword: (email: string) =>
+    api.post('/auth/forgot-password', { email }).then((r) => r.data),
+
+  /** Step 2 — consume the OTP and set a new password. */
+  resetPassword: (email: string, otp: string, newPassword: string) =>
+    api.post('/auth/reset-password', { email, otp, newPassword }).then((r) => r.data),
 }
 
 export const agentsApi = {
