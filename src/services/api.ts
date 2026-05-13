@@ -122,6 +122,14 @@ export const propertiesApi = {
   /** Admin: pending-approval queue. */
   getPending: () =>
     api.get<Property[]>('/properties/pending').then((r) => r.data),
+
+  /** Admin: approve or reject a pending property. */
+  approve: (id: number, action: 'approve' | 'reject', reason?: string) =>
+    api.post<Property>(`/properties/${id}/approve`, { action, reason }).then((r) => r.data),
+
+  /** Admin: assign a pending property to an Employee/Agent for verification. */
+  assignToVerify: (id: number, assignedToUserId: number) =>
+    api.patch<Property>(`/properties/${id}/assign`, { assignedToUserId }).then((r) => r.data),
 }
 
 /* ------------------- Admin inquiries (notifications feed) ------------------- */

@@ -67,6 +67,13 @@ export interface Property {
   legalStatus?: string
   documents?: PropertyDocument[]
   marketingPlan?: MarketingPlan
+  /** Employee/Agent assigned by an admin to verify the listing. */
+  assignedToVerifyUserId?: number | null
+  assignedToVerifyName?: string | null
+  assignedToVerifyAt?: string | null
+  /** Display name of the seller (joined from SubmittedByUser or anon submitter). */
+  submittedByName?: string | null
+  submittedByPhone?: string | null
 }
 
 export interface Agent {
