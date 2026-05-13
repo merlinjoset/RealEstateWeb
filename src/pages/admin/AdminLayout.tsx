@@ -1,22 +1,28 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import {
   LayoutDashboard, Home, Plus, ClipboardList, Users,
   MessageSquare, Settings, Menu, X, LogOut, Video, Send,
   ChevronDown, User as UserIcon, ExternalLink,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
+import { propertiesApi, inquiriesApi } from '../../services/api'
 import ConfirmDialog from '../../components/common/ConfirmDialog'
 import NotificationsBell from './NotificationsBell'
 
+// Sidebar items — badges are filled in below from live queries so the
+// numbers next to "Pending Approvals" / "Inquiries" / "Video Listings"
+// actually reflect what's in the DB, not the static 4 / 7 / 2 we used
+// to ship.
 const NAV_ITEMS = [
   { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, end: true },
   { to: '/admin/properties', label: 'All Properties', icon: Home },
-  { to: '/admin/video-listings', label: 'Video Listings', icon: Video, badge: 2 },
+  { to: '/admin/video-listings', label: 'Video Listings', icon: Video, badgeKey: 'video' as const },
   { to: '/admin/add-property', label: 'Add Property', icon: Plus },
-  { to: '/admin/pending', label: 'Pending Approvals', icon: ClipboardList, badge: 4 },
+  { to: '/admin/pending', label: 'Pending Approvals', icon: ClipboardList, badgeKey: 'pending' as const },
   { to: '/admin/testimonials', label: 'Testimonials', icon: Video },
-  { to: '/admin/inquiries', label: 'Inquiries', icon: MessageSquare, badge: 7 },
+  { to: '/admin/inquiries', label: 'Inquiries', icon: MessageSquare, badgeKey: 'unread' as const },
   { to: '/admin/users', label: 'Users', icon: Users },
   { to: '/admin/sms-templates', label: 'SMS Templates', icon: Send },
   { to: '/admin/settings', label: 'Settings', icon: Settings },
@@ -48,6 +54,28 @@ export default function AdminLayout() {
   const initials = user
     ? ((user.firstName[0] ?? '') + (user.lastName[0] ?? '')).toUpperCase() || 'A'
     : 'A'
+
+  // Live counts that drive the sidebar badges. Both refresh on a 60s cadence
+  // and are shared (via the same query keys) with the NotificationsBell so
+  // we don't double-fetch.
+  const pendingQuery = useQuery({
+    queryKey: ['admin-notifications', 'pending'],
+    queryFn: propertiesApi.getPending,
+    refetchInterval: 60_000,
+    staleTime: 30_000,
+  })
+  const inquiriesQuery = useQuery({
+    queryKey: ['admin-notifications', 'unread-inquiries'],
+    queryFn: inquiriesApi.getUnread,
+    refetchInterval: 60_000,
+    staleTime: 30_000,
+  })
+  const pendingList = Array.isArray(pendingQuery.data) ? pendingQuery.data : []
+  const badges: Record<'pending' | 'video' | 'unread', number> = {
+    pending: pendingList.length,
+    video: pendingList.filter((p) => p.marketingPlan === 'VideoPromotion').length,
+    unread: Array.isArray(inquiriesQuery.data) ? inquiriesQuery.data.length : 0,
+  }
 
   // First step — close any open menus and surface the confirmation dialog.
   const handleSignOut = () => {
@@ -97,30 +125,36 @@ export default function AdminLayout() {
         </div>
 
         <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
-          {NAV_ITEMS.map(({ to, label, icon: Icon, end, badge }) => (
-            <NavLink
-              key={to}
-              to={to}
-              end={end}
-              onClick={() => setSidebarOpen(false)}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                  isActive
-                    ? 'text-white'
-                    : 'text-gray-400 hover:text-white hover:bg-gray-800'
-                }`
-              }
-              style={({ isActive }) => isActive ? { backgroundColor: '#FF5A5F' } : {}}
-            >
-              <Icon className="w-4 h-4 shrink-0" />
-              <span className="flex-1">{label}</span>
-              {badge != null && (
-                <span className="w-5 h-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center">
-                  {badge}
-                </span>
-              )}
-            </NavLink>
-          ))}
+          {NAV_ITEMS.map((item) => {
+            const badge = item.badgeKey ? badges[item.badgeKey] : undefined
+            return (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.end}
+                onClick={() => setSidebarOpen(false)}
+                className={({ isActive }) =>
+                  `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                    isActive
+                      ? 'text-white'
+                      : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                  }`
+                }
+                style={({ isActive }) => isActive ? { backgroundColor: '#FF5A5F' } : {}}
+              >
+                <item.icon className="w-4 h-4 shrink-0" />
+                <span className="flex-1">{item.label}</span>
+                {/* Only show the badge when there's actually something to count.
+                    Stops the sidebar from misleading the admin about a queue
+                    that's really empty. */}
+                {badge != null && badge > 0 && (
+                  <span className="min-w-[20px] h-5 px-1.5 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">
+                    {badge > 99 ? '99+' : badge}
+                  </span>
+                )}
+              </NavLink>
+            )
+          })}
         </nav>
 
         <div className="p-3 border-t border-gray-800 space-y-1">
