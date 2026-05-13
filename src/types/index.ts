@@ -71,6 +71,9 @@ export interface Property {
   assignedToVerifyUserId?: number | null
   assignedToVerifyName?: string | null
   assignedToVerifyAt?: string | null
+  /** Free-form findings submitted by the verifier after their site visit. */
+  verificationNotes?: string | null
+  verificationDoneAt?: string | null
   /** Display name of the seller (joined from SubmittedByUser or anon submitter). */
   submittedByName?: string | null
   submittedByPhone?: string | null

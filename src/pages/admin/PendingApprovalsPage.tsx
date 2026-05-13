@@ -107,6 +107,27 @@ export default function PendingApprovalsPage() {
     },
   })
 
+  // Verification notes editor — Employees can submit findings after a site
+  // visit; Admins can also fill these in directly. Saving fires an admin
+  // SMS broadcast so the team sees the verifier's report.
+  const [verificationDraft, setVerificationDraft] = useState('')
+  const verificationMutation = useMutation({
+    mutationFn: ({ id, notes }: { id: number; notes: string }) =>
+      propertiesApi.submitVerification(id, notes),
+    onSuccess: (updated) => {
+      invalidate()
+      if (selected?.id === updated.id) {
+        setSelected(updated)
+        setVerificationDraft(updated.verificationNotes ?? '')
+      }
+    },
+  })
+
+  // Keep the draft in sync when the selected property changes.
+  useEffect(() => {
+    setVerificationDraft(selected?.verificationNotes ?? '')
+  }, [selected?.id, selected?.verificationNotes])
+
   // ── Derived state ────────────────────────────────────────────────────
   const displayed = useMemo(
     () => items.filter((p) => !videoOnly || p.marketingPlan === 'VideoPromotion'),
@@ -366,6 +387,18 @@ export default function PendingApprovalsPage() {
                 </div>
               )}
 
+              {/* === Verification notes — editor for verifier/admin,
+                  prominent display for Admin reviewing === */}
+              <VerificationPanel
+                property={selected}
+                draft={verificationDraft}
+                onDraftChange={setVerificationDraft}
+                onSubmit={(notes) => verificationMutation.mutate({ id: selected.id, notes })}
+                isSubmitting={verificationMutation.isPending}
+                isEmployee={isEmployee}
+                canEdit={isEmployee || !!user?.role && user.role === 'Admin'}
+              />
+
               <div>
                 <div className="text-xs text-gray-400 uppercase tracking-wide">Title</div>
                 <div className="font-medium text-gray-900 mt-0.5">{selected.title}</div>
@@ -586,4 +619,87 @@ function roleAccent(role: string) {
     case 'Agent':    return '#293237'
     default:         return '#9CA3AF'
   }
+}
+
+/* ─────────────────── Verification editor / display ─────────────────── */
+
+function VerificationPanel({
+  property, draft, onDraftChange, onSubmit, isSubmitting, isEmployee, canEdit,
+}: {
+  property: Property
+  draft: string
+  onDraftChange: (s: string) => void
+  onSubmit: (notes: string) => void
+  isSubmitting: boolean
+  isEmployee: boolean
+  canEdit: boolean
+}) {
+  const trimmed = draft.trim()
+  const existing = property.verificationNotes?.trim() ?? ''
+  const dirty = trimmed !== existing
+  const hasNotes = existing.length > 0
+
+  return (
+    <div className="rounded-xl border-2 p-4 space-y-3"
+      style={{
+        backgroundColor: hasNotes ? 'rgba(106,151,57,0.04)' : 'rgba(99,102,241,0.04)',
+        borderColor: hasNotes ? 'rgba(106,151,57,0.25)' : 'rgba(99,102,241,0.20)',
+      }}>
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <div className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5"
+          style={{ color: hasNotes ? '#6A9739' : '#4F46E5' }}>
+          {hasNotes ? <Check className="w-3.5 h-3.5" /> : null}
+          Verification report
+        </div>
+        {property.verificationDoneAt && (
+          <span className="text-[11px] text-gray-500">
+            Submitted {new Date(property.verificationDoneAt).toLocaleString('en-IN', {
+              day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit',
+            })}
+          </span>
+        )}
+      </div>
+
+      {/* Read-only existing notes (visible to everyone with detail-panel access). */}
+      {hasNotes && !canEdit && (
+        <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
+          {existing}
+        </p>
+      )}
+
+      {canEdit ? (
+        <>
+          <textarea
+            value={draft}
+            onChange={(e) => onDraftChange(e.target.value)}
+            disabled={isSubmitting}
+            rows={4}
+            placeholder={isEmployee
+              ? 'Site-visit findings: documents verified, location matches, photos taken, any concerns…'
+              : 'Verification notes (visible to all admins).'}
+            className="input-field resize-none text-sm disabled:opacity-60"
+          />
+          <button
+            type="button"
+            onClick={() => onSubmit(trimmed)}
+            disabled={!dirty || trimmed.length === 0 || isSubmitting}
+            className="w-full inline-flex items-center justify-center gap-2 px-3 py-2.5 text-white text-sm font-semibold rounded-lg transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            style={{ backgroundColor: hasNotes ? '#6A9739' : '#4F46E5' }}>
+            {isSubmitting
+              ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving…</>
+              : hasNotes && !dirty
+                ? 'No changes to save'
+                : hasNotes
+                  ? 'Update verification report'
+                  : 'Submit verification report'}
+          </button>
+          <p className="text-[10px] text-gray-400 leading-snug">
+            Submitting notifies admins via SMS so they can come and approve / reject.
+          </p>
+        </>
+      ) : !hasNotes ? (
+        <p className="text-xs text-gray-500">No verification report submitted yet.</p>
+      ) : null}
+    </div>
+  )
 }

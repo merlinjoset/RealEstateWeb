@@ -134,6 +134,13 @@ export const propertiesApi = {
   /** Employee: pending properties assigned to me for verification. */
   getAssignedToVerify: () =>
     api.get<Property[]>('/properties/assigned-to-verify').then((r) => r.data),
+
+  /**
+   * Submit verification notes for a property. Allowed for the assigned
+   * verifier and for any Admin. Admins are pinged via SMS on submission.
+   */
+  submitVerification: (id: number, notes: string) =>
+    api.patch<Property>(`/properties/${id}/verification`, { notes }).then((r) => r.data),
 }
 
 /* ------------------- Admin inquiries (notifications feed) ------------------- */
