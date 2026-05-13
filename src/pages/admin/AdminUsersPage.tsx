@@ -2,8 +2,8 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   Search, Edit2, Trash2, Mail, Phone, Shield, UserPlus,
-  X, Save, Eye, Users as UsersIcon, UserCheck, UserX, Calendar,
-  CheckCircle2, MapPin, Loader2, AlertCircle, ShoppingBag,
+  X, Save, Eye, EyeOff, Users as UsersIcon, UserCheck, UserX, Calendar,
+  CheckCircle2, MapPin, Loader2, AlertCircle, ShoppingBag, Lock,
 } from 'lucide-react'
 import {
   usersApi,
@@ -35,11 +35,13 @@ interface FormState {
   city: string
   role: AdminUserRole
   isActive: boolean
+  /** Plaintext password — only used on create. Ignored when editing. */
+  password: string
 }
 
 const EMPTY_FORM: FormState = {
   firstName: '', lastName: '', email: '', phone: '', city: '',
-  role: 'Employee', isActive: true,
+  role: 'Employee', isActive: true, password: '',
 }
 
 const ZERO_COUNTS: UserCounts = {
@@ -69,6 +71,7 @@ export default function AdminUsersPage() {
   const [editingUser, setEditingUser] = useState<AdminUser | null>(null)
   const [form, setForm] = useState<FormState>(EMPTY_FORM)
   const [formError, setFormError] = useState<string | null>(null)
+  const [showPw, setShowPw] = useState(false)
 
   const [viewing, setViewing] = useState<AdminUser | null>(null)
   const [deleteId, setDeleteId] = useState<number | null>(null)
@@ -122,6 +125,7 @@ export default function AdminUsersPage() {
     setEditingUser(null)
     setForm(EMPTY_FORM)
     setFormError(null)
+    setShowPw(false)
     setShowForm(true)
   }
 
@@ -130,8 +134,11 @@ export default function AdminUsersPage() {
     setForm({
       firstName: u.firstName, lastName: u.lastName, email: u.email,
       phone: u.phone, city: u.city ?? '', role: u.role, isActive: u.isActive,
+      password: '',  // Password isn't editable here — admin uses the
+                    // forgot-password flow or the user changes it themselves.
     })
     setFormError(null)
+    setShowPw(false)
     setShowForm(true)
   }
 
@@ -145,12 +152,31 @@ export default function AdminUsersPage() {
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault()
     setFormError(null)
-    const payload = { ...form, city: form.city.trim() || null }
 
     if (editingUser) {
-      updateMutation.mutate({ id: editingUser.id, payload: payload as UpdateUserPayload })
+      // password isn't part of the update payload — strip it before sending
+      const { password: _ignored, ...rest } = form
+      const payload: UpdateUserPayload = { ...rest, city: rest.city.trim() || null }
+      updateMutation.mutate({ id: editingUser.id, payload })
     } else {
-      createMutation.mutate(payload as CreateUserPayload)
+      // For create, password is optional but recommended; backend falls back
+      // to a default placeholder if we omit it, but the admin really should
+      // set one explicitly so the new user can sign in right away.
+      const pw = form.password.trim()
+      if (pw && pw.length < 8) {
+        setFormError('Password must be at least 8 characters.')
+        return
+      }
+      const payload: CreateUserPayload = {
+        firstName: form.firstName,
+        lastName:  form.lastName,
+        email:     form.email,
+        phone:     form.phone,
+        city:      form.city.trim() || null,
+        role:      form.role,
+        password:  pw || undefined,
+      }
+      createMutation.mutate(payload)
     }
   }
 
@@ -462,6 +488,53 @@ export default function AdminUsersPage() {
                   })}
                 </div>
               </div>
+
+              {/* Password — create flow only. On edit the admin sends the
+                  user through forgot-password instead of overwriting silently. */}
+              {!editingUser && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                    Initial password{' '}
+                    <span className="text-xs font-normal text-gray-400">
+                      (at least 8 characters — leave blank to use a default)
+                    </span>
+                  </label>
+                  <div className="relative">
+                    <Lock className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <input
+                      type={showPw ? 'text' : 'password'}
+                      value={form.password}
+                      onChange={(e) => setForm({ ...form, password: e.target.value })}
+                      placeholder="Set a password the new user will sign in with"
+                      className="input-field pl-10 pr-11"
+                      autoComplete="new-password"
+                      minLength={form.password ? 8 : undefined}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPw((p) => !p)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      tabIndex={-1}
+                    >
+                      {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  <p className="text-[11px] text-gray-400 mt-1.5">
+                    Share this password with the user — they can change it later from their profile.
+                  </p>
+                </div>
+              )}
+
+              {editingUser && (
+                <div className="text-xs text-gray-500 rounded-lg p-3 border border-gray-100 bg-gray-50 flex items-start gap-2">
+                  <Lock className="w-3.5 h-3.5 mt-0.5 shrink-0 text-gray-400" />
+                  <span>
+                    Passwords aren't editable here. Send the user to{' '}
+                    <strong>/forgot-password</strong> to reset, or have them update it from
+                    their own profile.
+                  </span>
+                </div>
+              )}
 
               <label className="flex items-center gap-3 cursor-pointer p-3 rounded-xl border border-gray-200 hover:bg-gray-50">
                 <div onClick={() => setForm({ ...form, isActive: !form.isActive })}
