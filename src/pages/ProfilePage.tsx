@@ -3,7 +3,7 @@ import { Navigate, useNavigate, Link } from 'react-router-dom'
 import {
   User as UserIcon, Mail, Phone, MapPin, Calendar, Shield, LogOut,
   Edit2, Save, Lock, Eye, EyeOff, Loader2, AlertCircle, CheckCircle2,
-  Building2,
+  Building2, Briefcase,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { authApi } from '../services/api'
@@ -139,6 +139,7 @@ export default function ProfilePage() {
   }
 
   const isAdmin = user.role === 'Admin'
+  const isEmployee = user.role === 'Employee'
   const canSell = user.role === 'Seller' || user.role === 'Agent' || user.role === 'Admin'
 
   return (
@@ -330,6 +331,10 @@ export default function ProfilePage() {
                 {isAdmin && (
                   <QuickLink to="/admin" icon={Shield} label="Admin Dashboard"
                     desc="Manage properties, users, inquiries" color="#FF5A5F" />
+                )}
+                {isEmployee && (
+                  <QuickLink to="/admin/my-work" icon={Briefcase} label="My Work"
+                    desc="Inquiries & properties assigned to you" color="#4F46E5" />
                 )}
                 {canSell && (
                   <QuickLink to="/sell" icon={Building2} label="Sell a Property"

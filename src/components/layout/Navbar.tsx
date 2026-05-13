@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
-import { Menu, X, Phone, Heart, ChevronDown, LogOut, User, Building2, Shield } from 'lucide-react'
+import { Menu, X, Phone, Heart, ChevronDown, LogOut, User, Building2, Shield, Briefcase } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import ConfirmDialog from '../common/ConfirmDialog'
 
@@ -147,11 +147,17 @@ export default function Navbar() {
                         <Heart className="w-4 h-4" /> Saved Properties
                       </Link>
 
-                      {/* Admins → Admin Dashboard */}
+                      {/* Admins → Admin Dashboard. Employees → their queue. */}
                       {user?.role === 'Admin' && (
                         <Link to="/admin" className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                           onClick={() => setUserMenuOpen(false)}>
                           <Shield className="w-4 h-4" /> Admin Dashboard
+                        </Link>
+                      )}
+                      {user?.role === 'Employee' && (
+                        <Link to="/admin/my-work" className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                          onClick={() => setUserMenuOpen(false)}>
+                          <Briefcase className="w-4 h-4" /> My Work
                         </Link>
                       )}
 
@@ -209,6 +215,12 @@ export default function Navbar() {
                 <Link to="/admin" onClick={() => setIsOpen(false)}
                   className="px-4 py-2 rounded-lg font-medium text-sm text-gray-600 hover:bg-gray-50 flex items-center gap-2">
                   <Shield className="w-4 h-4" /> Admin Dashboard
+                </Link>
+              )}
+              {isAuthenticated && user?.role === 'Employee' && (
+                <Link to="/admin/my-work" onClick={() => setIsOpen(false)}
+                  className="px-4 py-2 rounded-lg font-medium text-sm text-gray-600 hover:bg-gray-50 flex items-center gap-2">
+                  <Briefcase className="w-4 h-4" /> My Work
                 </Link>
               )}
               {isAuthenticated

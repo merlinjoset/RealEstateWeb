@@ -228,7 +228,7 @@ export default function AdminLayout() {
           </button>
 
           <h1 className="font-semibold text-gray-900 flex-1 text-sm md:text-base">
-            Admin Dashboard
+            {isEmployee ? 'Employee Workspace' : 'Admin Dashboard'}
           </h1>
 
           <NotificationsBell />

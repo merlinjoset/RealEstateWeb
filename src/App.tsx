@@ -26,7 +26,7 @@ import NotFoundPage from './pages/NotFoundPage'
 import RequireAdmin from './components/auth/RequireAdmin'
 import RequireStaff from './components/auth/RequireStaff'
 import AdminLayout from './pages/admin/AdminLayout'
-import DashboardPage from './pages/admin/DashboardPage'
+import AdminHomeRoute from './pages/admin/AdminHomeRoute'
 import MyWorkPage from './pages/admin/MyWorkPage'
 import AdminPropertiesPage from './pages/admin/AdminPropertiesPage'
 import AddPropertyPage from './pages/admin/AddPropertyPage'
@@ -151,7 +151,11 @@ export default function App() {
                 gated by RequireAdmin inside the element prop — Employees
                 only get through to /admin/my-work. */}
             <Route path="/admin" element={<RequireStaff><AdminLayout /></RequireStaff>}>
-              <Route index element={<RequireAdmin><DashboardPage /></RequireAdmin>} />
+              {/* /admin → Admin sees Dashboard, Employee gets redirected to
+                  /admin/my-work. Avoids the access-denied screen when an
+                  Employee clicks the logo, types the URL, or follows a
+                  link to /admin from elsewhere in the site. */}
+              <Route index element={<AdminHomeRoute />} />
               <Route path="my-work" element={<MyWorkPage />} />
               <Route path="properties" element={<RequireAdmin><AdminPropertiesPage /></RequireAdmin>} />
               <Route path="video-listings" element={<RequireAdmin><AdminVideoListingsPage /></RequireAdmin>} />
