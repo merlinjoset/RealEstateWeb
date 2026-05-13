@@ -49,10 +49,11 @@ export default function PendingApprovalsPage() {
   })
 
   const items = pendingQuery.data ?? []
+  // Assignment is restricted to Employees only — keeps the verification
+  // workflow inside the team and out of the Agents' / Admins' inboxes.
   const assignees = useMemo(
     () => (usersQuery.data?.items ?? [])
-      .filter((u: AdminUser) => u.isActive)
-      .filter((u: AdminUser) => u.role === 'Employee' || u.role === 'Agent' || u.role === 'Admin'),
+      .filter((u: AdminUser) => u.role === 'Employee' && u.isActive),
     [usersQuery.data],
   )
 
@@ -479,7 +480,7 @@ function AssignPicker({
         <div className="absolute z-30 left-0 right-0 mt-1 bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden max-h-64 overflow-y-auto">
           {assignees.length === 0 ? (
             <div className="px-4 py-4 text-xs text-gray-400 text-center">
-              No active Employees / Agents / Admins to assign to.
+              No active Employees to assign to. Add one in <strong>Users</strong>.
             </div>
           ) : (
             assignees.map((u) => {

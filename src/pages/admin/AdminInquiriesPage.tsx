@@ -67,10 +67,11 @@ export default function AdminInquiriesPage() {
   })
 
   const items = inquiriesQuery.data ?? []
+  // Assignment is intentionally restricted to Employees. Agents have their
+  // own listings to focus on; Admins shouldn't be in the verification rota.
   const assignees = useMemo(
     () => (usersQuery.data?.items ?? [])
-      .filter((u: AdminUser) => u.role === 'Employee' || u.role === 'Agent' || u.role === 'Admin')
-      .filter((u: AdminUser) => u.isActive),
+      .filter((u: AdminUser) => u.role === 'Employee' && u.isActive),
     [usersQuery.data],
   )
 
@@ -470,7 +471,7 @@ function AssignPicker({
         >
           {assignees.length === 0 ? (
             <div className="px-4 py-4 text-xs text-gray-400 text-center">
-              No active Employees / Agents / Admins to assign to.
+              No active Employees to assign to. Add one in <strong>Users</strong>.
             </div>
           ) : (
             assignees.map((u) => {
