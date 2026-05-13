@@ -139,11 +139,13 @@ export interface AdminInquiry {
   notes?: string | null
   propertyId?: number | null
   propertyTitle?: string | null
-  userId?: number | null
+  /** ID of the Employee/Agent the inquiry is assigned to (null = unassigned). */
   assignedToUserId?: number | null
-  createdAt: string
+  /** Pre-joined display name from the backend DTO. */
+  assignedToName?: string | null
   assignedAt?: string | null
   lastUpdatedAt?: string | null
+  createdAt: string
 }
 
 /** Server returns `{ data, total, page, pageSize }` from GET /api/inquiries. */
@@ -165,6 +167,10 @@ export const inquiriesApi = {
 
   markRead: (id: number) =>
     api.patch(`/inquiries/${id}/read`).then((r) => r.data),
+
+  /** Hand an inquiry off to an Employee / Agent / Admin for follow-up. */
+  assign: (id: number, assignedToUserId: number) =>
+    api.patch<AdminInquiry>(`/inquiries/${id}/assign`, { assignedToUserId }).then((r) => r.data),
 }
 
 export const authApi = {
