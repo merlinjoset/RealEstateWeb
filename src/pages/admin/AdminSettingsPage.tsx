@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import {
   Settings as SettingsIcon, Building2, Phone, Mail, MapPin, Globe, Image as ImageIcon,
-  Bell, Lock, Shield, Save, Check, Eye, EyeOff, Upload, Share2, Video, Camera,
+  Bell, Lock, Shield, Save, Check, Eye, EyeOff, Upload,
   MessageCircle, Clock, Trash2, IndianRupee, AlertCircle,
 } from 'lucide-react'
+import { FacebookIcon, InstagramIcon, YoutubeIcon } from '../../components/icons/Brands'
 
 type TabKey = 'company' | 'contact' | 'social' | 'notifications' | 'security' | 'appearance' | 'danger'
 
@@ -261,15 +262,15 @@ export default function AdminSettingsPage() {
             {/* Social */}
             {tab === 'social' && (
               <Section title="Social Links" desc="Profile URLs that appear in the website footer">
-                <Field label="Facebook" icon={Share2}>
+                <Field label="Facebook" icon={FacebookIcon}>
                   <input className="input-field" value={settings.facebook}
                     onChange={(e) => set('facebook', e.target.value)} placeholder="https://facebook.com/…" />
                 </Field>
-                <Field label="Instagram" icon={Camera}>
+                <Field label="Instagram" icon={InstagramIcon}>
                   <input className="input-field" value={settings.instagram}
                     onChange={(e) => set('instagram', e.target.value)} placeholder="https://instagram.com/…" />
                 </Field>
-                <Field label="YouTube" icon={Video}>
+                <Field label="YouTube" icon={YoutubeIcon}>
                   <input className="input-field" value={settings.youtube}
                     onChange={(e) => set('youtube', e.target.value)} placeholder="https://youtube.com/@…" />
                 </Field>

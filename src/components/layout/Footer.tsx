@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
-import { Phone, Mail, MapPin, Share2, Video, Camera } from 'lucide-react'
+import { Phone, Mail, MapPin } from 'lucide-react'
+import { FacebookIcon, InstagramIcon, YoutubeIcon } from '../icons/Brands'
 
 export default function Footer() {
   return (
@@ -22,13 +23,24 @@ export default function Footer() {
               Kanyakumari's most trusted land property platform. Free doorstep consultation on every listing.
             </p>
             <div className="flex items-center gap-3">
-              {[{ Icon: Share2, label: 'Facebook' }, { Icon: Video, label: 'YouTube' }, { Icon: Camera, label: 'Instagram' }].map(({ Icon, label }) => (
-                <button key={label} aria-label={label} className="w-9 h-9 rounded-lg flex items-center justify-center transition-colors hover:text-white" style={{ backgroundColor: '#293237' }}
-                  onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#FF5A5F')}
-                  onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#293237')}
+              {[
+                { Icon: FacebookIcon,  label: 'Facebook',  href: 'https://facebook.com/joseforland',  hover: '#1877F2' },
+                { Icon: InstagramIcon, label: 'Instagram', href: 'https://instagram.com/joseforland', hover: '#E1306C' },
+                { Icon: YoutubeIcon,   label: 'YouTube',   href: 'https://youtube.com/@joseforland',  hover: '#FF0000' },
+              ].map(({ Icon, label, href, hover }) => (
+                <a
+                  key={label}
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={label}
+                  className="w-9 h-9 rounded-lg flex items-center justify-center transition-colors text-gray-400 hover:text-white"
+                  style={{ backgroundColor: '#293237' }}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = hover)}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#293237')}
                 >
                   <Icon className="w-4 h-4" />
-                </button>
+                </a>
               ))}
             </div>
           </div>
