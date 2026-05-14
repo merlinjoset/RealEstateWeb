@@ -33,7 +33,7 @@ export default function BuyerLineBanner() {
           <span className="text-sm sm:text-lg uppercase tracking-wider leading-tight">
             Sign in to unlock{' '}
             <span className="font-extrabold underline underline-offset-2 decoration-white/80">
-              FREE listings
+              ZERO SERVICE CHARGE LISTINGS
             </span>{' '}
             &amp; direct seller phone numbers
           </span>

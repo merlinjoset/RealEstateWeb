@@ -83,7 +83,7 @@ export default function RegisterPage() {
         sub:
           planHint === 'premium'
             ? 'Sign up to unlock premium video tours and agent-assisted visits.'
-            : 'Sign up to unlock direct seller contacts on free listings.',
+            : 'Sign up to unlock direct seller contacts on zero service charge listings.',
       }
     }
     return { title: 'Create account', sub: 'List your land or join as an agent' }

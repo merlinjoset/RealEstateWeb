@@ -1,24 +1,49 @@
 import { Link, useLocation } from 'react-router-dom'
-import { ArrowRight, Phone } from 'lucide-react'
+import { ArrowRight, Phone, ShieldCheck } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 
 /**
- * Slim single-line blinking ad pinned to the very top of every public page
- * (above the Navbar). Tells anonymous visitors that signing in unlocks the
- * free-listing catalogue and direct seller phones.
+ * Slim single-line banner pinned to the very top of every public page
+ * (above the Navbar). Two flavours:
  *
- * Hidden for:
- *  - authenticated users (the ad is irrelevant once logged in)
- *  - the auth pages themselves (/login, /register) so we don't double up
+ *  - Anonymous → blinking coral CTA: "Sign in to unlock ZERO SERVICE CHARGE
+ *    LISTINGS & direct seller phone numbers — Sign in now →"
+ *  - Authenticated → calmer green info strip confirming the same benefit
+ *    they now have access to ("Zero service charge listings & direct seller
+ *    phone numbers"). Reassures the user post-login that they're in the
+ *    right place, without the ad-shouting tone of the anonymous variant.
+ *
+ * Hidden on the auth pages themselves so we don't double up.
  */
 export default function FreeListingsBanner() {
   const { isAuthenticated } = useAuth()
   const { pathname } = useLocation()
 
-  if (isAuthenticated) return null
   if (pathname.startsWith('/login') || pathname.startsWith('/register')
-      || pathname.startsWith('/forgot-password') || pathname.startsWith('/reset-password')) return null
+      || pathname.startsWith('/forgot-password') || pathname.startsWith('/reset-password')) {
+    return null
+  }
 
+  // ── Signed-in confirmation strip ─────────────────────────────────────
+  if (isAuthenticated) {
+    return (
+      <div
+        className="block w-full text-center text-xs sm:text-sm font-semibold text-white py-2 px-3"
+        style={{
+          background: 'linear-gradient(90deg, #6A9739 0%, #8BC34A 50%, #6A9739 100%)',
+        }}
+      >
+        <span className="inline-flex items-center gap-2 flex-wrap justify-center">
+          <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
+          <span className="uppercase tracking-wider">
+            <strong className="font-extrabold">Zero service charge listings</strong> &amp; direct seller phone numbers
+          </span>
+        </span>
+      </div>
+    )
+  }
+
+  // ── Anonymous attention-grabber ──────────────────────────────────────
   return (
     <Link
       to="/register?intent=buyer&plan=free"
@@ -35,7 +60,7 @@ export default function FreeListingsBanner() {
         </span>
         <Phone className="w-3.5 h-3.5 shrink-0" />
         <span className="uppercase tracking-wider">
-          Sign in for <strong className="font-extrabold">FREE listings</strong> &amp; direct seller phone numbers
+          Sign in to unlock <strong className="font-extrabold">ZERO SERVICE CHARGE LISTINGS</strong> &amp; direct seller phone numbers
         </span>
         <span className="inline-flex items-center gap-1 underline underline-offset-2 decoration-white/70 group-hover:decoration-white">
           Sign in now <ArrowRight className="w-3.5 h-3.5" />
