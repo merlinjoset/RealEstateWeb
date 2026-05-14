@@ -1,10 +1,12 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   Settings as SettingsIcon, Building2, Phone, Mail, MapPin, Globe, Image as ImageIcon,
   Bell, Lock, Shield, Save, Check, Eye, EyeOff, Upload,
-  MessageCircle, Clock, Trash2, IndianRupee, AlertCircle,
+  MessageCircle, Clock, Trash2, IndianRupee, AlertCircle, Loader2,
 } from 'lucide-react'
 import { FacebookIcon, InstagramIcon, YoutubeIcon } from '../../components/icons/Brands'
+import { settingsApi } from '../../services/api'
 
 type TabKey = 'company' | 'contact' | 'social' | 'notifications' | 'security' | 'appearance' | 'danger'
 
@@ -99,16 +101,57 @@ const INITIAL: SettingsState = {
 }
 
 export default function AdminSettingsPage() {
+  const queryClient = useQueryClient()
   const [tab, setTab] = useState<TabKey>('company')
   const [settings, setSettings] = useState<SettingsState>(INITIAL)
   const [savedFlash, setSavedFlash] = useState(false)
   const [showResetModal, setShowResetModal] = useState(false)
+
+  // Social URLs are the only tab persisted server-side today — the other
+  // tabs (Company, Contact, Notifications…) are still local mock state.
+  const siteQuery = useQuery({
+    queryKey: ['site-settings'],
+    queryFn: settingsApi.getSite,
+    staleTime: 5 * 60_000,
+  })
+
+  // Seed the social fields from the API once it lands.
+  useEffect(() => {
+    if (!siteQuery.data) return
+    setSettings(prev => ({
+      ...prev,
+      facebook:  siteQuery.data.facebookUrl  || prev.facebook,
+      instagram: siteQuery.data.instagramUrl || prev.instagram,
+      youtube:   siteQuery.data.youtubeUrl   || prev.youtube,
+      website:   siteQuery.data.websiteUrl   || prev.website,
+    }))
+  }, [siteQuery.data])
+
+  const saveSiteMutation = useMutation({
+    mutationFn: () => settingsApi.updateSite({
+      facebookUrl:  settings.facebook.trim(),
+      instagramUrl: settings.instagram.trim(),
+      youtubeUrl:   settings.youtube.trim(),
+      websiteUrl:   settings.website.trim(),
+    }),
+    onSuccess: () => {
+      // Refresh the Footer's cached copy too.
+      queryClient.invalidateQueries({ queryKey: ['site-settings'] })
+      setSavedFlash(true)
+      setTimeout(() => setSavedFlash(false), 2200)
+    },
+  })
 
   const set = <K extends keyof SettingsState>(key: K, value: SettingsState[K]) =>
     setSettings(prev => ({ ...prev, [key]: value }))
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault()
+    if (tab === 'social') {
+      saveSiteMutation.mutate()
+      return
+    }
+    // Other tabs are still mock — flash the "saved" toast without a real PUT.
     setSavedFlash(true)
     setTimeout(() => setSavedFlash(false), 2200)
   }
@@ -394,15 +437,28 @@ export default function AdminSettingsPage() {
             {/* Save bar */}
             {tab !== 'danger' && (
               <div className="flex items-center justify-between gap-3 px-6 py-4 border-t border-gray-100 bg-gray-50">
-                <p className="text-xs text-gray-500">
-                  Changes are applied site-wide once saved.
-                </p>
+                <div className="text-xs text-gray-500 flex items-center gap-2 min-w-0">
+                  {tab === 'social' ? (
+                    <>Saves to the database — Footer links update site-wide.</>
+                  ) : (
+                    <>Changes are applied site-wide once saved.</>
+                  )}
+                  {saveSiteMutation.isError && tab === 'social' && (
+                    <span className="inline-flex items-center gap-1 text-red-600 font-semibold">
+                      <AlertCircle className="w-3.5 h-3.5" />
+                      Save failed — try again.
+                    </span>
+                  )}
+                </div>
                 <button type="submit"
-                  className="inline-flex items-center gap-2 px-5 py-2.5 text-white text-sm font-semibold rounded-lg transition-colors"
+                  disabled={saveSiteMutation.isPending}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 text-white text-sm font-semibold rounded-lg transition-colors disabled:opacity-60"
                   style={{ backgroundColor: '#6A9739' }}
-                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#547a2d')}
-                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#6A9739')}>
-                  <Save className="w-4 h-4" /> Save changes
+                  onMouseEnter={(e) => { if (!saveSiteMutation.isPending) e.currentTarget.style.backgroundColor = '#547a2d' }}
+                  onMouseLeave={(e) => { if (!saveSiteMutation.isPending) e.currentTarget.style.backgroundColor = '#6A9739' }}>
+                  {saveSiteMutation.isPending
+                    ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving…</>
+                    : <><Save className="w-4 h-4" /> Save changes</>}
                 </button>
               </div>
             )}

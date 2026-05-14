@@ -1,8 +1,32 @@
 import { Link } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import { Phone, Mail, MapPin } from 'lucide-react'
 import { FacebookIcon, InstagramIcon, YoutubeIcon } from '../icons/Brands'
+import { settingsApi } from '../../services/api'
+
+// Static fallbacks — used when the /api/settings/site call is still in
+// flight, errors out, or returns empty strings. Keep these in sync with the
+// migration seed so first-page-load looks the same as the eventual fetched
+// state.
+const DEFAULT_SOCIAL = {
+  facebookUrl:  'https://facebook.com/joseforland',
+  instagramUrl: 'https://instagram.com/joseforland',
+  youtubeUrl:   'https://youtube.com/@joseforland',
+}
 
 export default function Footer() {
+  const siteQuery = useQuery({
+    queryKey: ['site-settings'],
+    queryFn: settingsApi.getSite,
+    staleTime: 5 * 60_000,      // settings change rarely — keep them warm
+  })
+  const site = siteQuery.data
+  const social = {
+    facebookUrl:  (site?.facebookUrl?.trim()  || DEFAULT_SOCIAL.facebookUrl),
+    instagramUrl: (site?.instagramUrl?.trim() || DEFAULT_SOCIAL.instagramUrl),
+    youtubeUrl:   (site?.youtubeUrl?.trim()   || DEFAULT_SOCIAL.youtubeUrl),
+  }
+
   return (
     <footer style={{ backgroundColor: '#111111' }} className="text-gray-400">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -24,9 +48,9 @@ export default function Footer() {
             </p>
             <div className="flex items-center gap-3">
               {[
-                { Icon: FacebookIcon,  label: 'Facebook',  href: 'https://facebook.com/joseforland',  hover: '#1877F2' },
-                { Icon: InstagramIcon, label: 'Instagram', href: 'https://instagram.com/joseforland', hover: '#E1306C' },
-                { Icon: YoutubeIcon,   label: 'YouTube',   href: 'https://youtube.com/@joseforland',  hover: '#FF0000' },
+                { Icon: FacebookIcon,  label: 'Facebook',  href: social.facebookUrl,  hover: '#1877F2' },
+                { Icon: InstagramIcon, label: 'Instagram', href: social.instagramUrl, hover: '#E1306C' },
+                { Icon: YoutubeIcon,   label: 'YouTube',   href: social.youtubeUrl,   hover: '#FF0000' },
               ].map(({ Icon, label, href, hover }) => (
                 <a
                   key={label}

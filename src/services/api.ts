@@ -287,6 +287,26 @@ export const mapsApi = {
     api.post<ResolveMapUrlResponse>('/maps/resolve', { url }).then((r) => r.data),
 }
 
+/* -------------------- Site-wide settings (Admin → Settings) -------------------- */
+
+export interface SiteSettings {
+  facebookUrl: string
+  instagramUrl: string
+  youtubeUrl: string
+  websiteUrl: string
+  updatedAt: string
+}
+
+export const settingsApi = {
+  /** Public — Footer pulls social URLs from here. */
+  getSite: () =>
+    api.get<SiteSettings>('/settings/site').then((r) => r.data),
+
+  /** Admin — Settings page writes here. Pass only fields you want to change. */
+  updateSite: (data: Partial<Omit<SiteSettings, 'updatedAt'>>) =>
+    api.put<SiteSettings>('/settings/site', data).then((r) => r.data),
+}
+
 export const contactApi = {
   /** Submits an inquiry (used by the contact form, property pages,
    *  and document-request modals). Hits /api/inquiries on the backend. */
