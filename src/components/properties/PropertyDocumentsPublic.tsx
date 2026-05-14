@@ -201,26 +201,42 @@ function DocumentRequestModal({ propertyId, propertyTitle, onClose }: ModalProps
         </div>
 
         {submitted ? (
-          /* Success state */
+          /* Success state — explicitly tells the user what they requested,
+             for which property, so they have a clear "yes this happened" moment. */
           <div className="p-8 text-center">
             <div className="w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-4"
               style={{ backgroundColor: 'rgba(106,151,57,0.10)', color: '#6A9739' }}>
               <CheckCircle2 className="w-8 h-8" />
             </div>
             <h4 className="text-xl font-bold mb-2 tracking-tight" style={{ color: '#111111' }}>
-              Request received!
+              Document request received!
             </h4>
-            <p className="text-sm leading-relaxed mb-1" style={{ color: '#4B5563' }}>
+            <p className="text-sm leading-relaxed mb-3" style={{ color: '#4B5563' }}>
               Thank you, <strong>{form.name}</strong>.
             </p>
+
+            {/* What was requested, for which property — the explicit confirmation. */}
+            <div className="rounded-xl p-4 mb-4 text-left border-2"
+              style={{ backgroundColor: 'rgba(106,151,57,0.06)', borderColor: 'rgba(106,151,57,0.25)' }}>
+              <div className="text-[10px] uppercase tracking-wider font-bold mb-1.5" style={{ color: '#6A9739' }}>
+                Your request
+              </div>
+              <p className="text-sm font-semibold text-gray-900 leading-snug">
+                EC / Patta / Chitta and other verified documents
+              </p>
+              <p className="text-xs text-gray-600 mt-1">
+                for <strong className="text-gray-900">"{propertyTitle}"</strong>
+              </p>
+            </div>
+
             <p className="text-sm leading-relaxed mb-6" style={{ color: '#4B5563' }}>
-              Our team will call you on <strong>{form.phone}</strong> within 2–5 hours
-              with the verified documents.
+              Our team will call you on <strong>{form.phone}</strong> within
+              <strong> 2–5 hours</strong> with the verified copies.
             </p>
 
             <div className="flex items-center justify-center gap-2 text-xs text-gray-500 mb-6">
               <Phone className="w-3.5 h-3.5" style={{ color: '#FF5A5F' }} />
-              SMS confirmation sent to your phone
+              SMS confirmation sent to {form.phone}
             </div>
 
             <button onClick={onClose}
