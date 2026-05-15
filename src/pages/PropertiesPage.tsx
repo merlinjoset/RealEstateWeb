@@ -1,44 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { Search, SlidersHorizontal, X, Grid3X3, List, ChevronLeft, ChevronRight, Map as MapIcon } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
+import { Search, SlidersHorizontal, X, Grid3X3, List, ChevronLeft, ChevronRight, Map as MapIcon, Loader2, AlertCircle } from 'lucide-react'
 import SEO from '../components/common/SEO'
 import PropertyCard from '../components/properties/PropertyCard'
-import type { Property } from '../types'
-
-const MOCK_PROPERTIES: Property[] = Array.from({ length: 12 }, (_, i) => ({
-  id: i + 1,
-  title: [
-    '15 Cents Prime Land - Nagercoil', '10 Cents Land with 3BHK - Marthandam',
-    '50 Cents Agricultural Land - Thuckalay', '8 Cents Residential Plot - Kanyakumari',
-    '20 Cents Open Plot - Colachel', '5 Cents Corner Plot - Padmanabhapuram',
-    '30 Cents Farm Land - Boothapandi', '12 Cents Plot Near Highway - Nagercoil',
-    '25 Cents Land with Well - Eraniel', '6 Cents Residential Land - Marthandam',
-    '100 Cents Estate - Thuckalay', '7 Cents Plot Near Beach - Kanyakumari',
-  ][i],
-  description: 'Prime location property with clear legal documents',
-  totalPrice: [2250000, 4500000, 3500000, 1600000, 2800000, 750000, 4200000, 1800000, 3750000, 900000, 8500000, 1400000][i],
-  pricePerCent: [150000, 450000, 70000, 200000, 140000, 150000, 140000, 150000, 150000, 150000, 85000, 200000][i],
-  address: 'Town Area',
-  city: ['Nagercoil', 'Marthandam', 'Thuckalay', 'Kanyakumari', 'Colachel', 'Padmanabhapuram',
-         'Boothapandi', 'Nagercoil', 'Eraniel', 'Marthandam', 'Thuckalay', 'Kanyakumari'][i],
-  district: 'Kanyakumari',
-  state: 'Tamil Nadu',
-  pinCode: '629001',
-  areaInCents: [15, 10, 50, 8, 20, 5, 30, 12, 25, 6, 100, 7][i],
-  bedrooms: i % 3 === 1 ? 3 : undefined,
-  bathrooms: i % 3 === 1 ? 2 : undefined,
-  propertyType: (['open_land', 'land_with_building', 'agricultural', 'residential_plot', 'open_land', 'residential_plot',
-    'agricultural', 'open_land', 'open_land', 'residential_plot', 'agricultural', 'residential_plot'] as Property['propertyType'][])[i],
-  status: 'for_sale',
-  images: [],
-  features: [],
-  agentId: 1,
-  createdAt: '2024-01-01',
-  updatedAt: '2024-01-01',
-  isFeatured: i < 3,
-  isVerified: i % 2 === 0,
-  roadAccess: i % 3 !== 2,
-}))
+import { propertiesApi } from '../services/api'
 
 const CITIES = ['Nagercoil', 'Marthandam', 'Thuckalay', 'Kanyakumari', 'Colachel', 'Padmanabhapuram', 'Boothapandi', 'Eraniel']
 const PRICE_RANGES = [
@@ -72,25 +38,26 @@ export default function PropertiesPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }, [page])
 
-  const filtered = MOCK_PROPERTIES.filter((p) => {
-    const q = search.toLowerCase()
-    if (q && !p.title.toLowerCase().includes(q) && !p.city.toLowerCase().includes(q)) return false
-    if (selectedCity && p.city !== selectedCity) return false
-    if (propertyType && p.propertyType !== propertyType) return false
-    const pr = PRICE_RANGES[priceRange]
-    if (pr.min && p.totalPrice < pr.min) return false
-    if (pr.max && p.totalPrice > pr.max) return false
-    return true
-  }).sort((a, b) => {
-    if (sortBy === 'price_asc') return a.totalPrice - b.totalPrice
-    if (sortBy === 'price_desc') return b.totalPrice - a.totalPrice
-    if (sortBy === 'area_asc') return a.areaInCents - b.areaInCents
-    if (sortBy === 'area_desc') return b.areaInCents - a.areaInCents
-    return b.id - a.id
+  const pr = PRICE_RANGES[priceRange]
+  const query = useQuery({
+    queryKey: ['properties', { search, selectedCity, priceRange, propertyType, sortBy, page }],
+    queryFn: () => propertiesApi.getAll({
+      search: search.trim() || undefined,
+      city: selectedCity || undefined,
+      propertyType: (propertyType as 'open_land' | undefined) || undefined,
+      minPrice: pr.min || undefined,
+      maxPrice: pr.max || undefined,
+      sortBy: sortBy as 'price_asc' | 'price_desc' | 'newest' | 'oldest' | 'area_asc' | 'area_desc',
+      page,
+      pageSize: PAGE_SIZE,
+    }),
+    placeholderData: (prev) => prev,    // keep old data visible while refetching → smoother filter UX
+    staleTime: 30_000,
   })
 
-  const totalPages = Math.ceil(filtered.length / PAGE_SIZE)
-  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+  const paginated = query.data?.data ?? []
+  const totalPages = query.data?.totalPages ?? 1
+  const totalCount = query.data?.total ?? 0
 
   const clearFilters = () => {
     setSearch('')
@@ -241,12 +208,26 @@ export default function PropertiesPage() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="flex items-center justify-between mb-4">
-          <p className="text-sm text-gray-500">
-            <span className="font-semibold text-gray-900">{filtered.length}</span> properties found
+          <p className="text-sm text-gray-500 inline-flex items-center gap-2">
+            <span className="font-semibold text-gray-900">{totalCount.toLocaleString('en-IN')}</span> properties found
+            {query.isFetching && <Loader2 className="w-3.5 h-3.5 animate-spin text-gray-400" />}
           </p>
         </div>
 
-        {paginated.length === 0 ? (
+        {query.isLoading ? (
+          <div className="text-center py-20 text-gray-400">
+            <Loader2 className="w-8 h-8 animate-spin mx-auto mb-3" />
+            <p className="text-sm">Loading properties…</p>
+          </div>
+        ) : query.isError ? (
+          <div className="text-center py-20">
+            <AlertCircle className="w-8 h-8 text-red-400 mx-auto mb-3" />
+            <p className="text-sm text-red-600 mb-2">Couldn't load properties.</p>
+            <button onClick={() => query.refetch()} className="text-xs font-semibold underline" style={{ color: '#FF5A5F' }}>
+              Try again
+            </button>
+          </div>
+        ) : paginated.length === 0 ? (
           <div className="text-center py-20">
             <p className="text-gray-400 text-lg">No properties found for your search.</p>
             <button onClick={clearFilters} className="mt-4 btn-primary">

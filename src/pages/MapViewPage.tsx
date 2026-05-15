@@ -1,15 +1,17 @@
-import { useState, useEffect, useMemo } from 'react'
+﻿import { useState, useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { MapPin, Phone, Ruler, X, ExternalLink, Search, SlidersHorizontal, ChevronDown, List as ListIcon } from 'lucide-react'
+import { propertiesApi } from '../services/api'
 import type { Property } from '../types'
 
 function formatLakhs(amount: number) {
-  if (amount >= 10000000) return `₹${(amount / 10000000).toFixed(2)} Cr`
-  if (amount >= 100000) return `₹${(amount / 100000).toFixed(2)} L`
-  return `₹${amount.toLocaleString('en-IN')}`
+  if (amount >= 10000000) return `â‚¹${(amount / 10000000).toFixed(2)} Cr`
+  if (amount >= 100000) return `â‚¹${(amount / 100000).toFixed(2)} L`
+  return `â‚¹${amount.toLocaleString('en-IN')}`
 }
 
 // Approximate coordinates for Kanyakumari district areas
@@ -29,80 +31,6 @@ function jitter(seed: number) {
   return ((seed * 9301 + 49297) % 233280) / 233280 * 0.02 - 0.01
 }
 
-const MOCK_PROPERTIES: Property[] = [
-  {
-    id: 1, title: '15 Cents Prime Land', description: 'Prime location near main road',
-    totalPrice: 2250000, pricePerCent: 150000, address: 'Kottar', city: 'Nagercoil',
-    district: 'Kanyakumari', state: 'Tamil Nadu', pinCode: '629001',
-    areaInCents: 15, propertyType: 'open_land', status: 'for_sale',
-    images: [], features: [], agentId: 1, createdAt: '2024-01-01', updatedAt: '2024-01-01',
-    isFeatured: true, isVerified: true, roadAccess: true,
-  },
-  {
-    id: 2, title: '10 Cents Land with 3BHK House', description: 'Ready to occupy',
-    totalPrice: 4500000, pricePerCent: 450000, address: 'Town Area', city: 'Marthandam',
-    district: 'Kanyakumari', state: 'Tamil Nadu', pinCode: '629165',
-    areaInCents: 10, bedrooms: 3, propertyType: 'land_with_building', status: 'for_sale',
-    images: [], features: [], agentId: 1, createdAt: '2024-01-02', updatedAt: '2024-01-02',
-    isFeatured: true, isVerified: true, roadAccess: true,
-  },
-  {
-    id: 3, title: '50 Cents Agricultural Land', description: 'Fertile land with water source',
-    totalPrice: 3500000, pricePerCent: 70000, address: 'Pechipparai Road', city: 'Thuckalay',
-    district: 'Kanyakumari', state: 'Tamil Nadu', pinCode: '629175',
-    areaInCents: 50, propertyType: 'agricultural', status: 'for_sale',
-    images: [], features: [], agentId: 1, createdAt: '2024-01-03', updatedAt: '2024-01-03',
-    isFeatured: false, isVerified: true, roadAccess: false,
-  },
-  {
-    id: 4, title: '8 Cents Residential Plot', description: 'Sea-view plot near beach',
-    totalPrice: 1600000, pricePerCent: 200000, address: 'Beach Road', city: 'Kanyakumari',
-    district: 'Kanyakumari', state: 'Tamil Nadu', pinCode: '629702',
-    areaInCents: 8, propertyType: 'residential_plot', status: 'for_sale',
-    images: [], features: [], agentId: 1, createdAt: '2024-01-04', updatedAt: '2024-01-04',
-    isFeatured: true, isVerified: false, roadAccess: true,
-  },
-  {
-    id: 5, title: '20 Cents Open Plot', description: 'Corner plot with road on two sides',
-    totalPrice: 2800000, pricePerCent: 140000, address: 'Main Road', city: 'Colachel',
-    district: 'Kanyakumari', state: 'Tamil Nadu', pinCode: '629251',
-    areaInCents: 20, propertyType: 'open_land', status: 'for_sale',
-    images: [], features: [], agentId: 1, createdAt: '2024-01-05', updatedAt: '2024-01-05',
-    isFeatured: false, isVerified: true, roadAccess: true,
-  },
-  {
-    id: 6, title: '5 Cents Corner Plot', description: 'Ideal for house construction',
-    totalPrice: 750000, pricePerCent: 150000, address: 'Palace Road', city: 'Padmanabhapuram',
-    district: 'Kanyakumari', state: 'Tamil Nadu', pinCode: '629401',
-    areaInCents: 5, propertyType: 'residential_plot', status: 'for_sale',
-    images: [], features: [], agentId: 1, createdAt: '2024-01-06', updatedAt: '2024-01-06',
-    isFeatured: false, isVerified: true, roadAccess: true,
-  },
-  {
-    id: 7, title: '30 Cents Farm Land', description: 'Suitable for farming with borewell',
-    totalPrice: 4200000, pricePerCent: 140000, address: 'Village Road', city: 'Boothapandi',
-    district: 'Kanyakumari', state: 'Tamil Nadu', pinCode: '629852',
-    areaInCents: 30, propertyType: 'agricultural', status: 'for_sale',
-    images: [], features: [], agentId: 1, createdAt: '2024-01-07', updatedAt: '2024-01-07',
-    isFeatured: false, isVerified: true, roadAccess: true,
-  },
-  {
-    id: 8, title: '12 Cents Plot Near Highway', description: 'Highway-facing prime plot',
-    totalPrice: 1800000, pricePerCent: 150000, address: 'NH Road', city: 'Nagercoil',
-    district: 'Kanyakumari', state: 'Tamil Nadu', pinCode: '629002',
-    areaInCents: 12, propertyType: 'open_land', status: 'for_sale',
-    images: [], features: [], agentId: 1, createdAt: '2024-01-08', updatedAt: '2024-01-08',
-    isFeatured: false, isVerified: true, roadAccess: true,
-  },
-  {
-    id: 9, title: '25 Cents Land with Well', description: 'Open well with year-round water',
-    totalPrice: 3750000, pricePerCent: 150000, address: 'Town Road', city: 'Eraniel',
-    district: 'Kanyakumari', state: 'Tamil Nadu', pinCode: '629902',
-    areaInCents: 25, propertyType: 'open_land', status: 'for_sale',
-    images: [], features: [], agentId: 1, createdAt: '2024-01-09', updatedAt: '2024-01-09',
-    isFeatured: false, isVerified: false, roadAccess: true,
-  },
-]
 
 const TYPE_LABELS: Record<Property['propertyType'], string> = {
   open_land: 'Open Land',
@@ -130,7 +58,7 @@ const TYPE_PRICE_COLORS: Record<Property['propertyType'], string> = {
   residential_plot: '#FCD34D',   // bright gold
 }
 
-// Build a custom DivIcon — Property-Finder-style deep navy "From [price]" pill
+// Build a custom DivIcon â€” Property-Finder-style deep navy "From [price]" pill
 function makePinIcon(
   dotColor: string,
   _priceTone: string, // kept for backwards compat
@@ -224,18 +152,18 @@ function getPropertyCoords(property: Property): [number, number] {
 
 const PRICE_RANGES = [
   { value: '', label: 'Any price', min: 0, max: 0 },
-  { value: '0-10', label: 'Under ₹10 L', min: 0, max: 1000000 },
-  { value: '10-25', label: '₹10 L – ₹25 L', min: 1000000, max: 2500000 },
-  { value: '25-50', label: '₹25 L – ₹50 L', min: 2500000, max: 5000000 },
-  { value: '50-100', label: '₹50 L – ₹1 Cr', min: 5000000, max: 10000000 },
-  { value: '100+', label: 'Above ₹1 Cr', min: 10000000, max: 0 },
+  { value: '0-10', label: 'Under â‚¹10 L', min: 0, max: 1000000 },
+  { value: '10-25', label: 'â‚¹10 L â€“ â‚¹25 L', min: 1000000, max: 2500000 },
+  { value: '25-50', label: 'â‚¹25 L â€“ â‚¹50 L', min: 2500000, max: 5000000 },
+  { value: '50-100', label: 'â‚¹50 L â€“ â‚¹1 Cr', min: 5000000, max: 10000000 },
+  { value: '100+', label: 'Above â‚¹1 Cr', min: 10000000, max: 0 },
 ]
 
 const AREA_RANGES = [
   { value: '', label: 'Any size', min: 0, max: 0 },
   { value: '0-10', label: 'Up to 10 cents', min: 0, max: 10 },
-  { value: '10-25', label: '10 – 25 cents', min: 10, max: 25 },
-  { value: '25-50', label: '25 – 50 cents', min: 25, max: 50 },
+  { value: '10-25', label: '10 â€“ 25 cents', min: 10, max: 25 },
+  { value: '25-50', label: '25 â€“ 50 cents', min: 25, max: 50 },
   { value: '50+', label: 'Above 50 cents', min: 50, max: 0 },
 ]
 
@@ -251,8 +179,19 @@ export default function MapViewPage() {
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [listOpen, setListOpen] = useState(false)
 
+  // Pull a generous page of approved properties â€” the map view needs all of
+  // them in memory to plot pins, and 500 is well under the backend's default
+  // pageSize cap. Future scale: switch to a /map endpoint that returns
+  // {id, lat, lng, price, type, city} only.
+  const query = useQuery({
+    queryKey: ['map-properties'],
+    queryFn: () => propertiesApi.getAll({ page: 1, pageSize: 500, sortBy: 'newest' }),
+    staleTime: 60_000,
+  })
+  const allProperties = query.data?.data ?? []
+
   const filtered = useMemo(() => {
-    return MOCK_PROPERTIES.filter(p => {
+    return allProperties.filter(p => {
       const q = search.trim().toLowerCase()
       if (q && !p.title.toLowerCase().includes(q) && !p.city.toLowerCase().includes(q) && !p.address.toLowerCase().includes(q)) {
         return false
@@ -278,7 +217,7 @@ export default function MapViewPage() {
 
       return true
     })
-  }, [search, typeFilter, cityFilter, priceFilter, areaFilter])
+  }, [allProperties, search, typeFilter, cityFilter, priceFilter, areaFilter])
 
   const activeCount = [typeFilter, cityFilter, priceFilter, areaFilter].filter(Boolean).length
   const hasFilters = activeCount > 0 || search.trim().length > 0
@@ -423,7 +362,7 @@ export default function MapViewPage() {
       </div>
 
       <div className="flex flex-col md:flex-row h-[70vh] md:h-[calc(100vh-180px)] min-h-[480px] relative">
-        {/* Left sidebar — property list (drawer on mobile) */}
+        {/* Left sidebar â€” property list (drawer on mobile) */}
         <div
           className={`bg-white border-r border-gray-200 overflow-y-auto
             md:w-80 md:shrink-0 md:relative md:translate-x-0
@@ -595,7 +534,7 @@ export default function MapViewPage() {
                   {selected.isVerified && (
                     <span className="text-xs px-2 py-0.5 rounded-full"
                       style={{ backgroundColor: 'rgba(106,151,57,0.1)', color: '#6A9739' }}>
-                      ✓ Verified
+                      âœ“ Verified
                     </span>
                   )}
                 </div>
@@ -713,7 +652,7 @@ function FilterSelect({
               style={value === opt.value ? { backgroundColor: 'rgba(255,90,95,0.06)', color: '#FF5A5F', fontWeight: 600 } : { color: '#374151' }}
             >
               {opt.label}
-              {value === opt.value && <span style={{ color: '#FF5A5F' }}>✓</span>}
+              {value === opt.value && <span style={{ color: '#FF5A5F' }}>âœ“</span>}
             </button>
           ))}
         </div>

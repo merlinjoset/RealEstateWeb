@@ -46,38 +46,11 @@ const STAGE_META: Record<VideoStage, { label: string; color: string; bg: string 
   sold:            { label: 'Sold · 2% earned', color: '#FF5A5F', bg: 'rgba(255,90,95,0.10)' },
 }
 
-const MOCK_VIDEOS: VideoListing[] = [
-  {
-    id: 101, title: '10 Cents Open Land - Nagercoil', city: 'Nagercoil', areaInCents: 10,
-    totalPrice: 1500000, propertyType: 'Open Land', submittedBy: 'Rajan K.',
-    submitterPhone: '+91 98765 43210', submittedAt: '2024-01-20',
-    stage: 'awaiting_shoot', marketingPlan: 'VideoPromotion',
-  },
-  {
-    id: 103, title: '25 Cents Agricultural Land - Thuckalay', city: 'Thuckalay', areaInCents: 25,
-    totalPrice: 1800000, propertyType: 'Agricultural', submittedBy: 'Xavier J.',
-    submitterPhone: '+91 76543 21098', submittedAt: '2024-01-18',
-    stage: 'shoot_scheduled', marketingPlan: 'VideoPromotion',
-  },
-  {
-    id: 145, title: '18 Cents Highway-facing Plot - Colachel', city: 'Colachel', areaInCents: 18,
-    totalPrice: 2700000, propertyType: 'Open Land', submittedBy: 'Karthik V.',
-    submitterPhone: '+91 90876 54321', submittedAt: '2024-01-16',
-    stage: 'editing', marketingPlan: 'VideoPromotion',
-  },
-  {
-    id: 201, title: '12 Cents Plot with sea view - Kanyakumari', city: 'Kanyakumari', areaInCents: 12,
-    totalPrice: 4200000, propertyType: 'Residential Plot', submittedBy: 'Priya S.',
-    submitterPhone: '+91 87654 32109', submittedAt: '2024-01-15',
-    stage: 'published', marketingPlan: 'VideoPromotion',
-  },
-  {
-    id: 202, title: '40 Cents Coconut Estate - Marthandam', city: 'Marthandam', areaInCents: 40,
-    totalPrice: 9500000, propertyType: 'Agricultural', submittedBy: 'Anand R.',
-    submitterPhone: '+91 65432 10987', submittedAt: '2024-01-10',
-    stage: 'sold', marketingPlan: 'VideoPromotion',
-  },
-]
+// Empty by design — no Video Promotion properties exist yet. Once sellers
+// start opting into the paid tier on /sell, this page can switch to
+// useQuery(propertiesApi.getAll({ marketingPlan: 'VideoPromotion' })) once
+// the backend grows a videoStage field to drive the stage picker below.
+const MOCK_VIDEOS: VideoListing[] = []
 
 const STAGE_FILTERS: Array<{ value: VideoStage | 'all'; label: string }> = [
   { value: 'all', label: 'All' },

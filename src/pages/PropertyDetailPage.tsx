@@ -1,7 +1,8 @@
-import { Link } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import {
   MapPin, Ruler, Phone, MessageCircle, Heart, ChevronLeft,
-  CheckCircle, Home, FileText, Calendar, FolderOpen,
+  CheckCircle, Home, FileText, Calendar, FolderOpen, Loader2, AlertCircle,
 } from 'lucide-react'
 import SEO from '../components/common/SEO'
 import PropertyGallery from '../components/properties/PropertyGallery'
@@ -10,7 +11,7 @@ import PropertyDocumentsPublic from '../components/properties/PropertyDocumentsP
 import PropertyLocationMap from '../components/properties/PropertyLocationMap'
 import ShareButton from '../components/properties/ShareButton'
 import { useAuth } from '../context/AuthContext'
-import type { Property } from '../types'
+import { propertiesApi } from '../services/api'
 
 function formatLakhs(amount: number) {
   if (amount >= 10000000) return `₹${(amount / 10000000).toFixed(2)} Cr`
@@ -18,70 +19,48 @@ function formatLakhs(amount: number) {
   return `₹${amount.toLocaleString('en-IN')}`
 }
 
-const MOCK_PROPERTY: Property = {
-  id: 1,
-  title: '15 Cents Prime Land Near Highway – Nagercoil',
-  description: `This is a prime land parcel located close to the main road in Nagercoil, Kanyakumari district.
-The plot has excellent road frontage and is ideal for residential or commercial construction.
-
-Highlights:
-- Located in a rapidly developing area
-- Clear legal documents (EC, Patta, Chitta verified)
-- All utilities available (electricity, water)
-- Well-connected to schools, hospitals, and markets
-- No encroachments
-- Immediate registration possible
-
-This property is personally verified by our agents. Reach out for a free site visit.`,
-  totalPrice: 2250000,
-  pricePerCent: 150000,
-  address: 'Kottar, Near NH 44',
-  city: 'Nagercoil',
-  district: 'Kanyakumari',
-  state: 'Tamil Nadu',
-  pinCode: '629001',
-  areaInCents: 15,
-  areaInSqFt: 6534,
-  propertyType: 'open_land',
-  status: 'for_sale',
-  images: [],
-  features: ['Road Access', 'Clear Title', 'Near Market', 'Water Source', 'Electricity', 'Boundary Wall'],
-  agentId: 1,
-  createdAt: '2024-01-15',
-  updatedAt: '2024-01-15',
-  isFeatured: true,
-  isVerified: true,
-  roadAccess: true,
-  nearbyLandmarks: ['Nagercoil Railway Station (2 km)', 'KK Hospitals (1.5 km)', 'NH 44 (200 m)', 'City Bus Stand (800 m)'],
-  legalStatus: 'Clear – EC, Patta, Chitta available',
-  documents: [
-    {
-      id: 1, propertyId: 1, type: 'ec', name: 'EC for last 13 years (2010 – 2023)',
-      fileName: 'ec-2010-2023.pdf', fileUrl: 'https://www.africau.edu/images/default/sample.pdf',
-      fileSize: 248000, mimeType: 'application/pdf', isPublic: true, uploadedAt: '2024-01-10',
-    },
-    {
-      id: 2, propertyId: 1, type: 'patta', name: 'Patta Document',
-      fileName: 'patta.pdf', fileUrl: 'https://www.africau.edu/images/default/sample.pdf',
-      fileSize: 156000, mimeType: 'application/pdf', isPublic: true, uploadedAt: '2024-01-10',
-    },
-    {
-      id: 3, propertyId: 1, type: 'chitta', name: 'Chitta Extract',
-      fileName: 'chitta.pdf', fileUrl: 'https://www.africau.edu/images/default/sample.pdf',
-      fileSize: 98000, mimeType: 'application/pdf', isPublic: true, uploadedAt: '2024-01-10',
-    },
-    {
-      id: 4, propertyId: 1, type: 'layout', name: 'Survey & Layout Plan',
-      fileName: 'layout.jpg', fileUrl: 'https://images.unsplash.com/photo-1577415124269-fc1140a69e91?w=1200&q=80',
-      fileSize: 1240000, mimeType: 'image/jpeg', isPublic: true, uploadedAt: '2024-01-12',
-    },
-  ],
-}
-
 export default function PropertyDetailPage() {
-  const property = MOCK_PROPERTY
+  const { id } = useParams<{ id: string }>()
+  const propertyId = Number(id)
   const { user } = useAuth()
   const canSeeDocuments = user?.role === 'Admin' || user?.role === 'Employee'
+
+  const query = useQuery({
+    queryKey: ['property', propertyId],
+    queryFn: () => propertiesApi.getById(propertyId),
+    enabled: Number.isFinite(propertyId) && propertyId > 0,
+    staleTime: 60_000,
+  })
+
+  if (query.isLoading) {
+    return (
+      <main className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center text-gray-400">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-3" />
+          <p className="text-sm">Loading property…</p>
+        </div>
+      </main>
+    )
+  }
+  if (query.isError || !query.data) {
+    return (
+      <main className="min-h-screen flex items-center justify-center bg-gray-50 px-6">
+        <div className="max-w-md text-center">
+          <AlertCircle className="w-10 h-10 text-red-400 mx-auto mb-3" />
+          <h1 className="text-xl font-bold text-gray-900 mb-2">Property not found</h1>
+          <p className="text-sm text-gray-500 mb-4">
+            This listing may have been removed or you may need to{' '}
+            <Link to="/login" className="font-semibold underline" style={{ color: '#FF5A5F' }}>sign in</Link>{' '}
+            to view free listings.
+          </p>
+          <Link to="/properties" className="btn-primary inline-flex">
+            <ChevronLeft className="w-4 h-4" /> Browse all properties
+          </Link>
+        </div>
+      </main>
+    )
+  }
+  const property = query.data
 
   // SEO copy — concise summary the search engines + WhatsApp previews pick up
   const seoDescription =

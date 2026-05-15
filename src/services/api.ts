@@ -83,22 +83,46 @@ export interface PropertySubmission {
   submitterEmail?: string
 }
 
+/**
+ * Backend returns enum strings in PascalCase ("OpenLand", "ForSale") but the
+ * frontend's PropertyType / ListingStatus unions are snake_case. Normalise
+ * once at the API boundary so every consumer below sees a consistent shape.
+ */
+function normaliseProperty<T extends { propertyType?: string; status?: string }>(p: T): T {
+  const map: Record<string, string> = {
+    OpenLand: 'open_land',
+    LandWithBuilding: 'land_with_building',
+    Agricultural: 'agricultural',
+    Commercial: 'commercial',
+    ResidentialPlot: 'residential_plot',
+    ForSale: 'for_sale',
+    ForRent: 'for_rent',
+    Sold: 'sold',
+  }
+  return {
+    ...p,
+    propertyType: p.propertyType ? (map[p.propertyType] ?? p.propertyType.toLowerCase()) : p.propertyType,
+    status: p.status ? (map[p.status] ?? p.status.toLowerCase()) : p.status,
+  }
+}
+
 export const propertiesApi = {
   getAll: (filters?: PropertyFilters) =>
-    api.get<PaginatedResponse<Property>>('/properties', { params: filters }).then((r) => r.data),
+    api.get<PaginatedResponse<Property>>('/properties', { params: filters })
+       .then((r) => ({ ...r.data, data: r.data.data.map(normaliseProperty) })),
 
   /** Public seller/dealer submission (auto-pending). */
   submit: (data: PropertySubmission) =>
     api.post<Property>('/properties', data).then((r) => r.data),
 
   getById: (id: number) =>
-    api.get<Property>(`/properties/${id}`).then((r) => r.data),
+    api.get<Property>(`/properties/${id}`).then((r) => normaliseProperty(r.data)),
 
   getFeatured: () =>
-    api.get<Property[]>('/properties/featured').then((r) => r.data),
+    api.get<Property[]>('/properties/featured').then((r) => r.data.map(normaliseProperty)),
 
   getRelated: (id: number) =>
-    api.get<Property[]>(`/properties/${id}/related`).then((r) => r.data),
+    api.get<Property[]>(`/properties/${id}/related`).then((r) => r.data.map(normaliseProperty)),
 
   create: (data: Partial<Property>) =>
     api.post<Property>('/properties', data).then((r) => r.data),
