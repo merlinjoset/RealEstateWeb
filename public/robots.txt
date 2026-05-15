@@ -1,0 +1,21 @@
+# Jose For Land — robots.txt
+# Allows all major search-engine crawlers to index public pages.
+# Admin / auth flows are gated client-side too via SEO noindex tags.
+
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /admin/
+Disallow: /login
+Disallow: /register
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /profile
+Disallow: /favorites
+Disallow: /my-properties
+Disallow: /api/
+
+# Polite default for aggressive crawlers
+Crawl-delay: 1
+
+Sitemap: https://joseforland.com/sitemap.xml

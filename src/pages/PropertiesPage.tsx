@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { Search, SlidersHorizontal, X, Grid3X3, List, ChevronLeft, ChevronRight, Map as MapIcon } from 'lucide-react'
+import SEO from '../components/common/SEO'
 import PropertyCard from '../components/properties/PropertyCard'
 import type { Property } from '../types'
 
@@ -103,6 +104,11 @@ export default function PropertiesPage() {
 
   return (
     <main className="min-h-screen bg-gray-50">
+      <SEO
+        path="/properties"
+        title="Browse Land Listings"
+        description="Browse verified plots and land for sale across Kanyakumari district — Nagercoil, Marthandam, Thuckalay, Colachel and more. Filter by price, area, and type."
+      />
       <div className="bg-white border-b border-gray-200 sticky top-16 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
           <div className="flex items-center gap-3">

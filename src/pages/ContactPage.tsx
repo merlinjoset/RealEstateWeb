@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Phone, Mail, MapPin, MessageCircle, Send, Clock } from 'lucide-react'
 import PageHeader from '../components/layout/PageHeader'
+import SEO from '../components/common/SEO'
 
 function isIndianMobile(phone: string): boolean {
   const trimmed = phone.trim()
@@ -29,6 +30,11 @@ export default function ContactPage() {
 
   return (
     <main className="min-h-screen bg-gray-50">
+      <SEO
+        path="/contact"
+        title="Contact Us"
+        description="Talk to the Jose For Land team. Call 99944 88490 (Mon-Sat 9 AM - 7 PM) or WhatsApp us. Free doorstep consultation, transparent dealings."
+      />
       <PageHeader
         eyebrow="Get in touch"
         title="Contact Us"

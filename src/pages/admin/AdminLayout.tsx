@@ -9,6 +9,7 @@ import {
 import { useAuth } from '../../context/AuthContext'
 import { propertiesApi, inquiriesApi } from '../../services/api'
 import ConfirmDialog from '../../components/common/ConfirmDialog'
+import SEO from '../../components/common/SEO'
 import NotificationsBell from './NotificationsBell'
 
 // Sidebar items — badges are filled in below from live queries so the
@@ -132,6 +133,8 @@ export default function AdminLayout() {
 
   return (
     <div className="flex h-screen bg-gray-100 overflow-hidden">
+      {/* Keep the admin / employee workspace out of Google. */}
+      <SEO title="Workspace" noindex />
       <aside
         className={`fixed inset-y-0 left-0 z-50 w-64 bg-gray-900 text-white flex flex-col transition-transform duration-200 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'

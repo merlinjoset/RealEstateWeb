@@ -3,6 +3,7 @@ import {
   MapPin, Ruler, Phone, MessageCircle, Heart, ChevronLeft,
   CheckCircle, Home, FileText, Calendar, FolderOpen,
 } from 'lucide-react'
+import SEO from '../components/common/SEO'
 import PropertyGallery from '../components/properties/PropertyGallery'
 import { PropertyDocumentsView } from '../components/properties/PropertyDocuments'
 import PropertyDocumentsPublic from '../components/properties/PropertyDocumentsPublic'
@@ -82,8 +83,44 @@ export default function PropertyDetailPage() {
   const { user } = useAuth()
   const canSeeDocuments = user?.role === 'Admin' || user?.role === 'Employee'
 
+  // SEO copy — concise summary the search engines + WhatsApp previews pick up
+  const seoDescription =
+    `${property.areaInCents} cents ${property.propertyType === 'open_land' ? 'open land' : 'plot'} for sale ` +
+    `in ${property.city}, ${property.district}. ${formatLakhs(property.totalPrice)}.` +
+    (property.roadAccess ? ' Road access.' : '') +
+    (property.legalStatus ? ` ${property.legalStatus.slice(0, 60)}.` : '')
+
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: property.title,
+    description: property.description?.slice(0, 300),
+    image: property.images?.[0],
+    offers: {
+      '@type': 'Offer',
+      priceCurrency: 'INR',
+      price: property.totalPrice,
+      availability: property.status === 'sold'
+        ? 'https://schema.org/SoldOut'
+        : 'https://schema.org/InStock',
+    },
+    additionalProperty: [
+      { '@type': 'PropertyValue', name: 'Area (cents)', value: property.areaInCents },
+      { '@type': 'PropertyValue', name: 'City', value: property.city },
+      { '@type': 'PropertyValue', name: 'District', value: property.district },
+    ],
+  }
+
   return (
     <main className="min-h-screen bg-gray-50">
+      <SEO
+        path={`/properties/${property.id}`}
+        title={property.title}
+        description={seoDescription}
+        image={property.images?.[0]}
+        type="article"
+        jsonLd={jsonLd}
+      />
       <div className="bg-white border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center gap-2 text-sm text-gray-500">
           <Link to="/" className="hover:text-[#FF5A5F] transition-colors">Home</Link>

@@ -15,6 +15,11 @@ export default defineConfig({
         changeOrigin: true,
         secure: false, // accept the .NET self-signed dev cert
       },
+      // Production nginx rewrites these root paths to the backend so search
+      // engines see /sitemap.xml at the public domain. Mirror that in dev
+      // so we can hit the same URLs locally.
+      '/sitemap.xml':            { target: 'https://localhost:7080', changeOrigin: true, secure: false },
+      '/sitemap-properties.xml': { target: 'https://localhost:7080', changeOrigin: true, secure: false },
     },
   },
   // `vite preview` (used by `npm start` on Render) blocks unknown hosts by

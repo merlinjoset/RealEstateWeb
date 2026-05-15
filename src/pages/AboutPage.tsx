@@ -1,9 +1,15 @@
 import { Phone, Mail, MapPin, Star, Users, Home, Award } from 'lucide-react'
 import PageHeader from '../components/layout/PageHeader'
+import SEO from '../components/common/SEO'
 
 export default function AboutPage() {
   return (
     <main className="min-h-screen">
+      <SEO
+        path="/about"
+        title="About Us"
+        description="Kanyakumari's most trusted land property consultancy. A decade of local expertise — verified plots, free doorstep consultation, transparent dealings."
+      />
       <PageHeader
         eyebrow="About Us"
         title="About Jose For Land"
