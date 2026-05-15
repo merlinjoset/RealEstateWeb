@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { Link, Navigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import {
   ClipboardList, MessageSquare, MapPin, Phone, Calendar, Inbox,
@@ -29,6 +29,11 @@ function timeAgo(iso: string | null | undefined) {
 
 export default function MyWorkPage() {
   const { user } = useAuth()
+
+  // My Work is the Employee-only daily queue. If an Admin lands here via
+  // a stale link or typed URL, bounce them to their dashboard instead of
+  // showing them an empty page they shouldn't see.
+  if (user?.role === 'Admin') return <Navigate to="/admin" replace />
 
   const propertiesQuery = useQuery({
     queryKey: ['my-work', 'properties'],
