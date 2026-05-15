@@ -339,7 +339,7 @@ export default function AdminSettingsPage() {
                 </Row>
                 <ToggleRow
                   label="Show stats strip on home"
-                  desc="The 4-column stats bar (434+, 200+, 100%, 10+) below the hero"
+                  desc="The 4-column stats bar (Land Listings, Happy Clients, Locations, Years of Trust) below the hero"
                   checked={settings.showStatsStrip}
                   onChange={(v) => set('showStatsStrip', v)} />
                 <ToggleRow

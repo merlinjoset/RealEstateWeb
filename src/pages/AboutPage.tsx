@@ -1,8 +1,18 @@
+import { useQuery } from '@tanstack/react-query'
 import { Phone, Mail, MapPin, Star, Users, Home, Award } from 'lucide-react'
 import PageHeader from '../components/layout/PageHeader'
 import SEO from '../components/common/SEO'
+import { propertiesApi } from '../services/api'
 
 export default function AboutPage() {
+  const { data } = useQuery({
+    queryKey: ['properties-total'],
+    queryFn: () => propertiesApi.getAll({ page: 1, pageSize: 1, sortBy: 'newest' }),
+    staleTime: 5 * 60_000,
+  })
+  const total = data?.total ?? 0
+  const listingsLabel = total >= 100 ? `${total}+` : '400+'
+
   return (
     <main className="min-h-screen">
       <SEO
@@ -52,7 +62,7 @@ export default function AboutPage() {
 
             <div className="grid grid-cols-2 gap-4">
               {[
-                { icon: Home, value: '434+', label: 'Active Listings', bg: 'rgba(255,90,95,0.08)', color: '#FF5A5F' },
+                { icon: Home, value: listingsLabel, label: 'Active Listings', bg: 'rgba(255,90,95,0.08)', color: '#FF5A5F' },
                 { icon: Users, value: '500+', label: 'Happy Clients', bg: 'rgba(106,151,57,0.08)', color: '#6A9739' },
                 { icon: MapPin, value: '15+', label: 'Locations Covered', bg: 'rgba(255,90,95,0.08)', color: '#FF5A5F' },
                 { icon: Award, value: '10+', label: 'Years of Trust', bg: 'rgba(106,151,57,0.08)', color: '#6A9739' },

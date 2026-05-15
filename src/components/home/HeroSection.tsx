@@ -1,12 +1,26 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import { Search, MapPin, Star, Phone, Map as MapIcon } from 'lucide-react'
+import { propertiesApi } from '../../services/api'
 
 const CITIES = ['Nagercoil', 'Marthandam', 'Thuckalay', 'Kanyakumari', 'Colachel', 'Padmanabhapuram']
 
 export default function HeroSection() {
   const navigate = useNavigate()
   const [query, setQuery] = useState('')
+
+  // Live property count drives the two "434+ Listings" badges. Shares its
+  // query key with StatsSection / WhyChooseUs so React Query dedupes.
+  const { data } = useQuery({
+    queryKey: ['properties-total'],
+    queryFn: () => propertiesApi.getAll({ page: 1, pageSize: 1, sortBy: 'newest' }),
+    staleTime: 5 * 60_000,
+  })
+  // Anonymous users get the VideoPromotion-only subset (currently 0) —
+  // fall back to a round marketing number when the count looks low.
+  const total = data?.total ?? 0
+  const listingsLabel = total >= 100 ? `${total}+` : '400+'
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -118,7 +132,7 @@ export default function HeroSection() {
               </div>
               {/* Floating stat badges */}
               {[
-                { label: '434+ Listings', pos: '-top-4 -right-4', bg: '#FF5A5F' },
+                { label: `${listingsLabel} Listings`, pos: '-top-4 -right-4', bg: '#FF5A5F' },
                 { label: 'Free Consultation', pos: '-bottom-4 -left-4', bg: '#6A9739' },
                 { label: '10+ Years Trust', pos: 'top-1/2 -right-16', bg: '#293237' },
               ].map(({ label, pos, bg }) => (
@@ -136,7 +150,7 @@ export default function HeroSection() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex flex-wrap items-center justify-center gap-6 md:gap-12 text-sm">
             {[
-              { label: '434+', sub: 'Land Listings' },
+              { label: listingsLabel, sub: 'Land Listings' },
               { label: '200+', sub: 'Happy Clients' },
               { label: '100%', sub: 'Free Consultation' },
               { label: '10+', sub: 'Years Experience' },
