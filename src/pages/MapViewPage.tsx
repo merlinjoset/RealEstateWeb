@@ -189,6 +189,9 @@ export default function MapViewPage() {
     staleTime: 60_000,
   })
   const allProperties = query.data?.data ?? []
+  // Total approved properties in the DB — used in the "Showing 10 of N"
+  // label so users know how many we're capping below.
+  const totalInDb = query.data?.total ?? 0
 
   const filtered = useMemo(() => {
     return allProperties.filter(p => {
@@ -219,12 +222,16 @@ export default function MapViewPage() {
     })
   }, [allProperties, search, typeFilter, cityFilter, priceFilter, areaFilter])
 
-  // Cap the markers + sidebar at 10 so the map stays readable. Plotting all
-  // 400+ pins clutters the view and slows interactions on lower-end devices;
-  // power users can refine via search/filters to see specific properties.
+  // Cap the markers + sidebar at 10 so the map stays readable. The API
+  // is already asked for 10 (sorted by newest), so this slice is mostly
+  // defensive — it also handles the case where a future search/filter
+  // change widens the fetch.
   const MAP_VISIBLE_LIMIT = 10
   const visible = filtered.slice(0, MAP_VISIBLE_LIMIT)
-  const hiddenCount = Math.max(0, filtered.length - visible.length)
+  // "Hidden" = approved properties in the DB beyond the 10 we fetched.
+  // Compare against totalInDb (true count) rather than filtered.length,
+  // which never exceeds 10 because of the API pageSize.
+  const hiddenCount = Math.max(0, totalInDb - visible.length)
 
   const activeCount = [typeFilter, cityFilter, priceFilter, areaFilter].filter(Boolean).length
   const hasFilters = activeCount > 0 || search.trim().length > 0
@@ -380,8 +387,8 @@ export default function MapViewPage() {
           <div className="p-3 border-b border-gray-100 flex items-center justify-between">
             <p className="text-xs text-gray-500 font-medium">
               {hiddenCount > 0
-                ? `Showing ${visible.length} of ${filtered.length} properties`
-                : `${filtered.length} properties`}
+                ? `Showing ${visible.length} of ${totalInDb} properties`
+                : `${visible.length} properties`}
             </p>
             <button
               onClick={() => setListOpen(false)}
@@ -510,7 +517,7 @@ export default function MapViewPage() {
             style={{ color: '#FF5A5F' }}
           >
             <ListIcon className="w-4 h-4" />
-            {hiddenCount > 0 ? `${visible.length} of ${filtered.length}` : `${filtered.length} listings`}
+            {hiddenCount > 0 ? `${visible.length} of ${totalInDb}` : `${visible.length} listings`}
           </button>
 
           {/* Selected property side card */}
