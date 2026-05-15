@@ -179,13 +179,13 @@ export default function MapViewPage() {
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [listOpen, setListOpen] = useState(false)
 
-  // Pull a generous page of approved properties â€” the map view needs all of
-  // them in memory to plot pins, and 500 is well under the backend's default
-  // pageSize cap. Future scale: switch to a /map endpoint that returns
-  // {id, lat, lng, price, type, city} only.
+  // Map view shows only the 10 newest properties — keeps the pin density
+  // readable and the page light. We ask the API for exactly that page size
+  // so client-side filters work against the same 10 (no surprise extras
+  // appearing/disappearing as filters change).
   const query = useQuery({
     queryKey: ['map-properties'],
-    queryFn: () => propertiesApi.getAll({ page: 1, pageSize: 500, sortBy: 'newest' }),
+    queryFn: () => propertiesApi.getAll({ page: 1, pageSize: 10, sortBy: 'newest' }),
     staleTime: 60_000,
   })
   const allProperties = query.data?.data ?? []
