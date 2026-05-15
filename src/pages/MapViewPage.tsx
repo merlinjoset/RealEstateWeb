@@ -219,6 +219,13 @@ export default function MapViewPage() {
     })
   }, [allProperties, search, typeFilter, cityFilter, priceFilter, areaFilter])
 
+  // Cap the markers + sidebar at 10 so the map stays readable. Plotting all
+  // 400+ pins clutters the view and slows interactions on lower-end devices;
+  // power users can refine via search/filters to see specific properties.
+  const MAP_VISIBLE_LIMIT = 10
+  const visible = filtered.slice(0, MAP_VISIBLE_LIMIT)
+  const hiddenCount = Math.max(0, filtered.length - visible.length)
+
   const activeCount = [typeFilter, cityFilter, priceFilter, areaFilter].filter(Boolean).length
   const hasFilters = activeCount > 0 || search.trim().length > 0
 
@@ -371,7 +378,11 @@ export default function MapViewPage() {
             ${listOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}
         >
           <div className="p-3 border-b border-gray-100 flex items-center justify-between">
-            <p className="text-xs text-gray-500 font-medium">{filtered.length} properties</p>
+            <p className="text-xs text-gray-500 font-medium">
+              {hiddenCount > 0
+                ? `Showing ${visible.length} of ${filtered.length} properties`
+                : `${filtered.length} properties`}
+            </p>
             <button
               onClick={() => setListOpen(false)}
               className="md:hidden p-1 -m-1 text-gray-400 hover:text-gray-600"
@@ -381,7 +392,7 @@ export default function MapViewPage() {
             </button>
           </div>
           <div className="divide-y divide-gray-100">
-            {filtered.map((property) => (
+            {visible.map((property) => (
               <button
                 key={property.id}
                 onClick={() => {
@@ -445,7 +456,7 @@ export default function MapViewPage() {
 
             <MapFlyTo position={selectedPos} />
 
-            {filtered.map((property) => {
+            {visible.map((property) => {
               const pos = getPropertyCoords(property)
               const isSelected = selected?.id === property.id
               return (
@@ -499,7 +510,7 @@ export default function MapViewPage() {
             style={{ color: '#FF5A5F' }}
           >
             <ListIcon className="w-4 h-4" />
-            {filtered.length} listings
+            {hiddenCount > 0 ? `${visible.length} of ${filtered.length}` : `${filtered.length} listings`}
           </button>
 
           {/* Selected property side card */}

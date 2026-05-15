@@ -30,7 +30,7 @@ type NavItem = {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { to: '/admin/my-work', label: 'My Work', icon: Briefcase, roles: ['Admin', 'Employee'] },
+  { to: '/admin/my-work', label: 'My Work', icon: Briefcase, roles: ['Employee'] },
   { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, end: true, roles: ['Admin'] },
   { to: '/admin/properties', label: 'All Properties', icon: Home, roles: ['Admin'] },
   { to: '/admin/video-listings', label: 'Video Listings', icon: Video, badgeKey: 'video', roles: ['Admin'] },

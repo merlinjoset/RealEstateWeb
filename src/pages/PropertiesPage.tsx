@@ -59,6 +59,24 @@ export default function PropertiesPage() {
   const totalPages = query.data?.totalPages ?? 1
   const totalCount = query.data?.total ?? 0
 
+  // Windowed pagination — show at most MAX_PAGE_BUTTONS numbered buttons so
+  // the bar stays readable even with hundreds of pages. Center the window on
+  // the current page and clamp to the start/end.
+  const MAX_PAGE_BUTTONS = 10
+  const pageWindow: number[] = (() => {
+    if (totalPages <= MAX_PAGE_BUTTONS) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1)
+    }
+    const half = Math.floor(MAX_PAGE_BUTTONS / 2)
+    let start = Math.max(1, page - half)
+    let end = start + MAX_PAGE_BUTTONS - 1
+    if (end > totalPages) {
+      end = totalPages
+      start = end - MAX_PAGE_BUTTONS + 1
+    }
+    return Array.from({ length: end - start + 1 }, (_, i) => start + i)
+  })()
+
   const clearFilters = () => {
     setSearch('')
     setSelectedCity('')
@@ -252,7 +270,19 @@ export default function PropertiesPage() {
               <ChevronLeft className="w-4 h-4" />
             </button>
 
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
+            {pageWindow[0] > 1 && (
+              <>
+                <button
+                  onClick={() => setPage(1)}
+                  className="w-9 h-9 rounded-lg text-sm font-medium border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
+                >
+                  1
+                </button>
+                {pageWindow[0] > 2 && <span className="px-1 text-gray-400 text-sm">…</span>}
+              </>
+            )}
+
+            {pageWindow.map((n) => (
               <button
                 key={n}
                 onClick={() => setPage(n)}
@@ -266,6 +296,20 @@ export default function PropertiesPage() {
                 {n}
               </button>
             ))}
+
+            {pageWindow[pageWindow.length - 1] < totalPages && (
+              <>
+                {pageWindow[pageWindow.length - 1] < totalPages - 1 && (
+                  <span className="px-1 text-gray-400 text-sm">…</span>
+                )}
+                <button
+                  onClick={() => setPage(totalPages)}
+                  className="w-9 h-9 rounded-lg text-sm font-medium border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
+                >
+                  {totalPages}
+                </button>
+              </>
+            )}
 
             <button
               disabled={page === totalPages}

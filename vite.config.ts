@@ -20,6 +20,10 @@ export default defineConfig({
       // so we can hit the same URLs locally.
       '/sitemap.xml':            { target: 'https://localhost:7080', changeOrigin: true, secure: false },
       '/sitemap-properties.xml': { target: 'https://localhost:7080', changeOrigin: true, secure: false },
+      // Property images — stored under /media on the API. Property.Images
+      // values are relative ("/media/2026/05/foo.jpg") so they resolve via
+      // the page origin in both dev (here) and prod (nginx).
+      '/media':                  { target: 'https://localhost:7080', changeOrigin: true, secure: false },
     },
   },
   // `vite preview` (used by `npm start` on Render) blocks unknown hosts by

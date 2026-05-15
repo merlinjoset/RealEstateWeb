@@ -145,6 +145,19 @@ export default function Footer() {
             <Link to="/terms" className="hover:text-gray-300 transition-colors">Terms of Service</Link>
           </div>
         </div>
+
+        {/* Subtle credit — muted, smaller than the copyright row */}
+        <div className="mt-2 text-center text-[11px]" style={{ color: '#3a3a3a' }}>
+          Powered by{' '}
+          <a
+            href="http://merlinjose.tech"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-gray-400 transition-colors underline-offset-2 hover:underline"
+          >
+            Merlin Jose
+          </a>
+        </div>
       </div>
     </footer>
   )
