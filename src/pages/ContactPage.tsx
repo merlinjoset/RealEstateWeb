@@ -3,6 +3,7 @@ import { Phone, Mail, MapPin, MessageCircle, Send, Clock } from 'lucide-react'
 import PageHeader from '../components/layout/PageHeader'
 import SEO from '../components/common/SEO'
 import { formatIndianPhone } from '../utils/phone'
+import { isValidEmail, EMAIL_PATTERN } from '../utils/email'
 
 function isIndianMobile(phone: string): boolean {
   const trimmed = phone.trim()
@@ -19,11 +20,19 @@ export default function ContactPage() {
 
   const phoneIsIndian = isIndianMobile(form.phone)
   const emailRequired = !phoneIsIndian && form.phone.length > 0
+  // Email shows an invalid-format warning whenever the user has typed
+  // something that doesn't look like an email — silent while empty so we
+  // don't yell before they've finished typing.
+  const emailLooksInvalid = form.email.length > 0 && !isValidEmail(form.email)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (emailRequired && !form.email.trim()) {
       alert('Email is required for non-Indian phone numbers — we can only send SMS to Indian mobiles.')
+      return
+    }
+    if (form.email.trim() && !isValidEmail(form.email)) {
+      alert('Please enter a valid email address (e.g. you@example.com).')
       return
     }
     setSent(true)
@@ -159,15 +168,23 @@ export default function ContactPage() {
                             Required (non-Indian phone)
                           </span>
                         )}
+                        {emailLooksInvalid && (
+                          <span className="text-[11px] font-normal" style={{ color: '#B45309' }}>
+                            ⚠ Looks incomplete
+                          </span>
+                        )}
                       </label>
                       <input
                         required={emailRequired}
                         type="email"
+                        pattern={EMAIL_PATTERN}
                         value={form.email}
                         onChange={(e) => setForm({ ...form, email: e.target.value })}
                         placeholder="you@example.com"
                         className="input-field"
-                        style={emailRequired && !form.email ? { borderColor: '#F59E0B' } : undefined}
+                        style={(emailRequired && !form.email) || emailLooksInvalid
+                          ? { borderColor: '#F59E0B' }
+                          : undefined}
                       />
                     </div>
 

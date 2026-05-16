@@ -15,6 +15,7 @@ import {
   type UpdateUserPayload,
 } from '../../services/api'
 import { formatIndianPhone } from '../../utils/phone'
+import { isValidEmail, EMAIL_PATTERN } from '../../utils/email'
 
 const ROLE_BADGE: Record<AdminUserRole, { bg: string; color: string; label: string }> = {
   Admin:    { bg: 'rgba(255,90,95,0.10)',  color: '#FF5A5F', label: 'Admin' },
@@ -446,10 +447,19 @@ export default function AdminUsersPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Email *</label>
-                <input required type="email" value={form.email}
+                <label className="text-sm font-medium text-gray-700 mb-1.5 flex items-center justify-between">
+                  <span>Email *</span>
+                  {form.email.length > 0 && !isValidEmail(form.email) && (
+                    <span className="text-[11px] font-normal" style={{ color: '#B45309' }}>
+                      ⚠ Looks incomplete
+                    </span>
+                  )}
+                </label>
+                <input required type="email" pattern={EMAIL_PATTERN} value={form.email}
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  className="input-field" placeholder="user@example.com" />
+                  className="input-field" placeholder="user@example.com"
+                  style={form.email.length > 0 && !isValidEmail(form.email)
+                    ? { borderColor: '#F59E0B' } : undefined} />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

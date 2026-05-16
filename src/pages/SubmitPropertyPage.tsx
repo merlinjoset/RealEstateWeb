@@ -11,6 +11,7 @@ import LocationPicker from '../components/properties/LocationPicker'
 import MarketingPlanPicker from '../components/properties/MarketingPlanPicker'
 import { propertiesApi, type PropertySubmission } from '../services/api'
 import { formatIndianPhone } from '../utils/phone'
+import { isValidEmail, EMAIL_PATTERN } from '../utils/email'
 import type { MarketingPlan } from '../types'
 
 const CITIES = [
@@ -117,6 +118,8 @@ export default function SubmitPropertyPage() {
 
   const phoneIsIndian = isIndianMobile(form.submitterPhone)
   const emailRequired = !phoneIsIndian && form.submitterPhone.length > 0
+  // Flag visibly incomplete emails — silent while the field is empty.
+  const emailLooksInvalid = form.submitterEmail.length > 0 && !isValidEmail(form.submitterEmail)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -272,20 +275,23 @@ export default function SubmitPropertyPage() {
 
             <Field
               label={emailRequired ? 'Email *' : 'Email (optional)'}
-              hint={emailRequired
-                ? 'We can only deliver SMS to Indian mobiles, so please share an email'
-                : 'Get a copy of your submission by email'}>
+              hint={emailLooksInvalid
+                ? '⚠ That doesn’t look like a valid email (e.g. you@example.com)'
+                : emailRequired
+                  ? 'We can only deliver SMS to Indian mobiles, so please share an email'
+                  : 'Get a copy of your submission by email'}>
               <div className="relative">
                 <Mail className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input
                   id="submitter-email"
                   required={emailRequired}
                   type="email"
+                  pattern={EMAIL_PATTERN}
                   value={form.submitterEmail}
                   onChange={(e) => set('submitterEmail', e.target.value)}
                   className="input-field pl-10"
                   placeholder="you@example.com"
-                  style={emailRequired && !form.submitterEmail
+                  style={(emailRequired && !form.submitterEmail) || emailLooksInvalid
                     ? { borderColor: '#F59E0B' } : undefined} />
               </div>
             </Field>
