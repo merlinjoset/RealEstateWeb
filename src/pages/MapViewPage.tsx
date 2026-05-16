@@ -375,6 +375,82 @@ export default function MapViewPage() {
         </div>
       </div>
 
+      {/* Selected-property banner — flows above the map row when something
+          is selected, so the details sit out of the map area entirely
+          instead of overlaying pins. Horizontal layout on desktop, wraps
+          gracefully on small screens. */}
+      {selected && (
+        <div className="bg-white border-b border-gray-200">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+            <div className="flex items-center gap-4 flex-wrap">
+              <div className="flex-1 min-w-[200px]">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="font-bold text-gray-900 text-sm leading-tight">{selected.title}</h3>
+                  <span className="text-xs px-2 py-0.5 rounded-full text-white whitespace-nowrap"
+                    style={{ backgroundColor: TYPE_COLORS[selected.propertyType] }}>
+                    {TYPE_LABELS[selected.propertyType]}
+                  </span>
+                  {selected.isVerified && (
+                    <span className="text-xs px-2 py-0.5 rounded-full whitespace-nowrap"
+                      style={{ backgroundColor: 'rgba(106,151,57,0.1)', color: '#6A9739' }}>
+                      ✓ Verified
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-1 text-gray-500 text-xs mt-1">
+                  <MapPin className="w-3 h-3" />
+                  {selected.city}, Kanyakumari Dist.
+                </div>
+              </div>
+
+              <div className="text-right">
+                <div className="text-lg font-bold leading-none" style={{ color: '#FF5A5F' }}>
+                  {formatLakhs(selected.totalPrice)}
+                </div>
+                {selected.pricePerCent && (
+                  <div className="text-[11px] text-gray-500 mt-0.5">{formatLakhs(selected.pricePerCent)}/cent</div>
+                )}
+              </div>
+
+              <div className="text-right border-l border-gray-200 pl-4">
+                <div className="text-sm font-semibold text-gray-900 leading-none">{selected.areaInCents} cents</div>
+                <div className="text-[11px] text-gray-500 mt-0.5">Total area</div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <a
+                  href="tel:+919994488490"
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold text-white transition-colors"
+                  style={{ backgroundColor: '#FF5A5F' }}
+                  onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#e04a4f')}
+                  onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#FF5A5F')}
+                >
+                  <Phone className="w-3.5 h-3.5" />
+                  Call
+                </a>
+                <Link
+                  to={`/properties/${selected.id}`}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold border transition-colors"
+                  style={{ borderColor: '#6A9739', color: '#6A9739' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(106,151,57,0.08)' }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent' }}
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  Details
+                </Link>
+                <button
+                  onClick={() => setSelected(null)}
+                  className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg"
+                  aria-label="Clear selection"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col md:flex-row h-[70vh] md:h-[calc(100vh-180px)] min-h-[480px] relative">
         {/* Left sidebar â€” property list (drawer on mobile) */}
         <div
@@ -519,87 +595,6 @@ export default function MapViewPage() {
             <ListIcon className="w-4 h-4" />
             {hiddenCount > 0 ? `${visible.length} of ${totalInDb}` : `${visible.length} listings`}
           </button>
-
-          {/* Selected property card — sits above the map (top-centered) so
-              it doesn't fight with pins on the right edge of the viewport.
-              On mobile it stays pinned to the bottom where the user's thumb
-              is already hovering. */}
-          {selected && (
-            <div
-              className="absolute z-[1000] bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden
-                left-3 right-3 bottom-3
-                md:left-1/2 md:right-auto md:top-4 md:bottom-auto md:w-80 md:-translate-x-1/2"
-            >
-              <div className="p-4">
-                <div className="flex items-start justify-between gap-2 mb-3">
-                  <div>
-                    <h3 className="font-bold text-gray-900 text-sm leading-tight">{selected.title}</h3>
-                    <div className="flex items-center gap-1 text-gray-500 text-xs mt-0.5">
-                      <MapPin className="w-3 h-3" />
-                      {selected.city}, Kanyakumari Dist.
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => setSelected(null)}
-                    className="shrink-0 p-1 text-gray-400 hover:text-gray-600 rounded"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="text-xs px-2 py-0.5 rounded-full text-white"
-                    style={{ backgroundColor: TYPE_COLORS[selected.propertyType] }}>
-                    {TYPE_LABELS[selected.propertyType]}
-                  </span>
-                  {selected.isVerified && (
-                    <span className="text-xs px-2 py-0.5 rounded-full"
-                      style={{ backgroundColor: 'rgba(106,151,57,0.1)', color: '#6A9739' }}>
-                      âœ“ Verified
-                    </span>
-                  )}
-                </div>
-
-                <div className="flex items-end justify-between mb-4">
-                  <div>
-                    <div className="text-2xl font-bold" style={{ color: '#FF5A5F' }}>
-                      {formatLakhs(selected.totalPrice)}
-                    </div>
-                    {selected.pricePerCent && (
-                      <div className="text-xs text-gray-500">{formatLakhs(selected.pricePerCent)}/cent</div>
-                    )}
-                  </div>
-                  <div className="text-right">
-                    <div className="text-sm font-semibold text-gray-900">{selected.areaInCents} cents</div>
-                    <div className="text-xs text-gray-500">Total area</div>
-                  </div>
-                </div>
-
-                <div className="flex gap-2">
-                  <a
-                    href="tel:+919994488490"
-                    className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-semibold text-white transition-colors"
-                    style={{ backgroundColor: '#FF5A5F' }}
-                    onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#e04a4f')}
-                    onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#FF5A5F')}
-                  >
-                    <Phone className="w-3.5 h-3.5" />
-                    Call
-                  </a>
-                  <Link
-                    to={`/properties/${selected.id}`}
-                    className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-semibold border transition-colors"
-                    style={{ borderColor: '#6A9739', color: '#6A9739' }}
-                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(106,151,57,0.08)' }}
-                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent' }}
-                  >
-                    <ExternalLink className="w-3.5 h-3.5" />
-                    Details
-                  </Link>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* Legend (hidden on mobile to free up screen space) */}
           <div className="hidden md:block absolute bottom-4 left-4 bg-white rounded-xl shadow-md border border-gray-100 p-3 z-[1000]">
