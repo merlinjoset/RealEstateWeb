@@ -135,6 +135,7 @@ export interface PropertyFilters {
   minAreaCents?: number
   maxAreaCents?: number
   roadAccess?: boolean
+  marketingPlan?: 'Free' | 'VideoPromotion'
   sortBy?: 'price_asc' | 'price_desc' | 'newest' | 'oldest' | 'area_asc' | 'area_desc'
   page?: number
   pageSize?: number

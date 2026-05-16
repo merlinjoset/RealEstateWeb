@@ -1,9 +1,11 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import {
   Video, MapPin, Ruler, Phone, User, Calendar, IndianRupee,
-  Sparkles, ExternalLink, Search, ChevronRight,
+  Sparkles, ExternalLink, Search, ChevronRight, Loader2, AlertCircle,
 } from 'lucide-react'
+import { propertiesApi } from '../../services/api'
 import { VIDEO_PROMOTION_FEE_RATE, type MarketingPlan } from '../../types'
 
 /**
@@ -46,12 +48,6 @@ const STAGE_META: Record<VideoStage, { label: string; color: string; bg: string 
   sold:            { label: 'Sold · 2% earned', color: '#FF5A5F', bg: 'rgba(255,90,95,0.10)' },
 }
 
-// Empty by design — no Video Promotion properties exist yet. Once sellers
-// start opting into the paid tier on /sell, this page can switch to
-// useQuery(propertiesApi.getAll({ marketingPlan: 'VideoPromotion' })) once
-// the backend grows a videoStage field to drive the stage picker below.
-const MOCK_VIDEOS: VideoListing[] = []
-
 const STAGE_FILTERS: Array<{ value: VideoStage | 'all'; label: string }> = [
   { value: 'all', label: 'All' },
   { value: 'awaiting_shoot', label: 'Awaiting shoot' },
@@ -62,14 +58,63 @@ const STAGE_FILTERS: Array<{ value: VideoStage | 'all'; label: string }> = [
 ]
 
 export default function AdminVideoListingsPage() {
-  const [items, setItems] = useState<VideoListing[]>(MOCK_VIDEOS)
   const [search, setSearch] = useState('')
   const [stage, setStage] = useState<VideoStage | 'all'>('all')
+  // Client-side stage overrides. Backend doesn't track production stage
+  // yet, so changes here are lost on reload — kept around so the admin
+  // can at least sort the queue visually during a shoot day. Replace
+  // with PATCH /api/properties/:id once the backend grows a videoStage.
+  const [stageOverrides, setStageOverrides] = useState<Record<number, VideoStage>>({})
 
-  /** Updates the production stage of a listing. When the API is wired,
-   *  this should call PATCH /api/properties/:id with the new stage. */
+  // /api/properties returns only Approved listings, but admins need to see
+  // pending Video-Promotion submissions in here too so they can plan the
+  // shoot before approval goes through. Fetch both buckets and merge.
+  const approvedQuery = useQuery({
+    queryKey: ['admin-video-listings', 'approved'],
+    queryFn: () => propertiesApi.getAll({ marketingPlan: 'VideoPromotion', pageSize: 200, sortBy: 'newest' }),
+    refetchInterval: 60_000,
+    staleTime: 30_000,
+  })
+  const pendingQuery = useQuery({
+    queryKey: ['admin-video-listings', 'pending'],
+    queryFn: propertiesApi.getPending,
+    refetchInterval: 60_000,
+    staleTime: 30_000,
+  })
+  const query = {
+    isLoading: approvedQuery.isLoading || pendingQuery.isLoading,
+    isError:   approvedQuery.isError   || pendingQuery.isError,
+    refetch:   () => { approvedQuery.refetch(); pendingQuery.refetch() },
+  }
+
+  const items: VideoListing[] = useMemo(() => {
+    const approved = approvedQuery.data?.data ?? []
+    const pendingAll = Array.isArray(pendingQuery.data) ? pendingQuery.data : []
+    const pendingVp = pendingAll.filter((p) => p.marketingPlan === 'VideoPromotion')
+    // Dedupe by id in case the same property somehow appears in both buckets.
+    const seen = new Set<number>()
+    const data = [...pendingVp, ...approved].filter((p) => {
+      if (seen.has(p.id)) return false
+      seen.add(p.id)
+      return true
+    })
+    return data.map((p) => ({
+      id: p.id,
+      title: p.title,
+      city: p.city,
+      areaInCents: p.areaInCents,
+      totalPrice: p.totalPrice,
+      propertyType: p.propertyType,
+      submittedBy: p.submittedByName ?? '(unknown)',
+      submitterPhone: p.submittedByPhone ?? '',
+      submittedAt: p.createdAt,
+      stage: stageOverrides[p.id] ?? 'awaiting_shoot',
+      marketingPlan: 'VideoPromotion' as MarketingPlan,
+    }))
+  }, [approvedQuery.data, pendingQuery.data, stageOverrides])
+
   const updateStage = (id: number, next: VideoStage) =>
-    setItems((prev) => prev.map((p) => (p.id === id ? { ...p, stage: next } : p)))
+    setStageOverrides((prev) => ({ ...prev, [id]: next }))
 
   const filtered = useMemo(
     () => items.filter((p) => {
@@ -168,7 +213,20 @@ export default function AdminVideoListingsPage() {
       </div>
 
       {/* Listings */}
-      {filtered.length === 0 ? (
+      {query.isLoading ? (
+        <div className="bg-white rounded-xl p-10 text-center shadow-sm border border-gray-100">
+          <Loader2 className="w-8 h-8 text-gray-300 animate-spin mx-auto mb-3" />
+          <p className="text-sm text-gray-500">Loading video listings…</p>
+        </div>
+      ) : query.isError ? (
+        <div className="bg-white rounded-xl p-10 text-center shadow-sm border border-gray-100">
+          <AlertCircle className="w-8 h-8 text-red-400 mx-auto mb-3" />
+          <p className="text-sm font-semibold text-red-600 mb-2">Couldn’t load video listings.</p>
+          <button onClick={() => query.refetch()} className="text-xs font-semibold underline" style={{ color: '#FF5A5F' }}>
+            Try again
+          </button>
+        </div>
+      ) : filtered.length === 0 ? (
         <div className="bg-white rounded-xl p-10 text-center shadow-sm border border-gray-100">
           <Video className="w-10 h-10 text-gray-300 mx-auto mb-3" />
           <p className="text-sm font-semibold text-gray-700">No video listings in this view</p>
