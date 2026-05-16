@@ -60,7 +60,10 @@ export default function Navbar() {
       </div>
 
       {/* Main navbar — white */}
-      <nav className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
+      {/* z-index has to clear the leaflet map panes (up to z-1000) plus our
+          own map overlays (sidebar drawer at z-[1100]), otherwise the navbar
+          and its dropdown get clipped by map content on /map. */}
+      <nav className="sticky top-0 z-[1200] bg-white border-b border-gray-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
 
@@ -116,7 +119,10 @@ export default function Navbar() {
                     <ChevronDown className="w-4 h-4 text-gray-400" />
                   </button>
                   {userMenuOpen && (
-                    <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50">
+                    // Leaflet panes stack up to ~z-1000 on the map page, so a
+                    // bare z-50 lets the map clip the dropdown. Lift it above
+                    // every overlay the app paints on top of the map.
+                    <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-[1200]">
                       {/* Identity header */}
                       <div className="px-4 py-3 border-b border-gray-100">
                         <div className="text-sm font-semibold text-gray-900 truncate">

@@ -520,12 +520,15 @@ export default function MapViewPage() {
             {hiddenCount > 0 ? `${visible.length} of ${totalInDb}` : `${visible.length} listings`}
           </button>
 
-          {/* Selected property side card */}
+          {/* Selected property card — sits above the map (top-centered) so
+              it doesn't fight with pins on the right edge of the viewport.
+              On mobile it stays pinned to the bottom where the user's thumb
+              is already hovering. */}
           {selected && (
             <div
               className="absolute z-[1000] bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden
                 left-3 right-3 bottom-3
-                md:left-auto md:right-4 md:top-4 md:bottom-auto md:w-72"
+                md:left-1/2 md:right-auto md:top-4 md:bottom-auto md:w-80 md:-translate-x-1/2"
             >
               <div className="p-4">
                 <div className="flex items-start justify-between gap-2 mb-3">
