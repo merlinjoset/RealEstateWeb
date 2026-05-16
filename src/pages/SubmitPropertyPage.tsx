@@ -79,21 +79,6 @@ function formatLakhs(v: string) {
   return `₹${n.toLocaleString('en-IN')}`
 }
 
-/**
- * Returns true if the phone number is reachable by our Indian SMS provider.
- * Accepts: +91XXXXXXXXXX, 91XXXXXXXXXX, or a bare 10-digit number.
- * Anything else (e.g. +1, +44, +971) requires an email fallback because our
- * SMS gateway only delivers to Indian carriers.
- */
-function isIndianMobile(phone: string): boolean {
-  const trimmed = phone.trim()
-  if (!trimmed) return false
-  // If a + is present, only +91 is allowed
-  if (trimmed.startsWith('+')) return trimmed.startsWith('+91')
-  const digits = trimmed.replace(/\D/g, '')
-  if (digits.startsWith('91') && digits.length === 12) return true
-  return digits.length === 10
-}
 
 export default function SubmitPropertyPage() {
   const [form, setForm] = useState<FormState>(INITIAL)

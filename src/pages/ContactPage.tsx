@@ -4,15 +4,6 @@ import PageHeader from '../components/layout/PageHeader'
 import SEO from '../components/common/SEO'
 import { isValidEmail, EMAIL_PATTERN } from '../utils/email'
 
-function isIndianMobile(phone: string): boolean {
-  const trimmed = phone.trim()
-  if (!trimmed) return false
-  if (trimmed.startsWith('+')) return trimmed.startsWith('+91')
-  const digits = trimmed.replace(/\D/g, '')
-  if (digits.startsWith('91') && digits.length === 12) return true
-  return digits.length === 10
-}
-
 export default function ContactPage() {
   const [form, setForm] = useState({ name: '', phone: '', email: '', message: '', contact: 'phone' as 'phone' | 'whatsapp' })
   const [sent, setSent] = useState(false)
