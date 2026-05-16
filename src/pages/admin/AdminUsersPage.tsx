@@ -14,7 +14,7 @@ import {
   type CreateUserPayload,
   type UpdateUserPayload,
 } from '../../services/api'
-import { formatIndianPhone } from '../../utils/phone'
+import { sanitiseIndianMobile } from '../../utils/phone'
 import { isValidEmail, EMAIL_PATTERN } from '../../utils/email'
 
 const ROLE_BADGE: Record<AdminUserRole, { bg: string; color: string; label: string }> = {
@@ -42,7 +42,7 @@ interface FormState {
 }
 
 const EMPTY_FORM: FormState = {
-  firstName: '', lastName: '', email: '', phone: '+91 ', city: '',
+  firstName: '', lastName: '', email: '', phone: '', city: '',
   role: 'Employee', isActive: true, password: '',
 }
 
@@ -465,14 +465,17 @@ export default function AdminUsersPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">Phone *</label>
-                  <input required type="tel" value={form.phone}
-                    // Auto-format to "+91 XXXXX XXXXX" and cap at 10 local digits.
-                    // See utils/phone.ts — shared with Contact + Submit Property.
-                    inputMode="tel"
-                    pattern="\+91 \d{0,5}( \d{0,5})?"
-                    maxLength={15}
-                    onChange={(e) => setForm({ ...form, phone: formatIndianPhone(e.target.value) })}
-                    className="input-field" placeholder="+91 XXXXX XXXXX" />
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-medium pointer-events-none">
+                      +91
+                    </span>
+                    <input required type="tel" value={form.phone}
+                      inputMode="numeric"
+                      pattern="\d{10}"
+                      maxLength={10}
+                      onChange={(e) => setForm({ ...form, phone: sanitiseIndianMobile(e.target.value) })}
+                      className="input-field pl-12" placeholder="9876543210" />
+                  </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">City</label>

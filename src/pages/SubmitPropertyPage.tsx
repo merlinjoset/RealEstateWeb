@@ -10,7 +10,7 @@ import PageHeader from '../components/layout/PageHeader'
 import LocationPicker from '../components/properties/LocationPicker'
 import MarketingPlanPicker from '../components/properties/MarketingPlanPicker'
 import { propertiesApi, type PropertySubmission } from '../services/api'
-import { formatIndianPhone } from '../utils/phone'
+import { sanitiseIndianMobile } from '../utils/phone'
 import { isValidEmail, EMAIL_PATTERN } from '../utils/email'
 import type { MarketingPlan } from '../types'
 
@@ -61,9 +61,9 @@ interface FormState {
 }
 
 const INITIAL: FormState = {
-  // Phone defaults to "+91 " so Indian users (the vast majority) don't have
-  // to type the country code. Matches the same default in RegisterPage.
-  submitterName: '', submitterPhone: '+91 ', submitterEmail: '',
+  // Phone is the bare 10-digit local number — the +91 country code is
+  // shown as a visual prefix next to the input, not stored in the value.
+  submitterName: '', submitterPhone: '', submitterEmail: '',
   title: '', description: '', propertyType: 'open_land',
   totalPrice: '', areaInCents: '', city: '', address: '', pinCode: '',
   legalStatus: '', roadAccess: false, features: [],
@@ -116,8 +116,10 @@ export default function SubmitPropertyPage() {
     onSuccess: (created) => setSubmittedId(created.id),
   })
 
-  const phoneIsIndian = isIndianMobile(form.submitterPhone)
-  const emailRequired = !phoneIsIndian && form.submitterPhone.length > 0
+  // With the input constrained to exactly 10 digits and the +91 prefix
+  // shown as a static label, the phone is always Indian by construction.
+  // Email becomes a pure optional field.
+  const emailRequired = false
   // Flag visibly incomplete emails — silent while the field is empty.
   const emailLooksInvalid = form.submitterEmail.length > 0 && !isValidEmail(form.submitterEmail)
 
@@ -252,22 +254,26 @@ export default function SubmitPropertyPage() {
                   className="input-field" placeholder="e.g. Rajan Kumar" />
               </Field>
               <Field label="Phone Number *"
-                hint={form.submitterPhone && !phoneIsIndian
-                  ? '⚠ Non-Indian number — email required'
+                hint={form.submitterPhone.length > 0 && form.submitterPhone.length < 10
+                  ? `⚠ Need ${10 - form.submitterPhone.length} more digit${10 - form.submitterPhone.length === 1 ? '' : 's'}`
                   : 'We will send a confirmation SMS'}>
                 <div className="relative">
-                  <Phone className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  {/* "+91" prefix label — static, sits inside the field's
+                      left padding so the input itself only handles the
+                      10-digit local number. */}
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-medium pointer-events-none">
+                    +91
+                  </span>
                   <input required type="tel" value={form.submitterPhone}
-                    // Auto-format any input into "+91 XXXXX XXXXX" and hard-cap
-                    // at 10 local digits via formatIndianPhone — see utils/phone.ts.
-                    // pattern + maxLength are belt-and-suspenders; the JS path
-                    // does the actual work.
-                    inputMode="tel"
-                    pattern="\+91 \d{0,5}( \d{0,5})?"
-                    maxLength={15}
-                    onChange={(e) => set('submitterPhone', formatIndianPhone(e.target.value))}
-                    className="input-field pl-10" placeholder="+91 XXXXX XXXXX"
-                    style={form.submitterPhone && !phoneIsIndian
+                    inputMode="numeric"
+                    pattern="\d{10}"
+                    maxLength={10}
+                    // Strip everything except digits + cap at 10. The util
+                    // also drops a leading "91" if the user pasted a number
+                    // with a "+" (E.164 / "+91 ..." format).
+                    onChange={(e) => set('submitterPhone', sanitiseIndianMobile(e.target.value))}
+                    className="input-field pl-12" placeholder="9876543210"
+                    style={form.submitterPhone.length > 0 && form.submitterPhone.length < 10
                       ? { borderColor: '#F59E0B' } : undefined} />
                 </div>
               </Field>
