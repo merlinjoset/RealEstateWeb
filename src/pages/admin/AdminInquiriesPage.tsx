@@ -280,10 +280,16 @@ export default function AdminInquiriesPage() {
                   const ContactIcon = CONTACT_ICON(i.preferredContact)
                   const isActive = selected?.id === i.id
                   return (
-                    <button
+                    // div rather than button — we now nest <Link>s for the
+                    // property Edit/View shortcuts, and <a> inside <button>
+                    // is invalid HTML (and triggers a React warning).
+                    <div
                       key={i.id}
+                      role="button"
+                      tabIndex={0}
                       onClick={() => openInquiry(i)}
-                      className="w-full text-left p-4 hover:bg-gray-50 transition-colors"
+                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openInquiry(i) } }}
+                      className="w-full text-left p-4 hover:bg-gray-50 transition-colors cursor-pointer"
                       style={isActive ? { backgroundColor: 'rgba(106,151,57,0.05)' } : {}}>
                       <div className="flex items-start gap-3">
                         <div className="shrink-0 mt-1.5">
@@ -315,8 +321,37 @@ export default function AdminInquiriesPage() {
                           </div>
 
                           {i.propertyTitle && (
-                            <div className="text-[11px] mb-1.5" style={{ color: '#6A9739' }}>
-                              re: {i.propertyTitle}
+                            <div className="text-[11px] mb-1.5 flex items-center gap-1.5 flex-wrap"
+                              style={{ color: '#6A9739' }}>
+                              {i.propertyId != null && (
+                                <span className="font-bold tabular-nums px-1.5 rounded"
+                                  style={{ backgroundColor: 'rgba(106,151,57,0.12)' }}>
+                                  #{i.propertyId}
+                                </span>
+                              )}
+                              <span className="truncate">re: {i.propertyTitle}</span>
+                              {i.propertyId != null && !isEmployee && (
+                                <>
+                                  {/* Inline shortcuts so admin can jump straight from
+                                      the inquiry list to the linked property without
+                                      opening the detail panel first. */}
+                                  <Link
+                                    to={`/admin/edit-property/${i.propertyId}`}
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="text-[10px] font-bold uppercase tracking-wider hover:underline"
+                                    style={{ color: '#B45309' }}>
+                                    Edit
+                                  </Link>
+                                  <Link
+                                    to={`/properties/${i.propertyId}`}
+                                    target="_blank"
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="text-[10px] font-bold uppercase tracking-wider hover:underline"
+                                    style={{ color: '#4F46E5' }}>
+                                    View
+                                  </Link>
+                                </>
+                              )}
                             </div>
                           )}
 
@@ -333,7 +368,7 @@ export default function AdminInquiriesPage() {
                           </p>
                         </div>
                       </div>
-                    </button>
+                    </div>
                   )
                 })}
               </div>
@@ -441,20 +476,47 @@ export default function AdminInquiriesPage() {
                   </div>
                 </div>
 
-                {/* Linked property */}
+                {/* Linked property — explicit Edit + View Details buttons so
+                    admins can act on the property without leaving the inquiry. */}
                 {selected.propertyId && (
-                  <Link to={`/properties/${selected.propertyId}`} target="_blank"
-                    className="flex items-center gap-3 p-3 rounded-xl border transition-all"
+                  <div className="flex items-center gap-3 p-3 rounded-xl border"
                     style={{ borderColor: 'rgba(106,151,57,0.3)', backgroundColor: 'rgba(106,151,57,0.05)' }}>
                     <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
                       style={{ backgroundColor: '#6A9739', color: 'white' }}>
                       <MapPin className="w-4 h-4" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-[10px] uppercase tracking-wider font-semibold" style={{ color: '#6A9739' }}>About Property</div>
+                      <div className="text-[10px] uppercase tracking-wider font-semibold flex items-center gap-2"
+                        style={{ color: '#6A9739' }}>
+                        About Property
+                        <span className="font-bold tabular-nums px-1.5 rounded text-gray-700"
+                          style={{ backgroundColor: 'rgba(106,151,57,0.15)' }}>
+                          #{selected.propertyId}
+                        </span>
+                      </div>
                       <div className="text-sm font-medium text-gray-900 truncate">{selected.propertyTitle}</div>
                     </div>
-                  </Link>
+                    {!isEmployee && (
+                      <Link
+                        to={`/admin/edit-property/${selected.propertyId}`}
+                        className="shrink-0 inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition-colors"
+                        style={{ borderColor: '#B45309', color: '#B45309' }}
+                        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(245,158,11,0.08)' }}
+                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent' }}>
+                        Edit
+                      </Link>
+                    )}
+                    <Link
+                      to={`/properties/${selected.propertyId}`}
+                      target="_blank"
+                      className="shrink-0 inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-white transition-colors"
+                      style={{ backgroundColor: '#6A9739' }}
+                      onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#547a2d')}
+                      onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#6A9739')}>
+                      <ExternalLink className="w-3 h-3" />
+                      View Details
+                    </Link>
+                  </div>
                 )}
 
                 {/* Message */}
