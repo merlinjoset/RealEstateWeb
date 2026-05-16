@@ -59,7 +59,9 @@ interface FormState {
 }
 
 const INITIAL: FormState = {
-  submitterName: '', submitterPhone: '', submitterEmail: '',
+  // Phone defaults to "+91 " so Indian users (the vast majority) don't have
+  // to type the country code. Matches the same default in RegisterPage.
+  submitterName: '', submitterPhone: '+91 ', submitterEmail: '',
   title: '', description: '', propertyType: 'open_land',
   totalPrice: '', areaInCents: '', city: '', address: '', pinCode: '',
   legalStatus: '', roadAccess: false, features: [],
@@ -252,7 +254,19 @@ export default function SubmitPropertyPage() {
                 <div className="relative">
                   <Phone className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                   <input required type="tel" value={form.submitterPhone}
-                    onChange={(e) => set('submitterPhone', e.target.value)}
+                    // Allow only digits, "+" and spaces — block letters and
+                    // punctuation as the user types. Combined with the HTML5
+                    // `pattern` attribute below, this catches both casual
+                    // typos and malformed paste-ins (e.g. "+91 (98)765-4321").
+                    // maxLength is generous (covers "+91 XXXXX XXXXX" plus a
+                    // little headroom for international numbers).
+                    inputMode="tel"
+                    pattern="[+\d\s]*"
+                    maxLength={20}
+                    onChange={(e) => {
+                      const cleaned = e.target.value.replace(/[^+\d\s]/g, '').slice(0, 20)
+                      set('submitterPhone', cleaned)
+                    }}
                     className="input-field pl-10" placeholder="+91 XXXXX XXXXX"
                     style={form.submitterPhone && !phoneIsIndian
                       ? { borderColor: '#F59E0B' } : undefined} />

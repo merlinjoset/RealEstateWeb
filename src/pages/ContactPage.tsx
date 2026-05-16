@@ -13,7 +13,7 @@ function isIndianMobile(phone: string): boolean {
 }
 
 export default function ContactPage() {
-  const [form, setForm] = useState({ name: '', phone: '', email: '', message: '', contact: 'phone' as 'phone' | 'whatsapp' })
+  const [form, setForm] = useState({ name: '', phone: '+91 ', email: '', message: '', contact: 'phone' as 'phone' | 'whatsapp' })
   const [sent, setSent] = useState(false)
 
   const phoneIsIndian = isIndianMobile(form.phone)
@@ -137,8 +137,14 @@ export default function ContactPage() {
                         <input
                           required
                           type="tel"
+                          inputMode="tel"
+                          pattern="[+\d\s]*"
+                          maxLength={20}
                           value={form.phone}
-                          onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                          // Strip everything except digits, "+" and spaces as the
+                          // user types so letters/punctuation can never sneak in
+                          // via paste or autofill.
+                          onChange={(e) => setForm({ ...form, phone: e.target.value.replace(/[^+\d\s]/g, '').slice(0, 20) })}
                           placeholder="+91 XXXXX XXXXX"
                           className="input-field"
                           style={form.phone && !phoneIsIndian ? { borderColor: '#F59E0B' } : undefined}

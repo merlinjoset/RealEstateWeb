@@ -40,7 +40,7 @@ interface FormState {
 }
 
 const EMPTY_FORM: FormState = {
-  firstName: '', lastName: '', email: '', phone: '', city: '',
+  firstName: '', lastName: '', email: '', phone: '+91 ', city: '',
   role: 'Employee', isActive: true, password: '',
 }
 
@@ -455,7 +455,13 @@ export default function AdminUsersPage() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">Phone *</label>
                   <input required type="tel" value={form.phone}
-                    onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                    // Same input hygiene as the public-facing forms (Contact,
+                    // Submit Property): allow only digits, "+" and spaces;
+                    // cap length so a fat-finger paste can't overflow.
+                    inputMode="tel"
+                    pattern="[+\d\s]*"
+                    maxLength={20}
+                    onChange={(e) => setForm({ ...form, phone: e.target.value.replace(/[^+\d\s]/g, '').slice(0, 20) })}
                     className="input-field" placeholder="+91 XXXXX XXXXX" />
                 </div>
                 <div>
