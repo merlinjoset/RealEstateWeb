@@ -465,8 +465,10 @@ export default function AdminUsersPage() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">Phone *</label>
                   <input required type="tel" value={form.phone}
-                    onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                    className="input-field" placeholder="+91 XXXXX XXXXX" />
+                    inputMode="numeric"
+                    maxLength={10}
+                    onChange={(e) => setForm({ ...form, phone: e.target.value.replace(/\D/g, '') })}
+                    className="input-field" placeholder="10-digit mobile" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">City</label>

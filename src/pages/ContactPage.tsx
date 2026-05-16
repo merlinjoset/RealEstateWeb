@@ -131,9 +131,11 @@ export default function ContactPage() {
                         <input
                           required
                           type="tel"
+                          inputMode="numeric"
+                          maxLength={10}
                           value={form.phone}
-                          onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                          placeholder="+91 XXXXX XXXXX"
+                          onChange={(e) => setForm({ ...form, phone: e.target.value.replace(/\D/g, '') })}
+                          placeholder="10-digit mobile"
                           className="input-field"
                         />
                       </div>

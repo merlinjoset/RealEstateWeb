@@ -256,8 +256,10 @@ export default function SubmitPropertyPage() {
                 <div className="relative">
                   <Phone className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                   <input required type="tel" value={form.submitterPhone}
-                    onChange={(e) => set('submitterPhone', e.target.value)}
-                    className="input-field pl-10" placeholder="+91 XXXXX XXXXX" />
+                    inputMode="numeric"
+                    maxLength={10}
+                    onChange={(e) => set('submitterPhone', e.target.value.replace(/\D/g, ''))}
+                    className="input-field pl-10" placeholder="10-digit mobile" />
                 </div>
               </Field>
             </Row>
