@@ -71,6 +71,8 @@ export interface PropertySubmission {
   propertyType: string
   status: string
   features: string[]
+  /** Public /media URLs returned from uploadsApi.propertyImage. */
+  images?: string[]
   legalStatus?: string
   roadAccess: boolean
   /** "Free" (zero brokerage) or "VideoPromotion" (2% brokerage). */
@@ -104,6 +106,22 @@ function normaliseProperty<T extends { propertyType?: string; status?: string }>
     propertyType: p.propertyType ? (map[p.propertyType] ?? p.propertyType.toLowerCase()) : p.propertyType,
     status: p.status ? (map[p.status] ?? p.status.toLowerCase()) : p.status,
   }
+}
+
+/**
+ * Upload a single property image and get back the public /media/... URL
+ * to store in Property.Images. Used by both the public Submit Property
+ * form and the admin Add/Edit Property page.
+ */
+export const uploadsApi = {
+  propertyImage: async (file: File): Promise<{ url: string }> => {
+    const form = new FormData()
+    form.append('file', file)
+    const r = await api.post<{ url: string }>('/uploads/property-image', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    return r.data
+  },
 }
 
 export const propertiesApi = {

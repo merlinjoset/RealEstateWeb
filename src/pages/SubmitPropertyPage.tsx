@@ -5,11 +5,12 @@ import {
   Save, CheckCircle2, Phone, Mail, User, MapPin, IndianRupee,
   Sparkles, Loader2, AlertCircle, ArrowLeft, Trees, Home as HomeIcon,
   Wheat, Building2, Map as MapPinIcon, FileText, Video,
+  Image as ImageIcon, Upload, Trash2, Star, GripVertical,
 } from 'lucide-react'
 import PageHeader from '../components/layout/PageHeader'
 import LocationPicker from '../components/properties/LocationPicker'
 import MarketingPlanPicker from '../components/properties/MarketingPlanPicker'
-import { propertiesApi, type PropertySubmission } from '../services/api'
+import { propertiesApi, uploadsApi, type PropertySubmission } from '../services/api'
 import { isValidEmail, EMAIL_PATTERN } from '../utils/email'
 import type { MarketingPlan } from '../types'
 
@@ -80,12 +81,63 @@ function formatLakhs(v: string) {
 }
 
 
+// Local-only image record. `preview` is an object URL we create from the
+// File for the thumbnail; revoked when the image is removed or the page
+// unmounts. The `file` itself only gets uploaded at submit time.
+interface PendingImage {
+  id: string
+  preview: string
+  file: File
+}
+
 export default function SubmitPropertyPage() {
   const [form, setForm] = useState<FormState>(INITIAL)
   const [submittedId, setSubmittedId] = useState<number | null>(null)
+  const [images, setImages] = useState<PendingImage[]>([])
+  const [uploadError, setUploadError] = useState<string | null>(null)
+  // Track uploads-in-flight at submit time so the button can show progress.
+  const [uploadProgress, setUploadProgress] = useState<{ done: number; total: number } | null>(null)
 
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm(prev => ({ ...prev, [key]: value }))
+
+  // Image grid helpers — match the admin Add Property page so the seller
+  // experience is consistent across both submission flows.
+  const handleImagesAdd = (files: FileList | null) => {
+    if (!files) return
+    setUploadError(null)
+    const next: PendingImage[] = []
+    for (const file of Array.from(files)) {
+      if (!file.type.startsWith('image/')) {
+        setUploadError(`"${file.name}" is not an image.`)
+        continue
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        setUploadError(`"${file.name}" is larger than 5 MB.`)
+        continue
+      }
+      next.push({
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        preview: URL.createObjectURL(file),
+        file,
+      })
+    }
+    if (next.length > 0) setImages(prev => [...prev, ...next])
+  }
+  const removeImage = (id: string) =>
+    setImages(prev => {
+      const target = prev.find(i => i.id === id)
+      if (target) URL.revokeObjectURL(target.preview)
+      return prev.filter(i => i.id !== id)
+    })
+  const moveImage = (from: number, to: number) =>
+    setImages(prev => {
+      if (to < 0 || to >= prev.length) return prev
+      const next = [...prev]
+      const [item] = next.splice(from, 1)
+      next.splice(to, 0, item)
+      return next
+    })
 
   const toggleFeature = (f: string) =>
     setForm(prev => ({
@@ -107,14 +159,35 @@ export default function SubmitPropertyPage() {
   // Flag visibly incomplete emails — silent while the field is empty.
   const emailLooksInvalid = form.submitterEmail.length > 0 && !isValidEmail(form.submitterEmail)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (emailRequired && !form.submitterEmail.trim()) {
-      // Native browser will catch the required validity, but in case
-      // it's bypassed, scroll to the email field.
       document.getElementById('submitter-email')?.focus()
       return
     }
+
+    // Upload pending images first, then submit the property with the
+    // resulting /media URLs in `images`. We upload sequentially so a
+    // weak mobile connection doesn't open ten concurrent multipart
+    // requests; the per-file UI hint reports `done/total`.
+    let imageUrls: string[] = []
+    if (images.length > 0) {
+      setUploadError(null)
+      setUploadProgress({ done: 0, total: images.length })
+      try {
+        for (let i = 0; i < images.length; i++) {
+          const { url } = await uploadsApi.propertyImage(images[i].file)
+          imageUrls.push(url)
+          setUploadProgress({ done: i + 1, total: images.length })
+        }
+      } catch (err) {
+        setUploadProgress(null)
+        setUploadError('We couldn’t upload one of your images. Please retry.')
+        return
+      }
+      setUploadProgress(null)
+    }
+
     const payload: PropertySubmission = {
       title: form.title,
       description: form.description,
@@ -128,6 +201,7 @@ export default function SubmitPropertyPage() {
       propertyType: form.propertyType,
       status: 'for_sale',
       features: form.features,
+      images: imageUrls,
       legalStatus: form.legalStatus || undefined,
       roadAccess: form.roadAccess,
       marketingPlan: form.marketingPlan,
@@ -416,6 +490,56 @@ export default function SubmitPropertyPage() {
             </label>
           </Section>
 
+          {/* === Property images === */}
+          <Section icon={ImageIcon} title="Property Images" desc="Add 3–5 photos of the plot, surroundings, and key landmarks. First one becomes the cover.">
+            {images.length > 0 && (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-3">
+                {images.map((img, idx) => (
+                  <div key={img.id} className="relative group rounded-xl overflow-hidden border border-gray-200 aspect-square bg-gray-100">
+                    <img src={img.preview} alt="" className="w-full h-full object-cover" />
+                    {idx === 0 && (
+                      <div className="absolute top-2 left-2 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide flex items-center gap-1 text-white"
+                        style={{ backgroundColor: '#FF5A5F' }}>
+                        <Star className="w-2.5 h-2.5" fill="currentColor" /> Cover
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5">
+                      {idx > 0 && (
+                        <button type="button" onClick={() => moveImage(idx, idx - 1)}
+                          className="w-7 h-7 bg-white/90 hover:bg-white rounded-full flex items-center justify-center text-gray-700"
+                          title="Move left">
+                          <GripVertical className="w-3.5 h-3.5 -rotate-90" />
+                        </button>
+                      )}
+                      <button type="button" onClick={() => removeImage(img.id)}
+                        className="w-7 h-7 bg-red-600 hover:bg-red-700 rounded-full flex items-center justify-center text-white"
+                        title="Remove">
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            <label className="block border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-colors"
+              style={{ borderColor: '#CFD8DC' }}
+              onMouseEnter={(e) => (e.currentTarget.style.borderColor = '#6A9739')}
+              onMouseLeave={(e) => (e.currentTarget.style.borderColor = '#CFD8DC')}>
+              <input type="file" accept="image/*" multiple className="hidden"
+                onChange={(e) => { handleImagesAdd(e.target.files); e.target.value = '' }} />
+              <Upload className="w-7 h-7 text-gray-300 mx-auto mb-2" />
+              <p className="text-sm font-semibold text-gray-700">
+                {images.length === 0 ? 'Click to upload property images' : 'Add more images'}
+              </p>
+              <p className="text-xs text-gray-400 mt-0.5">JPG, PNG, WebP up to 5 MB each · You can select multiple</p>
+            </label>
+            {uploadError && (
+              <p className="mt-2 text-xs flex items-center gap-1" style={{ color: '#B45309' }}>
+                <AlertCircle className="w-3.5 h-3.5" /> {uploadError}
+              </p>
+            )}
+          </Section>
+
           {/* === Marketing plan === */}
           <Section
             icon={Video}
@@ -460,14 +584,16 @@ export default function SubmitPropertyPage() {
               <ArrowLeft className="w-4 h-4" /> Cancel
             </Link>
             <button type="submit"
-              disabled={submitMutation.isPending}
+              disabled={submitMutation.isPending || uploadProgress != null}
               className="inline-flex items-center gap-2 px-7 py-3.5 text-white text-base font-bold rounded-xl shadow-lg transition-colors disabled:opacity-60"
               style={{ backgroundColor: '#FF5A5F' }}
               onMouseEnter={e => !submitMutation.isPending && (e.currentTarget.style.backgroundColor = '#e04a4f')}
               onMouseLeave={e => !submitMutation.isPending && (e.currentTarget.style.backgroundColor = '#FF5A5F')}>
-              {submitMutation.isPending
-                ? <><Loader2 className="w-5 h-5 animate-spin" /> Submitting…</>
-                : <><Save className="w-5 h-5" /> Submit Property</>
+              {uploadProgress
+                ? <><Loader2 className="w-5 h-5 animate-spin" /> Uploading {uploadProgress.done}/{uploadProgress.total}…</>
+                : submitMutation.isPending
+                  ? <><Loader2 className="w-5 h-5 animate-spin" /> Submitting…</>
+                  : <><Save className="w-5 h-5" /> Submit Property</>
               }
             </button>
           </div>

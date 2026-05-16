@@ -9,6 +9,7 @@ import {
 import { PropertyDocumentsEditor } from '../../components/properties/PropertyDocuments'
 import LocationPicker from '../../components/properties/LocationPicker'
 import MarketingPlanPicker from '../../components/properties/MarketingPlanPicker'
+import { propertiesApi, uploadsApi, type PropertySubmission } from '../../services/api'
 import type { MarketingPlan, PropertyDocument } from '../../types'
 
 const CITIES = [
@@ -180,9 +181,14 @@ export default function AddPropertyPage() {
   const isEditMode = Boolean(id)
   const [form, setForm] = useState<FormState>(INITIAL)
   const [documents, setDocuments] = useState<PropertyDocument[]>([])
+  // New images the admin has just picked — `file` is the pending upload,
+  // `url` is the blob preview. Already-saved images on an edited property
+  // would be loaded separately (TODO when edit prefill is wired to the API).
   const [images, setImages] = useState<{ id: string; url: string; file: File }[]>([])
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
+  const [uploadProgress, setUploadProgress] = useState<{ done: number; total: number } | null>(null)
   const [activeSection, setActiveSection] = useState<string>('basic')
   const [showPreview, setShowPreview] = useState(false)
   const [errors, setErrors] = useState<Errors>({})
@@ -308,10 +314,64 @@ export default function AddPropertyPage() {
     }
 
     setSaving(true)
-    await new Promise((r) => setTimeout(r, 1000))
-    setSaving(false)
-    setSaved(true)
-    setTimeout(() => navigate('/admin/properties'), 1500)
+    setSaveError(null)
+
+    // 1) Upload each pending image. Sequential so a flaky line doesn't
+    //    spawn ten concurrent multipart requests.
+    let imageUrls: string[] = []
+    if (images.length > 0) {
+      setUploadProgress({ done: 0, total: images.length })
+      try {
+        for (let i = 0; i < images.length; i++) {
+          const { url } = await uploadsApi.propertyImage(images[i].file)
+          imageUrls.push(url)
+          setUploadProgress({ done: i + 1, total: images.length })
+        }
+      } catch (err) {
+        setUploadProgress(null)
+        setSaving(false)
+        setSaveError('Image upload failed. Please retry.')
+        return
+      }
+      setUploadProgress(null)
+    }
+
+    // 2) Create the property. (Edit-mode PUT is still TODO — currently
+    //    the form flows through the same POST endpoint regardless.)
+    try {
+      // AddPropertyPage is admin-only; the form doesn't capture a separate
+      // submitter, so we mark the submission as an internal admin entry.
+      const payload: PropertySubmission = {
+        title: form.title,
+        description: form.description,
+        totalPrice: Number(form.totalPrice) || 0,
+        pricePerCent: form.pricePerCent ? Number(form.pricePerCent) : undefined,
+        areaInCents: Number(form.areaInCents) || 0,
+        address: form.address,
+        city: form.city,
+        district: 'Kanyakumari',
+        state: 'Tamil Nadu',
+        pinCode: form.pinCode,
+        propertyType: form.propertyType,
+        status: 'for_sale',
+        features: form.features,
+        images: imageUrls,
+        legalStatus: form.legalStatus || undefined,
+        roadAccess: form.roadAccess,
+        marketingPlan: form.marketingPlan,
+        latitude: form.latitude ? Number(form.latitude) : undefined,
+        longitude: form.longitude ? Number(form.longitude) : undefined,
+        submitterName: 'Admin entry',
+        submitterPhone: '',
+      }
+      await propertiesApi.submit(payload)
+      setSaving(false)
+      setSaved(true)
+      setTimeout(() => navigate('/admin/properties'), 1500)
+    } catch (err) {
+      setSaving(false)
+      setSaveError('Failed to save the property. Please check the fields and retry.')
+    }
   }
 
   // Whether to show an error for a given field
@@ -891,7 +951,9 @@ export default function AddPropertyPage() {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                   </svg>
-                  Saving…
+                  {uploadProgress
+                    ? `Uploading ${uploadProgress.done}/${uploadProgress.total}…`
+                    : 'Saving…'}
                 </>
               ) : (
                 <>
@@ -900,6 +962,11 @@ export default function AddPropertyPage() {
                 </>
               )}
             </button>
+            {saveError && (
+              <p className="ml-3 text-xs flex items-center gap-1" style={{ color: '#B91C1C' }}>
+                <AlertCircle className="w-3.5 h-3.5" /> {saveError}
+              </p>
+            )}
           </div>
         </div>
       </div>
