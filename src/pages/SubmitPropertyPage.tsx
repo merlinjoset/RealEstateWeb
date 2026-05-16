@@ -10,6 +10,7 @@ import PageHeader from '../components/layout/PageHeader'
 import LocationPicker from '../components/properties/LocationPicker'
 import MarketingPlanPicker from '../components/properties/MarketingPlanPicker'
 import { propertiesApi, type PropertySubmission } from '../services/api'
+import { formatIndianPhone } from '../utils/phone'
 import type { MarketingPlan } from '../types'
 
 const CITIES = [
@@ -254,19 +255,14 @@ export default function SubmitPropertyPage() {
                 <div className="relative">
                   <Phone className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                   <input required type="tel" value={form.submitterPhone}
-                    // Allow only digits, "+" and spaces — block letters and
-                    // punctuation as the user types. Combined with the HTML5
-                    // `pattern` attribute below, this catches both casual
-                    // typos and malformed paste-ins (e.g. "+91 (98)765-4321").
-                    // maxLength is generous (covers "+91 XXXXX XXXXX" plus a
-                    // little headroom for international numbers).
+                    // Auto-format any input into "+91 XXXXX XXXXX" and hard-cap
+                    // at 10 local digits via formatIndianPhone — see utils/phone.ts.
+                    // pattern + maxLength are belt-and-suspenders; the JS path
+                    // does the actual work.
                     inputMode="tel"
-                    pattern="[+\d\s]*"
-                    maxLength={20}
-                    onChange={(e) => {
-                      const cleaned = e.target.value.replace(/[^+\d\s]/g, '').slice(0, 20)
-                      set('submitterPhone', cleaned)
-                    }}
+                    pattern="\+91 \d{0,5}( \d{0,5})?"
+                    maxLength={15}
+                    onChange={(e) => set('submitterPhone', formatIndianPhone(e.target.value))}
                     className="input-field pl-10" placeholder="+91 XXXXX XXXXX"
                     style={form.submitterPhone && !phoneIsIndian
                       ? { borderColor: '#F59E0B' } : undefined} />

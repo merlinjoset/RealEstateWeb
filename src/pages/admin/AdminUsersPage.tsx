@@ -14,6 +14,7 @@ import {
   type CreateUserPayload,
   type UpdateUserPayload,
 } from '../../services/api'
+import { formatIndianPhone } from '../../utils/phone'
 
 const ROLE_BADGE: Record<AdminUserRole, { bg: string; color: string; label: string }> = {
   Admin:    { bg: 'rgba(255,90,95,0.10)',  color: '#FF5A5F', label: 'Admin' },
@@ -455,13 +456,12 @@ export default function AdminUsersPage() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">Phone *</label>
                   <input required type="tel" value={form.phone}
-                    // Same input hygiene as the public-facing forms (Contact,
-                    // Submit Property): allow only digits, "+" and spaces;
-                    // cap length so a fat-finger paste can't overflow.
+                    // Auto-format to "+91 XXXXX XXXXX" and cap at 10 local digits.
+                    // See utils/phone.ts — shared with Contact + Submit Property.
                     inputMode="tel"
-                    pattern="[+\d\s]*"
-                    maxLength={20}
-                    onChange={(e) => setForm({ ...form, phone: e.target.value.replace(/[^+\d\s]/g, '').slice(0, 20) })}
+                    pattern="\+91 \d{0,5}( \d{0,5})?"
+                    maxLength={15}
+                    onChange={(e) => setForm({ ...form, phone: formatIndianPhone(e.target.value) })}
                     className="input-field" placeholder="+91 XXXXX XXXXX" />
                 </div>
                 <div>

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Phone, Mail, MapPin, MessageCircle, Send, Clock } from 'lucide-react'
 import PageHeader from '../components/layout/PageHeader'
 import SEO from '../components/common/SEO'
+import { formatIndianPhone } from '../utils/phone'
 
 function isIndianMobile(phone: string): boolean {
   const trimmed = phone.trim()
@@ -138,13 +139,11 @@ export default function ContactPage() {
                           required
                           type="tel"
                           inputMode="tel"
-                          pattern="[+\d\s]*"
-                          maxLength={20}
+                          pattern="\+91 \d{0,5}( \d{0,5})?"
+                          maxLength={15}
                           value={form.phone}
-                          // Strip everything except digits, "+" and spaces as the
-                          // user types so letters/punctuation can never sneak in
-                          // via paste or autofill.
-                          onChange={(e) => setForm({ ...form, phone: e.target.value.replace(/[^+\d\s]/g, '').slice(0, 20) })}
+                          // Auto-format to "+91 XXXXX XXXXX" and cap at 10 local digits.
+                          onChange={(e) => setForm({ ...form, phone: formatIndianPhone(e.target.value) })}
                           placeholder="+91 XXXXX XXXXX"
                           className="input-field"
                           style={form.phone && !phoneIsIndian ? { borderColor: '#F59E0B' } : undefined}
