@@ -119,16 +119,22 @@ export default function ContactPage() {
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1.5">Phone Number *</label>
-                        <input
-                          required
-                          type="tel"
-                          inputMode="numeric"
-                          maxLength={10}
-                          value={form.phone}
-                          onChange={(e) => setForm({ ...form, phone: e.target.value.replace(/\D/g, '') })}
-                          placeholder="10-digit mobile"
-                          className="input-field"
-                        />
+                        <div className="relative">
+                          {/* Static "+91" prefix — visual only. */}
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-medium pointer-events-none">
+                            +91
+                          </span>
+                          <input
+                            required
+                            type="tel"
+                            inputMode="numeric"
+                            maxLength={10}
+                            value={form.phone}
+                            onChange={(e) => setForm({ ...form, phone: e.target.value.replace(/\D/g, '') })}
+                            placeholder="10-digit mobile"
+                            className="input-field pl-12"
+                          />
+                        </div>
                       </div>
                     </div>
 

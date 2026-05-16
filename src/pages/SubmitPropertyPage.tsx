@@ -239,12 +239,16 @@ export default function SubmitPropertyPage() {
               </Field>
               <Field label="Phone Number *" hint="We will send a confirmation SMS">
                 <div className="relative">
-                  <Phone className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  {/* Static "+91" prefix label — visual only, the input value
+                      holds just the 10-digit local number. */}
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-medium pointer-events-none">
+                    +91
+                  </span>
                   <input required type="tel" value={form.submitterPhone}
                     inputMode="numeric"
                     maxLength={10}
                     onChange={(e) => set('submitterPhone', e.target.value.replace(/\D/g, ''))}
-                    className="input-field pl-10" placeholder="10-digit mobile" />
+                    className="input-field pl-12" placeholder="10-digit mobile" />
                 </div>
               </Field>
             </Row>

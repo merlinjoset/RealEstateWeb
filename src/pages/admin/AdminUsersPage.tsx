@@ -464,11 +464,17 @@ export default function AdminUsersPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">Phone *</label>
-                  <input required type="tel" value={form.phone}
-                    inputMode="numeric"
-                    maxLength={10}
-                    onChange={(e) => setForm({ ...form, phone: e.target.value.replace(/\D/g, '') })}
-                    className="input-field" placeholder="10-digit mobile" />
+                  <div className="relative">
+                    {/* Static "+91" prefix — visual only. */}
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-medium pointer-events-none">
+                      +91
+                    </span>
+                    <input required type="tel" value={form.phone}
+                      inputMode="numeric"
+                      maxLength={10}
+                      onChange={(e) => setForm({ ...form, phone: e.target.value.replace(/\D/g, '') })}
+                      className="input-field pl-12" placeholder="10-digit mobile" />
+                  </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">City</label>
