@@ -15,14 +15,15 @@
  * exceed 10 digits.
  */
 export function formatIndianPhone(input: string): string {
-  // Strip everything except digits
+  // Strip everything except digits.
   let digits = input.replace(/\D/g, '')
 
-  // If the user pasted "91xxxxxxxxxx" (12 digits, country code included),
-  // drop the leading "91" since we always re-prepend it. We only do this
-  // if it would otherwise overflow the 10-digit cap, so "915" doesn't get
-  // turned into "5".
-  if (digits.startsWith('91') && digits.length > 10) {
+  // Drop the leading "91" if a "+" is anywhere in the input — that means
+  // it came from our sticky "+91 " prefix (or from pasted E.164 like
+  // "+91 9876543210"). Without the "+" check we'd also strip the "91"
+  // from a genuine Indian mobile that *starts* with 91 (e.g. 9123456789),
+  // which is wrong. The "+" is the disambiguator.
+  if (input.includes('+') && digits.startsWith('91')) {
     digits = digits.slice(2)
   }
 
