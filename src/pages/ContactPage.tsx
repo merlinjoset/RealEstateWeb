@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { Phone, Mail, MapPin, MessageCircle, Send, Clock } from 'lucide-react'
 import PageHeader from '../components/layout/PageHeader'
 import SEO from '../components/common/SEO'
-import { sanitiseIndianMobile } from '../utils/phone'
 import { isValidEmail, EMAIL_PATTERN } from '../utils/email'
 
 function isIndianMobile(phone: string): boolean {
@@ -18,22 +17,11 @@ export default function ContactPage() {
   const [form, setForm] = useState({ name: '', phone: '', email: '', message: '', contact: 'phone' as 'phone' | 'whatsapp' })
   const [sent, setSent] = useState(false)
 
-  // Phone is now a bare 10-digit local number, +91 shown as static label.
-  // Always Indian by construction, so email never becomes required.
   const emailRequired = false
-  // Email shows an invalid-format warning whenever the user has typed
-  // something that doesn't look like an email — silent while empty so we
-  // don't yell before they've finished typing.
   const emailLooksInvalid = form.email.length > 0 && !isValidEmail(form.email)
-  // Live progress hint while the user is still typing digits.
-  const phoneLooksIncomplete = form.phone.length > 0 && form.phone.length < 10
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (form.phone.length !== 10) {
-      alert('Please enter a 10-digit mobile number.')
-      return
-    }
     if (form.email.trim() && !isValidEmail(form.email)) {
       alert('Please enter a valid email address (e.g. you@example.com).')
       return
@@ -139,34 +127,15 @@ export default function ContactPage() {
                         />
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-gray-700 mb-1.5 flex items-center justify-between">
-                          <span>Phone Number *</span>
-                          {phoneLooksIncomplete && (
-                            <span className="text-[11px] font-normal" style={{ color: '#B45309' }}>
-                              ⚠ Need {10 - form.phone.length} more digit{10 - form.phone.length === 1 ? '' : 's'}
-                            </span>
-                          )}
-                        </label>
-                        <div className="relative">
-                          {/* Static +91 country code prefix sits inside the
-                              input's left padding so the editable area only
-                              holds the 10-digit local number. */}
-                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-medium pointer-events-none">
-                            +91
-                          </span>
-                          <input
-                            required
-                            type="tel"
-                            inputMode="numeric"
-                            pattern="\d{10}"
-                            maxLength={10}
-                            value={form.phone}
-                            onChange={(e) => setForm({ ...form, phone: sanitiseIndianMobile(e.target.value) })}
-                            placeholder="9876543210"
-                            className="input-field pl-12"
-                            style={phoneLooksIncomplete ? { borderColor: '#F59E0B' } : undefined}
-                          />
-                        </div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Phone Number *</label>
+                        <input
+                          required
+                          type="tel"
+                          value={form.phone}
+                          onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                          placeholder="+91 XXXXX XXXXX"
+                          className="input-field"
+                        />
                       </div>
                     </div>
 
