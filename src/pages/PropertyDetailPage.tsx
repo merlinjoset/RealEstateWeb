@@ -11,7 +11,7 @@ import PropertyDocumentsPublic from '../components/properties/PropertyDocumentsP
 import PropertyLocationMap from '../components/properties/PropertyLocationMap'
 import ShareButton from '../components/properties/ShareButton'
 import { useAuth } from '../context/AuthContext'
-import { propertiesApi } from '../services/api'
+import { propertiesApi, resolveMediaUrl } from '../services/api'
 
 function formatLakhs(amount: number) {
   if (amount >= 10000000) return `₹${(amount / 10000000).toFixed(2)} Cr`
@@ -74,7 +74,7 @@ export default function PropertyDetailPage() {
     '@type': 'Product',
     name: property.title,
     description: property.description?.slice(0, 300),
-    image: property.images?.[0],
+    image: resolveMediaUrl(property.images?.[0]),
     offers: {
       '@type': 'Offer',
       priceCurrency: 'INR',
@@ -96,7 +96,7 @@ export default function PropertyDetailPage() {
         path={`/properties/${property.id}`}
         title={property.title}
         description={seoDescription}
-        image={property.images?.[0]}
+        image={resolveMediaUrl(property.images?.[0])}
         type="article"
         jsonLd={jsonLd}
       />

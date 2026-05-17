@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { X, ChevronLeft, ChevronRight } from 'lucide-react'
+import { resolveMediaUrl } from '../../services/api'
 
 const FALLBACK_IMAGES = [
   'https://images.unsplash.com/photo-1570129477492-45c003edd2be?w=800&auto=format&fit=crop',
@@ -14,7 +15,12 @@ interface Props {
 
 export default function PropertyGallery({ images, title }: Props) {
   const [lightbox, setLightbox] = useState<number | null>(null)
-  const displayImages = images.length > 0 ? images : FALLBACK_IMAGES
+  // Resolve every DB-relative path against the API origin so the
+  // browser can fetch directly from api.joseforland.com (or whatever
+  // VITE_API_BASE_URL points at).
+  const displayImages = images.length > 0
+    ? images.map(resolveMediaUrl)
+    : FALLBACK_IMAGES
 
   const prev = () => setLightbox((i) => (i !== null ? (i - 1 + displayImages.length) % displayImages.length : 0))
   const next = () => setLightbox((i) => (i !== null ? (i + 1) % displayImages.length : 0))

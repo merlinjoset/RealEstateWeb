@@ -5,7 +5,7 @@ import {
   CheckCircle2, Clock, XCircle, Star,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
-import { propertiesApi } from '../services/api'
+import { propertiesApi, resolveMediaUrl } from '../services/api'
 import PageHeader from '../components/layout/PageHeader'
 import type { Property } from '../types'
 
@@ -154,7 +154,7 @@ function PropertyRow({ property }: { property: Property }) {
   const status = ((property as any).approvalStatus ?? 'Approved') as keyof typeof STATUS_CONFIG
   const statusCfg = STATUS_CONFIG[status] ?? STATUS_CONFIG.Approved
   const StatusIcon = statusCfg.icon
-  const cover = property.images?.[0]
+  const cover = property.images?.[0] ? resolveMediaUrl(property.images[0]) : null
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow">

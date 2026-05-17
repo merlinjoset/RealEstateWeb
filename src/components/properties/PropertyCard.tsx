@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { MapPin, Heart, Ruler, Home, CheckCircle, Phone } from 'lucide-react'
 import type { Property } from '../../types'
+import { resolveMediaUrl } from '../../services/api'
 import ShareButton from './ShareButton'
 
 interface Props {
@@ -30,7 +31,9 @@ const FALLBACK_IMAGES = [
 ]
 
 export default function PropertyCard({ property, onFavorite, isFavorited }: Props) {
-  const imageSrc = property.images?.[0] || FALLBACK_IMAGES[property.id % 3]
+  const imageSrc = property.images?.[0]
+    ? resolveMediaUrl(property.images[0])
+    : FALLBACK_IMAGES[property.id % 3]
 
   return (
     <div className="card group">

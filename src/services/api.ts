@@ -30,6 +30,30 @@ const API_BASE_URL = /\/api(\/|$)/.test(rawBaseUrl)
   ? rawBaseUrl
   : `${rawBaseUrl}/api`
 
+// The API origin without the "/api" suffix — used for resolving
+// media (image) URLs, which the backend serves directly off the root
+// (e.g. https://api.joseforland.com/media/...). Falls back to the
+// current page origin in dev so the Vite proxy can intercept.
+const MEDIA_ORIGIN = API_BASE_URL.replace(/\/api$/, '')
+
+/**
+ * Convert a `Property.Images[]` entry into a fully-qualified URL the
+ * browser can fetch. Handles three shapes the DB might hold:
+ *
+ *   "/media/2026/05/foo.jpg"           → "{MEDIA_ORIGIN}/media/2026/05/foo.jpg"
+ *   "https://api.joseforland.com/..."  → returned as-is (already absolute)
+ *   "" / null / undefined              → empty string (caller should fallback)
+ *
+ * Keeps the DB origin-neutral — every environment (dev, demo, prod)
+ * resolves its own image base from VITE_API_BASE_URL.
+ */
+export function resolveMediaUrl(path: string | null | undefined): string {
+  if (!path) return ''
+  if (/^https?:\/\//i.test(path)) return path
+  if (path.startsWith('/')) return `${MEDIA_ORIGIN}${path}`
+  return `${MEDIA_ORIGIN}/${path}`
+}
+
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: { 'Content-Type': 'application/json' },
