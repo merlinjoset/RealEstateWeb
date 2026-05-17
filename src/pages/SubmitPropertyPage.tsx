@@ -5,7 +5,7 @@ import {
   Save, CheckCircle2, Phone, Mail, User, MapPin, IndianRupee,
   Sparkles, Loader2, AlertCircle, ArrowLeft, Trees, Home as HomeIcon,
   Wheat, Building2, Map as MapPinIcon, FileText, Video,
-  Image as ImageIcon, Upload, Trash2, Star, GripVertical,
+  Image as ImageIcon, Upload, Trash2, Star, GripVertical, Film,
 } from 'lucide-react'
 import PageHeader from '../components/layout/PageHeader'
 import LocationPicker from '../components/properties/LocationPicker'
@@ -94,9 +94,11 @@ export default function SubmitPropertyPage() {
   const [form, setForm] = useState<FormState>(INITIAL)
   const [submittedId, setSubmittedId] = useState<number | null>(null)
   const [images, setImages] = useState<PendingImage[]>([])
+  const [videos, setVideos] = useState<PendingImage[]>([])
   const [uploadError, setUploadError] = useState<string | null>(null)
   // Track uploads-in-flight at submit time so the button can show progress.
-  const [uploadProgress, setUploadProgress] = useState<{ done: number; total: number } | null>(null)
+  // `kind` lets the button display "Uploading image 2/3…" vs "Uploading video 1/1…"
+  const [uploadProgress, setUploadProgress] = useState<{ done: number; total: number; kind: 'image' | 'video' } | null>(null)
 
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm(prev => ({ ...prev, [key]: value }))
@@ -139,6 +141,38 @@ export default function SubmitPropertyPage() {
       return next
     })
 
+  // Video parallel — separate state but same shape. Cap is 100 MB to
+  // match the backend's RequestSizeLimit; reject larger files locally
+  // so the user sees an instant error instead of a 413.
+  const VIDEO_MAX_BYTES = 100 * 1024 * 1024
+  const handleVideosAdd = (files: FileList | null) => {
+    if (!files) return
+    setUploadError(null)
+    const next: PendingImage[] = []
+    for (const file of Array.from(files)) {
+      if (!file.type.startsWith('video/')) {
+        setUploadError(`"${file.name}" is not a video.`)
+        continue
+      }
+      if (file.size > VIDEO_MAX_BYTES) {
+        setUploadError(`"${file.name}" is larger than 100 MB. Please compress it before uploading.`)
+        continue
+      }
+      next.push({
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        preview: URL.createObjectURL(file),
+        file,
+      })
+    }
+    if (next.length > 0) setVideos(prev => [...prev, ...next])
+  }
+  const removeVideo = (id: string) =>
+    setVideos(prev => {
+      const target = prev.find(v => v.id === id)
+      if (target) URL.revokeObjectURL(target.preview)
+      return prev.filter(v => v.id !== id)
+    })
+
   const toggleFeature = (f: string) =>
     setForm(prev => ({
       ...prev,
@@ -166,27 +200,43 @@ export default function SubmitPropertyPage() {
       return
     }
 
-    // Upload pending images first, then submit the property with the
-    // resulting /media URLs in `images`. We upload sequentially so a
-    // weak mobile connection doesn't open ten concurrent multipart
+    // Upload pending images first, then videos, then submit the
+    // property with the resulting /media URLs. Sequential so a weak
+    // mobile connection doesn't open many concurrent multipart
     // requests; the per-file UI hint reports `done/total`.
     let imageUrls: string[] = []
+    let videoUrls: string[] = []
     if (images.length > 0) {
       setUploadError(null)
-      setUploadProgress({ done: 0, total: images.length })
+      setUploadProgress({ done: 0, total: images.length, kind: 'image' })
       try {
         for (let i = 0; i < images.length; i++) {
           const { url } = await uploadsApi.propertyImage(images[i].file)
           imageUrls.push(url)
-          setUploadProgress({ done: i + 1, total: images.length })
+          setUploadProgress({ done: i + 1, total: images.length, kind: 'image' })
         }
       } catch (err) {
         setUploadProgress(null)
         setUploadError('We couldn’t upload one of your images. Please retry.')
         return
       }
-      setUploadProgress(null)
     }
+    if (videos.length > 0) {
+      setUploadError(null)
+      setUploadProgress({ done: 0, total: videos.length, kind: 'video' })
+      try {
+        for (let i = 0; i < videos.length; i++) {
+          const { url } = await uploadsApi.propertyVideo(videos[i].file)
+          videoUrls.push(url)
+          setUploadProgress({ done: i + 1, total: videos.length, kind: 'video' })
+        }
+      } catch (err) {
+        setUploadProgress(null)
+        setUploadError('We couldn’t upload one of your videos. Please retry.')
+        return
+      }
+    }
+    setUploadProgress(null)
 
     const payload: PropertySubmission = {
       title: form.title,
@@ -202,6 +252,7 @@ export default function SubmitPropertyPage() {
       status: 'for_sale',
       features: form.features,
       images: imageUrls,
+      videos: videoUrls,
       legalStatus: form.legalStatus || undefined,
       roadAccess: form.roadAccess,
       marketingPlan: form.marketingPlan,
@@ -540,6 +591,41 @@ export default function SubmitPropertyPage() {
             )}
           </Section>
 
+          {/* === Property videos === */}
+          <Section icon={Film} title="Property Videos (optional)" desc="Short walkthrough clips help buyers shortlist faster. MP4 / MOV / WebM up to 100 MB each.">
+            {videos.length > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-3">
+                {videos.map((vid) => (
+                  <div key={vid.id} className="relative group rounded-xl overflow-hidden border border-gray-200 aspect-video bg-gray-900">
+                    {/* preload="metadata" pulls the first frame for thumbnail
+                        without downloading the whole file. */}
+                    <video src={vid.preview} preload="metadata" controls playsInline className="w-full h-full object-cover bg-black" />
+                    <button type="button" onClick={() => removeVideo(vid.id)}
+                      className="absolute top-2 right-2 w-7 h-7 bg-red-600 hover:bg-red-700 rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                      title="Remove">
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                    <div className="absolute bottom-2 left-2 text-[10px] text-white bg-black/60 px-1.5 py-0.5 rounded">
+                      {(vid.file.size / (1024 * 1024)).toFixed(1)} MB
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            <label className="block border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-colors"
+              style={{ borderColor: '#CFD8DC' }}
+              onMouseEnter={(e) => (e.currentTarget.style.borderColor = '#6A9739')}
+              onMouseLeave={(e) => (e.currentTarget.style.borderColor = '#CFD8DC')}>
+              <input type="file" accept="video/*" multiple className="hidden"
+                onChange={(e) => { handleVideosAdd(e.target.files); e.target.value = '' }} />
+              <Film className="w-7 h-7 text-gray-300 mx-auto mb-2" />
+              <p className="text-sm font-semibold text-gray-700">
+                {videos.length === 0 ? 'Click to upload property videos' : 'Add more videos'}
+              </p>
+              <p className="text-xs text-gray-400 mt-0.5">MP4, MOV, WebM up to 100 MB each · A 30-60 second walkthrough works best</p>
+            </label>
+          </Section>
+
           {/* === Marketing plan === */}
           <Section
             icon={Video}
@@ -590,7 +676,7 @@ export default function SubmitPropertyPage() {
               onMouseEnter={e => !submitMutation.isPending && (e.currentTarget.style.backgroundColor = '#e04a4f')}
               onMouseLeave={e => !submitMutation.isPending && (e.currentTarget.style.backgroundColor = '#FF5A5F')}>
               {uploadProgress
-                ? <><Loader2 className="w-5 h-5 animate-spin" /> Uploading {uploadProgress.done}/{uploadProgress.total}…</>
+                ? <><Loader2 className="w-5 h-5 animate-spin" /> Uploading {uploadProgress.kind} {uploadProgress.done}/{uploadProgress.total}…</>
                 : submitMutation.isPending
                   ? <><Loader2 className="w-5 h-5 animate-spin" /> Submitting…</>
                   : <><Save className="w-5 h-5" /> Submit Property</>

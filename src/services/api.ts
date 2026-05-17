@@ -97,6 +97,8 @@ export interface PropertySubmission {
   features: string[]
   /** Public /media URLs returned from uploadsApi.propertyImage. */
   images?: string[]
+  /** Public /media URLs returned from uploadsApi.propertyVideo. */
+  videos?: string[]
   legalStatus?: string
   roadAccess: boolean
   /** "Free" (zero brokerage) or "VideoPromotion" (2% brokerage). */
@@ -142,6 +144,19 @@ export const uploadsApi = {
     const form = new FormData()
     form.append('file', file)
     const r = await api.post<{ url: string }>('/uploads/property-image', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    return r.data
+  },
+  /**
+   * Upload a single property video. Cap is 100 MB at the API level; the
+   * caller should also validate locally before posting so the user gets
+   * an immediate error instead of a 413 from the server.
+   */
+  propertyVideo: async (file: File): Promise<{ url: string }> => {
+    const form = new FormData()
+    form.append('file', file)
+    const r = await api.post<{ url: string }>('/uploads/property-video', form, {
       headers: { 'Content-Type': 'multipart/form-data' },
     })
     return r.data

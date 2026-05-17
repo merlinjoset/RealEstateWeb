@@ -356,6 +356,7 @@ export default function AddPropertyPage() {
         status: 'for_sale',
         features: form.features,
         images: imageUrls,
+        videos: [],   // TODO: wire up the admin-side video uploader
         legalStatus: form.legalStatus || undefined,
         roadAccess: form.roadAccess,
         marketingPlan: form.marketingPlan,
