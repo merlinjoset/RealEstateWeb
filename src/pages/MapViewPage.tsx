@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
-import { MapPin, Phone, Ruler, X, ExternalLink, Search, SlidersHorizontal, ChevronDown, List as ListIcon } from 'lucide-react'
+import { MapPin, Phone, Ruler, X, ExternalLink, Search, SlidersHorizontal, ChevronDown, ChevronLeft, ChevronRight, List as ListIcon } from 'lucide-react'
 import { propertiesApi } from '../services/api'
 import type { Property } from '../types'
 
@@ -169,6 +169,8 @@ const AREA_RANGES = [
 
 const CITIES = ['Nagercoil', 'Marthandam', 'Thuckalay', 'Kanyakumari', 'Colachel', 'Padmanabhapuram', 'Boothapandi', 'Eraniel']
 
+const PAGE_SIZE = 10
+
 export default function MapViewPage() {
   const [selected, setSelected] = useState<Property | null>(null)
   const [search, setSearch] = useState('')
@@ -178,14 +180,15 @@ export default function MapViewPage() {
   const [areaFilter, setAreaFilter] = useState<string>('')
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [listOpen, setListOpen] = useState(false)
+  const [page, setPage] = useState(1)
 
-  // Map view shows only the 10 newest properties — keeps the pin density
-  // readable and the page light. We ask the API for exactly that page size
-  // so client-side filters work against the same 10 (no surprise extras
-  // appearing/disappearing as filters change).
+  // Map view paginates 10-at-a-time so the pin density stays readable
+  // and the page stays light. Cache key includes `page` so React Query
+  // memoises per page and back/forward navigation is instant.
   const query = useQuery({
-    queryKey: ['map-properties'],
-    queryFn: () => propertiesApi.getAll({ page: 1, pageSize: 10, sortBy: 'newest' }),
+    queryKey: ['map-properties', page],
+    queryFn: () => propertiesApi.getAll({ page, pageSize: PAGE_SIZE, sortBy: 'newest' }),
+    placeholderData: (prev) => prev,    // keep last page visible while next loads
     staleTime: 60_000,
   })
   const allProperties = query.data?.data ?? []
@@ -222,16 +225,29 @@ export default function MapViewPage() {
     })
   }, [allProperties, search, typeFilter, cityFilter, priceFilter, areaFilter])
 
-  // Cap the markers + sidebar at 10 so the map stays readable. The API
-  // is already asked for 10 (sorted by newest), so this slice is mostly
-  // defensive — it also handles the case where a future search/filter
-  // change widens the fetch.
-  const MAP_VISIBLE_LIMIT = 10
-  const visible = filtered.slice(0, MAP_VISIBLE_LIMIT)
-  // "Hidden" = approved properties in the DB beyond the 10 we fetched.
-  // Compare against totalInDb (true count) rather than filtered.length,
-  // which never exceeds 10 because of the API pageSize.
-  const hiddenCount = Math.max(0, totalInDb - visible.length)
+  // The map shows whatever the current page returns (always ≤ PAGE_SIZE).
+  // Filters are still applied client-side on top of the page, so changing
+  // a filter doesn't refetch — the user pages through the underlying
+  // dataset rather than searching across it.
+  const visible = filtered
+  const totalPages = Math.max(1, Math.ceil(totalInDb / PAGE_SIZE))
+  // Windowed page-number bar — at most MAX_PAGE_BUTTONS visible at once,
+  // centred on the current page. First/last are always anchored with
+  // ellipses bridging the gap. Matches the PropertiesPage pattern.
+  const MAX_PAGE_BUTTONS = 7
+  const pageWindow: number[] = (() => {
+    if (totalPages <= MAX_PAGE_BUTTONS) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1)
+    }
+    const half = Math.floor(MAX_PAGE_BUTTONS / 2)
+    let start = Math.max(1, page - half)
+    let end = start + MAX_PAGE_BUTTONS - 1
+    if (end > totalPages) {
+      end = totalPages
+      start = end - MAX_PAGE_BUTTONS + 1
+    }
+    return Array.from({ length: end - start + 1 }, (_, i) => start + i)
+  })()
 
   const activeCount = [typeFilter, cityFilter, priceFilter, areaFilter].filter(Boolean).length
   const hasFilters = activeCount > 0 || search.trim().length > 0
@@ -462,8 +478,8 @@ export default function MapViewPage() {
         >
           <div className="p-3 border-b border-gray-100 flex items-center justify-between">
             <p className="text-xs text-gray-500 font-medium">
-              {hiddenCount > 0
-                ? `Showing ${visible.length} of ${totalInDb} properties`
+              {totalInDb > 0
+                ? `Page ${page} of ${totalPages} · ${totalInDb} total`
                 : `${visible.length} properties`}
             </p>
             <button
@@ -514,6 +530,61 @@ export default function MapViewPage() {
               </button>
             ))}
           </div>
+
+          {/* Pagination — windowed at MAX_PAGE_BUTTONS, sits at the bottom
+              of the sidebar list so it's always reachable. */}
+          {totalPages > 1 && (
+            <div className="p-3 border-t border-gray-100 flex items-center justify-center gap-1 sticky bottom-0 bg-white">
+              <button
+                disabled={page === 1}
+                onClick={() => { setPage(p => p - 1); setSelected(null) }}
+                className="p-1.5 rounded-lg border border-gray-200 disabled:opacity-40 hover:bg-gray-50 transition-colors"
+                aria-label="Previous page">
+                <ChevronLeft className="w-3.5 h-3.5" />
+              </button>
+
+              {pageWindow[0] > 1 && (
+                <>
+                  <button onClick={() => { setPage(1); setSelected(null) }}
+                    className="w-7 h-7 rounded-lg text-xs font-medium border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors">
+                    1
+                  </button>
+                  {pageWindow[0] > 2 && <span className="px-0.5 text-gray-400 text-xs">…</span>}
+                </>
+              )}
+
+              {pageWindow.map((n) => (
+                <button key={n}
+                  onClick={() => { setPage(n); setSelected(null) }}
+                  className={`w-7 h-7 rounded-lg text-xs font-medium transition-colors ${
+                    n === page ? 'text-white' : 'border border-gray-200 text-gray-600 hover:bg-gray-50'
+                  }`}
+                  style={n === page ? { backgroundColor: '#FF5A5F' } : {}}>
+                  {n}
+                </button>
+              ))}
+
+              {pageWindow[pageWindow.length - 1] < totalPages && (
+                <>
+                  {pageWindow[pageWindow.length - 1] < totalPages - 1 && (
+                    <span className="px-0.5 text-gray-400 text-xs">…</span>
+                  )}
+                  <button onClick={() => { setPage(totalPages); setSelected(null) }}
+                    className="w-7 h-7 rounded-lg text-xs font-medium border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors">
+                    {totalPages}
+                  </button>
+                </>
+              )}
+
+              <button
+                disabled={page === totalPages}
+                onClick={() => { setPage(p => p + 1); setSelected(null) }}
+                className="p-1.5 rounded-lg border border-gray-200 disabled:opacity-40 hover:bg-gray-50 transition-colors"
+                aria-label="Next page">
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Drawer scrim (mobile only) */}
@@ -593,7 +664,7 @@ export default function MapViewPage() {
             style={{ color: '#FF5A5F' }}
           >
             <ListIcon className="w-4 h-4" />
-            {hiddenCount > 0 ? `${visible.length} of ${totalInDb}` : `${visible.length} listings`}
+            {totalInDb > 0 ? `Page ${page}/${totalPages}` : `${visible.length} listings`}
           </button>
 
           {/* Legend (hidden on mobile to free up screen space) */}
