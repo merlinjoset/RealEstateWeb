@@ -53,7 +53,6 @@ export interface Property {
   propertyType: PropertyType
   status: ListingStatus
   images: string[]
-  videos?: string[]
   features: string[]
   agentId?: number
   agent?: Agent
