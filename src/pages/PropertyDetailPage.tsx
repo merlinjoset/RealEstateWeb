@@ -1,4 +1,4 @@
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useNavigate, useLocation } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import {
   MapPin, Ruler, Phone, MessageCircle, Heart, ChevronLeft,
@@ -21,6 +21,26 @@ function formatLakhs(amount: number) {
 
 export default function PropertyDetailPage() {
   const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
+  const location = useLocation()
+
+  /**
+   * "Back to listings" — return to whatever listing page the user came
+   * from with all its state (page number, filters, scroll position)
+   * intact, by walking one step back in browser history. We only do
+   * that when we actually arrived here from inside the app; if someone
+   * opened the detail URL directly (external link, refresh on detail
+   * page), fall back to a fresh /properties.
+   *
+   * Detection: react-router seeds location.key to "default" on the
+   * first navigation and to a random hash on every subsequent one. A
+   * non-default key means at least one prior in-app navigation, so
+   * `navigate(-1)` will land on it.
+   */
+  const handleBack = () => {
+    if (location.key !== 'default') navigate(-1)
+    else navigate('/properties')
+  }
   const propertyId = Number(id)
   const { user } = useAuth()
   const canSeeDocuments = user?.role === 'Admin' || user?.role === 'Employee'
@@ -111,9 +131,10 @@ export default function PropertyDetailPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <Link to="/properties" className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-[#FF5A5F] mb-4 transition-colors">
+        <button onClick={handleBack}
+          className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-[#FF5A5F] mb-4 transition-colors">
           <ChevronLeft className="w-4 h-4" /> Back to listings
-        </Link>
+        </button>
 
         <div className="mb-6">
           <PropertyGallery images={property.images} title={property.title} />

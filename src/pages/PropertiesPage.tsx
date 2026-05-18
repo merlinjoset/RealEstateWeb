@@ -16,16 +16,36 @@ const PRICE_RANGES = [
 ]
 
 export default function PropertiesPage() {
-  const [searchParams] = useSearchParams()
+  // Listing state lives in the URL so it survives navigation — the
+  // "Back to listings" button on a detail page walks one step back in
+  // browser history and lands on the same page+filters the user was
+  // looking at. Local state mirrors the URL for write performance.
+  const [searchParams, setSearchParams] = useSearchParams()
   const [search, setSearch] = useState(searchParams.get('search') || '')
   const [selectedCity, setSelectedCity] = useState(searchParams.get('city') || '')
-  const [priceRange, setPriceRange] = useState(0)
-  const [propertyType, setPropertyType] = useState<string>('')
-  const [sortBy, setSortBy] = useState('newest')
+  const [priceRange, setPriceRange] = useState(() => Number(searchParams.get('price') || 0))
+  const [propertyType, setPropertyType] = useState<string>(searchParams.get('type') || '')
+  const [sortBy, setSortBy] = useState(searchParams.get('sort') || 'newest')
   const [showFilters, setShowFilters] = useState(false)
-  const [view, setView] = useState<'grid' | 'list'>('grid')
-  const [page, setPage] = useState(1)
+  const [view, setView] = useState<'grid' | 'list'>(
+    (searchParams.get('view') as 'grid' | 'list') || 'grid')
+  const [page, setPage] = useState(() => Number(searchParams.get('page') || 1))
   const PAGE_SIZE = 9
+
+  // Sync the URL whenever any listing-shaping state changes — that's
+  // what makes browser back/forward restore the listing position.
+  // We use replace: true so each filter tweak doesn't bloat history.
+  useEffect(() => {
+    const next = new URLSearchParams()
+    if (search.trim()) next.set('search', search.trim())
+    if (selectedCity) next.set('city', selectedCity)
+    if (priceRange) next.set('price', String(priceRange))
+    if (propertyType) next.set('type', propertyType)
+    if (sortBy !== 'newest') next.set('sort', sortBy)
+    if (view !== 'grid') next.set('view', view)
+    if (page !== 1) next.set('page', String(page))
+    setSearchParams(next, { replace: true })
+  }, [search, selectedCity, priceRange, propertyType, sortBy, view, page, setSearchParams])
 
   // Scroll to top whenever the page number changes (skip the very first
   // mount so loading the route doesn't auto-scroll the user).
