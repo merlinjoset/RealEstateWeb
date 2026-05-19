@@ -2,11 +2,9 @@ import { useState } from 'react'
 import { X, ChevronLeft, ChevronRight } from 'lucide-react'
 import { resolveMediaUrl } from '../../services/api'
 
-const FALLBACK_IMAGES = [
-  'https://images.unsplash.com/photo-1570129477492-45c003edd2be?w=800&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1560185127-6a4a8c0c3e7d?w=800&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&auto=format&fit=crop',
-]
+// Single static placeholder shown when a property has no uploaded
+// images. Lives in /public so it ships with the bundle.
+const NO_IMAGE = '/noimage.svg'
 
 interface Props {
   images: string[]
@@ -17,10 +15,16 @@ export default function PropertyGallery({ images, title }: Props) {
   const [lightbox, setLightbox] = useState<number | null>(null)
   // Resolve every DB-relative path against the API origin so the
   // browser can fetch directly from api.joseforland.com (or whatever
-  // VITE_API_BASE_URL points at).
+  // VITE_API_BASE_URL points at). When the seller hasn't uploaded any
+  // images, fall through to a single placeholder rather than rotating
+  // through stock photos that misrepresent the listing.
   const displayImages = images.length > 0
     ? images.map(resolveMediaUrl)
-    : FALLBACK_IMAGES
+    : [NO_IMAGE]
+  const handleImgError = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    const img = e.currentTarget
+    if (img.src !== window.location.origin + NO_IMAGE) img.src = NO_IMAGE
+  }
 
   const prev = () => setLightbox((i) => (i !== null ? (i - 1 + displayImages.length) % displayImages.length : 0))
   const next = () => setLightbox((i) => (i !== null ? (i + 1) % displayImages.length : 0))
@@ -35,6 +39,7 @@ export default function PropertyGallery({ images, title }: Props) {
           <img
             src={displayImages[0]}
             alt={`${title} - photo 1`}
+            onError={handleImgError}
             className="w-full h-full object-cover hover:opacity-95 transition-opacity"
           />
         </div>
@@ -47,6 +52,7 @@ export default function PropertyGallery({ images, title }: Props) {
             <img
               src={src}
               alt={`${title} - photo ${i + 2}`}
+              onError={handleImgError}
               className="w-full h-full object-cover hover:opacity-95 transition-opacity"
             />
             {i === 3 && displayImages.length > 5 && (
@@ -74,6 +80,7 @@ export default function PropertyGallery({ images, title }: Props) {
           <img
             src={displayImages[lightbox]}
             alt={`${title} - photo ${lightbox + 1}`}
+            onError={handleImgError}
             className="max-w-5xl max-h-[85vh] object-contain mx-16"
           />
 

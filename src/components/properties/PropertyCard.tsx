@@ -24,16 +24,16 @@ const TYPE_LABELS: Record<Property['propertyType'], string> = {
   residential_plot: 'Residential Plot',
 }
 
-const FALLBACK_IMAGES = [
-  'https://images.unsplash.com/photo-1500076656116-558758c991c1?w=600&q=80&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1464082354059-27db6ce50048?w=600&q=80&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1592595896551-12b371d546d5?w=600&q=80&auto=format&fit=crop',
-]
+// Static placeholder used whenever the seller hasn't uploaded any
+// images yet. Lives in /public so it's served directly by the web
+// server — no API round-trip, no flicker. Replace the file in public/
+// to update the placeholder visual.
+const NO_IMAGE = '/noimage.svg'
 
 export default function PropertyCard({ property, onFavorite, isFavorited }: Props) {
   const imageSrc = property.images?.[0]
     ? resolveMediaUrl(property.images[0])
-    : FALLBACK_IMAGES[property.id % 3]
+    : NO_IMAGE
 
   return (
     <div className="card group">
@@ -42,6 +42,12 @@ export default function PropertyCard({ property, onFavorite, isFavorited }: Prop
           <img
             src={imageSrc}
             alt={property.title}
+            // If the real image fails to load (404, broken URL), swap to
+            // the local placeholder so the card never shows a broken icon.
+            onError={(e) => {
+              const img = e.currentTarget
+              if (img.src !== window.location.origin + NO_IMAGE) img.src = NO_IMAGE
+            }}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
 

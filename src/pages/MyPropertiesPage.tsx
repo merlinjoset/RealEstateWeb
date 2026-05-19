@@ -162,13 +162,12 @@ function PropertyRow({ property }: { property: Property }) {
         {/* Cover */}
         <div className="md:col-span-3 relative">
           <div className="aspect-video md:aspect-square rounded-xl overflow-hidden bg-gray-100">
-            {cover ? (
-              <img src={cover} alt={property.title} className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-gray-300">
-                <Building2 className="w-10 h-10" />
-              </div>
-            )}
+            <img
+              src={cover || '/noimage.svg'}
+              alt={property.title}
+              onError={(e) => { e.currentTarget.src = '/noimage.svg' }}
+              className="w-full h-full object-cover"
+            />
           </div>
           <span className="absolute top-3 left-3 inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-full"
             style={{ backgroundColor: statusCfg.bg, color: statusCfg.color }}>
