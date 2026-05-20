@@ -10,7 +10,7 @@ import { PropertyDocumentsEditor } from '../../components/properties/PropertyDoc
 import LocationPicker from '../../components/properties/LocationPicker'
 import MarketingPlanPicker from '../../components/properties/MarketingPlanPicker'
 import { propertiesApi, uploadsApi, type PropertySubmission } from '../../services/api'
-import type { MarketingPlan, PropertyDocument } from '../../types'
+import type { MarketingPlan, PropertyDocument, Property } from '../../types'
 
 const CITIES = [
   'Nagercoil', 'Marthandam', 'Thuckalay', 'Kanyakumari', 'Colachel',
@@ -199,32 +199,46 @@ export default function AddPropertyPage() {
   const navigate = useNavigate()
   const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({})
 
-  // Edit mode prefill
+  // Edit-mode prefill — fetch the real property by id and hydrate the
+  // form. (Previously this was hardcoded mock data, which is why every
+  // edit screen looked identical regardless of which listing you opened.)
   useEffect(() => {
     if (!isEditMode || !id) return
-    setForm({
-      serialNo: '',
-      title: `15 Cents Prime Land - Property ${id}`,
-      description: 'Prime location near main road with clear documents and full road access. Ideal for residential or commercial development. The plot has clear EC, Patta, and Chitta documents available for immediate registration.',
-      totalPrice: '2250000',
-      pricePerCent: '150000',
-      areaInCents: '15',
-      city: 'Nagercoil',
-      address: 'Kottar, Near NH 44',
-      pinCode: '629001',
-      propertyType: 'open_land',
-      bedrooms: '',
-      bathrooms: '',
-      roadAccess: true,
-      isFeatured: true,
-      isVerified: true,
-      legalStatus: 'Clear — EC, Patta, Chitta available',
-      nearbyLandmarks: 'NH 44 (200m), Nagercoil Railway Station (2km)',
-      features: ['Road Access', 'Clear Title', 'Near Market'],
-      latitude: '8.183300',
-      longitude: '77.411900',
-      marketingPlan: 'Free',
-    })
+    let cancelled = false
+    propertiesApi.getById(Number(id))
+      .then((p) => {
+        if (cancelled) return
+        setForm({
+          serialNo: p.serialNo ?? '',
+          title: p.title ?? '',
+          description: p.description ?? '',
+          totalPrice: p.totalPrice?.toString() ?? '',
+          pricePerCent: p.pricePerCent?.toString() ?? '',
+          areaInCents: p.areaInCents?.toString() ?? '',
+          city: p.city ?? '',
+          address: p.address ?? '',
+          pinCode: p.pinCode ?? '',
+          propertyType: p.propertyType ?? 'open_land',
+          bedrooms: p.bedrooms?.toString() ?? '',
+          bathrooms: p.bathrooms?.toString() ?? '',
+          roadAccess: !!p.roadAccess,
+          isFeatured: !!p.isFeatured,
+          isVerified: !!p.isVerified,
+          legalStatus: p.legalStatus ?? '',
+          // nearbyLandmarks is string[] on the API, joined for the
+          // single-line textarea-style input the form uses.
+          nearbyLandmarks: (p.nearbyLandmarks ?? []).join(', '),
+          features: p.features ?? [],
+          latitude: p.latitude?.toString() ?? '',
+          longitude: p.longitude?.toString() ?? '',
+          marketingPlan: p.marketingPlan ?? 'Free',
+        })
+      })
+      .catch((err) => {
+        console.error('Failed to load property for edit', err)
+        setSaveError(`Couldn't load property #${id}. It may have been deleted.`)
+      })
+    return () => { cancelled = true }
   }, [isEditMode, id])
 
   const set = <K extends keyof FormState>(field: K, value: FormState[K]) => {
@@ -339,36 +353,68 @@ export default function AddPropertyPage() {
       setUploadProgress(null)
     }
 
-    // 2) Create the property. (Edit-mode PUT is still TODO — currently
-    //    the form flows through the same POST endpoint regardless.)
+    // 2) Persist — PUT in edit mode, POST when creating a new listing.
+    //    Both endpoints accept the same field shape; the backend treats
+    //    a null/missing field as "leave unchanged" on update.
     try {
-      // AddPropertyPage is admin-only; the form doesn't capture a separate
-      // submitter, so we mark the submission as an internal admin entry.
-      const payload: PropertySubmission = {
-        serialNo: form.serialNo.trim() || undefined,
-        title: form.title,
-        description: form.description,
-        totalPrice: Number(form.totalPrice) || 0,
-        pricePerCent: form.pricePerCent ? Number(form.pricePerCent) : undefined,
-        areaInCents: Number(form.areaInCents) || 0,
-        address: form.address,
-        city: form.city,
-        district: 'Kanyakumari',
-        state: 'Tamil Nadu',
-        pinCode: form.pinCode,
-        propertyType: form.propertyType,
-        status: 'for_sale',
-        features: form.features,
-        images: imageUrls,
-        legalStatus: form.legalStatus || undefined,
-        roadAccess: form.roadAccess,
-        marketingPlan: form.marketingPlan,
-        latitude: form.latitude ? Number(form.latitude) : undefined,
-        longitude: form.longitude ? Number(form.longitude) : undefined,
-        submitterName: 'Admin entry',
-        submitterPhone: '',
+      const nearbyLandmarksArr = form.nearbyLandmarks
+        .split(',')
+        .map((s) => s.trim())
+        .filter((s) => s.length > 0)
+      if (isEditMode && id) {
+        await propertiesApi.update(Number(id), {
+          serialNo: form.serialNo.trim() || null,
+          title: form.title,
+          description: form.description,
+          totalPrice: Number(form.totalPrice) || 0,
+          pricePerCent: form.pricePerCent ? Number(form.pricePerCent) : undefined,
+          areaInCents: Number(form.areaInCents) || 0,
+          address: form.address,
+          city: form.city,
+          pinCode: form.pinCode,
+          propertyType: form.propertyType,
+          // For edit, only overwrite images when the admin actually
+          // uploaded new ones — otherwise we'd wipe the existing gallery.
+          ...(imageUrls.length > 0 ? { images: imageUrls } : {}),
+          features: form.features,
+          nearbyLandmarks: nearbyLandmarksArr,
+          legalStatus: form.legalStatus || undefined,
+          roadAccess: form.roadAccess,
+          isFeatured: form.isFeatured,
+          isVerified: form.isVerified,
+          marketingPlan: form.marketingPlan,
+          latitude: form.latitude ? Number(form.latitude) : undefined,
+          longitude: form.longitude ? Number(form.longitude) : undefined,
+        } as Partial<Property>)
+      } else {
+        // AddPropertyPage is admin-only; the form doesn't capture a separate
+        // submitter, so we mark the submission as an internal admin entry.
+        const payload: PropertySubmission = {
+          serialNo: form.serialNo.trim() || undefined,
+          title: form.title,
+          description: form.description,
+          totalPrice: Number(form.totalPrice) || 0,
+          pricePerCent: form.pricePerCent ? Number(form.pricePerCent) : undefined,
+          areaInCents: Number(form.areaInCents) || 0,
+          address: form.address,
+          city: form.city,
+          district: 'Kanyakumari',
+          state: 'Tamil Nadu',
+          pinCode: form.pinCode,
+          propertyType: form.propertyType,
+          status: 'for_sale',
+          features: form.features,
+          images: imageUrls,
+          legalStatus: form.legalStatus || undefined,
+          roadAccess: form.roadAccess,
+          marketingPlan: form.marketingPlan,
+          latitude: form.latitude ? Number(form.latitude) : undefined,
+          longitude: form.longitude ? Number(form.longitude) : undefined,
+          submitterName: 'Admin entry',
+          submitterPhone: '',
+        }
+        await propertiesApi.submit(payload)
       }
-      await propertiesApi.submit(payload)
       setSaving(false)
       setSaved(true)
       setTimeout(() => navigate('/admin/properties'), 1500)
