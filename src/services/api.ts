@@ -82,6 +82,8 @@ api.interceptors.response.use(
  * phone, and (optional) email so the API can fire the confirmation SMS/email.
  */
 export interface PropertySubmission {
+  /** Optional admin-assigned serial / reference number. */
+  serialNo?: string
   title: string
   description: string
   totalPrice: number

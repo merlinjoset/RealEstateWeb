@@ -87,6 +87,14 @@ export default function PropertyCard({ property, onFavorite, isFavorited }: Prop
 
       <div className="p-4">
         <Link to={`/properties/${property.id}`}>
+          {/* Admin-assigned serial / ref code, shown as a small monospace tag
+              above the title. Hidden when no serial is set (most legacy
+              imports). */}
+          {property.serialNo && (
+            <div className="text-[10px] font-mono font-semibold uppercase tracking-wider text-gray-400 mb-1">
+              {property.serialNo}
+            </div>
+          )}
           <h3 className="font-semibold text-gray-900 transition-colors line-clamp-1 mb-1 hover:text-[#FF5A5F]">
             {property.title}
           </h3>

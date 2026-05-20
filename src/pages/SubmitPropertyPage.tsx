@@ -39,6 +39,7 @@ interface FormState {
   submitterPhone: string
   submitterEmail: string
   // Property
+  serialNo: string
   title: string
   description: string
   propertyType: string
@@ -64,6 +65,7 @@ const INITIAL: FormState = {
   // Phone is the bare 10-digit local number — the +91 country code is
   // shown as a visual prefix next to the input, not stored in the value.
   submitterName: '', submitterPhone: '', submitterEmail: '',
+  serialNo: '',
   title: '', description: '', propertyType: 'open_land',
   totalPrice: '', areaInCents: '', city: '', address: '', pinCode: '',
   legalStatus: '', roadAccess: false, features: [],
@@ -189,6 +191,7 @@ export default function SubmitPropertyPage() {
     }
 
     const payload: PropertySubmission = {
+      serialNo: form.serialNo.trim() || undefined,
       title: form.title,
       description: form.description,
       totalPrice: Number(form.totalPrice),
@@ -353,6 +356,13 @@ export default function SubmitPropertyPage() {
 
           {/* === Property basics === */}
           <Section icon={MapPinIcon} title="Property Details" desc="Tell us about the land you're selling">
+            <Field label="Serial No (optional)" hint="A reference code you can use to track this listing — e.g. JFL-2026-001">
+              <input value={form.serialNo}
+                onChange={(e) => set('serialNo', e.target.value)}
+                className="input-field" maxLength={50}
+                placeholder="e.g. JFL-2026-001" />
+            </Field>
+
             <Field label="Listing Title *" hint="Clear, specific titles attract more buyers">
               <input required value={form.title}
                 onChange={(e) => set('title', e.target.value)}

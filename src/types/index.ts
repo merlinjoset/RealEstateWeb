@@ -37,6 +37,8 @@ export interface PropertyDocument {
 
 export interface Property {
   id: number
+  /** Optional admin-assigned serial / reference number (e.g. "JFL-2026-001"). */
+  serialNo?: string | null
   title: string
   description: string
   totalPrice: number

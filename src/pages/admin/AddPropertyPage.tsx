@@ -32,6 +32,7 @@ const PROPERTY_TYPES = [
 ] as const
 
 interface FormState {
+  serialNo: string
   title: string
   description: string
   totalPrice: string
@@ -55,6 +56,7 @@ interface FormState {
 }
 
 const INITIAL: FormState = {
+  serialNo: '',
   title: '', description: '', totalPrice: '', pricePerCent: '',
   areaInCents: '', city: '', address: '', pinCode: '',
   propertyType: 'open_land', bedrooms: '', bathrooms: '',
@@ -201,6 +203,7 @@ export default function AddPropertyPage() {
   useEffect(() => {
     if (!isEditMode || !id) return
     setForm({
+      serialNo: '',
       title: `15 Cents Prime Land - Property ${id}`,
       description: 'Prime location near main road with clear documents and full road access. Ideal for residential or commercial development. The plot has clear EC, Patta, and Chitta documents available for immediate registration.',
       totalPrice: '2250000',
@@ -342,6 +345,7 @@ export default function AddPropertyPage() {
       // AddPropertyPage is admin-only; the form doesn't capture a separate
       // submitter, so we mark the submission as an internal admin entry.
       const payload: PropertySubmission = {
+        serialNo: form.serialNo.trim() || undefined,
         title: form.title,
         description: form.description,
         totalPrice: Number(form.totalPrice) || 0,
@@ -547,6 +551,14 @@ export default function AddPropertyPage() {
             icon={Info}
             sectionRef={(el) => (sectionRefs.current.basic = el)}
             id="basic">
+
+            <Field label="Serial No"
+              hint="Optional reference code for tracking — e.g. JFL-2026-001">
+              <input type="text" value={form.serialNo}
+                onChange={(e) => set('serialNo', e.target.value)}
+                placeholder="e.g. JFL-2026-001"
+                className="input-field" maxLength={50} />
+            </Field>
 
             <Field label="Property Title" required
               hint="A clear, specific title performs best (include location and area)"
