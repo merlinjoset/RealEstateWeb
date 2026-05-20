@@ -9,9 +9,9 @@ import { propertiesApi } from '../services/api'
 import type { Property } from '../types'
 
 function formatLakhs(amount: number) {
-  if (amount >= 10000000) return `â‚¹${(amount / 10000000).toFixed(2)} Cr`
-  if (amount >= 100000) return `â‚¹${(amount / 100000).toFixed(2)} L`
-  return `â‚¹${amount.toLocaleString('en-IN')}`
+  if (amount >= 10000000) return `₹${(amount / 10000000).toFixed(2)} Cr`
+  if (amount >= 100000) return `₹${(amount / 100000).toFixed(2)} L`
+  return `₹${amount.toLocaleString('en-IN')}`
 }
 
 // Approximate coordinates for Kanyakumari district areas
@@ -58,7 +58,7 @@ const TYPE_PRICE_COLORS: Record<Property['propertyType'], string> = {
   residential_plot: '#FCD34D',   // bright gold
 }
 
-// Build a custom DivIcon â€” Property-Finder-style deep navy "From [price]" pill
+// Build a custom DivIcon — Property-Finder-style deep navy "From [price]" pill
 function makePinIcon(
   dotColor: string,
   _priceTone: string, // kept for backwards compat
@@ -152,18 +152,18 @@ function getPropertyCoords(property: Property): [number, number] {
 
 const PRICE_RANGES = [
   { value: '', label: 'Any price', min: 0, max: 0 },
-  { value: '0-10', label: 'Under â‚¹10 L', min: 0, max: 1000000 },
-  { value: '10-25', label: 'â‚¹10 L â€“ â‚¹25 L', min: 1000000, max: 2500000 },
-  { value: '25-50', label: 'â‚¹25 L â€“ â‚¹50 L', min: 2500000, max: 5000000 },
-  { value: '50-100', label: 'â‚¹50 L â€“ â‚¹1 Cr', min: 5000000, max: 10000000 },
-  { value: '100+', label: 'Above â‚¹1 Cr', min: 10000000, max: 0 },
+  { value: '0-10', label: 'Under ₹10 L', min: 0, max: 1000000 },
+  { value: '10-25', label: '₹10 L – ₹25 L', min: 1000000, max: 2500000 },
+  { value: '25-50', label: '₹25 L – ₹50 L', min: 2500000, max: 5000000 },
+  { value: '50-100', label: '₹50 L – ₹1 Cr', min: 5000000, max: 10000000 },
+  { value: '100+', label: 'Above ₹1 Cr', min: 10000000, max: 0 },
 ]
 
 const AREA_RANGES = [
   { value: '', label: 'Any size', min: 0, max: 0 },
   { value: '0-10', label: 'Up to 10 cents', min: 0, max: 10 },
-  { value: '10-25', label: '10 â€“ 25 cents', min: 10, max: 25 },
-  { value: '25-50', label: '25 â€“ 50 cents', min: 25, max: 50 },
+  { value: '10-25', label: '10 – 25 cents', min: 10, max: 25 },
+  { value: '25-50', label: '25 – 50 cents', min: 25, max: 50 },
   { value: '50+', label: 'Above 50 cents', min: 50, max: 0 },
 ]
 
@@ -468,7 +468,7 @@ export default function MapViewPage() {
       )}
 
       <div className="flex flex-col md:flex-row h-[70vh] md:h-[calc(100vh-180px)] min-h-[480px] relative">
-        {/* Left sidebar â€” property list (drawer on mobile) */}
+        {/* Left sidebar — property list (drawer on mobile) */}
         <div
           className={`bg-white border-r border-gray-200 overflow-y-auto
             md:w-80 md:shrink-0 md:relative md:translate-x-0
