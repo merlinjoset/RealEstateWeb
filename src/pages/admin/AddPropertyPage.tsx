@@ -141,6 +141,28 @@ function validate(form: FormState): Errors {
     e.totalPrice = 'Price seems too low — verify the amount'
   }
 
+  // Price per cent — optional, but if set it must agree with total / area.
+  // We allow a 1% slop because admins often round (eg. 7 cents at
+  // ₹10.5L/cent = ₹73.5L total, not the exact ₹73,500,000.).
+  const perCent = Number(form.pricePerCent)
+  if (form.pricePerCent && (isNaN(perCent) || perCent <= 0)) {
+    e.pricePerCent = 'Enter a valid price per cent'
+  } else if (form.pricePerCent && !e.totalPrice && !e.areaInCents && area > 0) {
+    const expectedTotal = perCent * area
+    const drift = Math.abs(expectedTotal - price) / Math.max(expectedTotal, price)
+    if (drift > 0.01) {
+      // Format the expected total in lakhs/crores so the admin sees the
+      // exact number we'd accept and can pick which field to fix.
+      const fmt = (n: number) =>
+        n >= 10000000 ? `₹${(n / 10000000).toFixed(2)} Cr` :
+        n >= 100000   ? `₹${(n / 100000).toFixed(2)} L`   :
+                        `₹${Math.round(n).toLocaleString('en-IN')}`
+      e.pricePerCent =
+        `Doesn't match — ${area} cents × ${fmt(perCent)} = ${fmt(expectedTotal)}, ` +
+        `but total is ${fmt(price)}. Check one of the three fields.`
+    }
+  }
+
   // City
   if (!form.city) {
     e.city = 'Please select a city'
