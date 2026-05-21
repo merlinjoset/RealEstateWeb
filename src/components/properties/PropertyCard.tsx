@@ -1,13 +1,13 @@
-import { Link } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { MapPin, Heart, Ruler, Home, CheckCircle, Phone } from 'lucide-react'
 import type { Property } from '../../types'
-import { resolveMediaUrl } from '../../services/api'
+import { propertiesApi, resolveMediaUrl } from '../../services/api'
+import { useAuth } from '../../context/AuthContext'
 import ShareButton from './ShareButton'
 
 interface Props {
   property: Property
-  onFavorite?: (id: number) => void
-  isFavorited?: boolean
 }
 
 function formatLakhs(amount: number) {
@@ -30,10 +30,54 @@ const TYPE_LABELS: Record<Property['propertyType'], string> = {
 // to update the placeholder visual.
 const NO_IMAGE = '/noimage.svg'
 
-export default function PropertyCard({ property, onFavorite, isFavorited }: Props) {
+export default function PropertyCard({ property }: Props) {
   const imageSrc = property.images?.[0]
     ? resolveMediaUrl(property.images[0])
     : NO_IMAGE
+
+  // Favourite handling — self-contained so the heart works on every page
+  // (PropertiesPage, FeaturedProperties, MapView, etc.), not just the
+  // dedicated FavoritesPage. Reads the shared ['favorites'] query cache
+  // so all cards stay in sync. Anonymous users are redirected to /login
+  // with `from` state so they land back on the same page after sign-in.
+  const { isAuthenticated } = useAuth()
+  const navigate = useNavigate()
+  const location = useLocation()
+  const queryClient = useQueryClient()
+  const favoritesQuery = useQuery({
+    queryKey: ['favorites'],
+    queryFn: propertiesApi.getFavorites,
+    enabled: isAuthenticated,
+    staleTime: 60_000,
+  })
+  const isFavorited = Array.isArray(favoritesQuery.data)
+    && favoritesQuery.data.some((p) => p.id === property.id)
+  const toggleFavorite = useMutation({
+    mutationFn: () => propertiesApi.toggleFavorite(property.id),
+    // Optimistic flip — fill/empty the heart immediately, roll back on error.
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ['favorites'] })
+      const prev = queryClient.getQueryData<Property[]>(['favorites']) ?? []
+      const next = isFavorited
+        ? prev.filter((p) => p.id !== property.id)
+        : [property, ...prev]
+      queryClient.setQueryData(['favorites'], next)
+      return { prev }
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.prev) queryClient.setQueryData(['favorites'], ctx.prev)
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['favorites'] }),
+  })
+  const handleHeartClick = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!isAuthenticated) {
+      navigate('/login', { state: { from: location.pathname } })
+      return
+    }
+    if (!toggleFavorite.isPending) toggleFavorite.mutate()
+  }
 
   return (
     <div className="card group">
@@ -70,11 +114,13 @@ export default function PropertyCard({ property, onFavorite, isFavorited }: Prop
           )}
 
           <button
-            onClick={(e) => {
-              e.preventDefault()
-              onFavorite?.(property.id)
-            }}
-            className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center hover:bg-white transition-colors shadow-sm"
+            onClick={handleHeartClick}
+            disabled={toggleFavorite.isPending}
+            aria-label={isFavorited ? 'Remove from favourites' : 'Save to favourites'}
+            title={isAuthenticated
+              ? (isFavorited ? 'Remove from favourites' : 'Save to favourites')
+              : 'Sign in to save properties'}
+            className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center hover:bg-white transition-colors shadow-sm disabled:opacity-60"
           >
             <Heart
               className={`w-4 h-4 transition-colors ${
