@@ -44,6 +44,7 @@ interface FormState {
   description: string
   propertyType: string
   totalPrice: string
+  pricePerCent: string
   areaInCents: string
   city: string
   address: string
@@ -67,7 +68,7 @@ const INITIAL: FormState = {
   submitterName: '', submitterPhone: '', submitterEmail: '',
   serialNo: '',
   title: '', description: '', propertyType: 'open_land',
-  totalPrice: '', areaInCents: '', city: '', address: '', pinCode: '',
+  totalPrice: '', pricePerCent: '', areaInCents: '', city: '', address: '', pinCode: '',
   legalStatus: '', roadAccess: false, features: [],
   latitude: '', longitude: '',
   marketingPlan: 'Free',
@@ -161,8 +162,34 @@ export default function SubmitPropertyPage() {
   // Flag visibly incomplete emails — silent while the field is empty.
   const emailLooksInvalid = form.submitterEmail.length > 0 && !isValidEmail(form.submitterEmail)
 
+  // Cross-check total price vs per-cent × area. Allows 1% slop so
+  // sellers can round (eg. 7 cents at ₹10.5L/cent → ₹73.5L total).
+  // Only fires when all three are filled and individually valid.
+  const price    = Number(form.totalPrice)
+  const perCent  = Number(form.pricePerCent)
+  const area     = Number(form.areaInCents)
+  const priceMismatchError: string | null = (() => {
+    if (!form.pricePerCent || !form.totalPrice || !form.areaInCents) return null
+    if (isNaN(price) || price <= 0)     return null
+    if (isNaN(perCent) || perCent <= 0) return null
+    if (isNaN(area)    || area <= 0)    return null
+    const expectedTotal = perCent * area
+    const drift = Math.abs(expectedTotal - price) / Math.max(expectedTotal, price)
+    if (drift <= 0.01) return null
+    const fmt = (n: number) =>
+      n >= 10000000 ? `₹${(n / 10000000).toFixed(2)} Cr` :
+      n >= 100000   ? `₹${(n / 100000).toFixed(2)} L`   :
+                      `₹${Math.round(n).toLocaleString('en-IN')}`
+    return `Doesn't match — ${area} cents × ${fmt(perCent)} = ${fmt(expectedTotal)}, ` +
+           `but total is ${fmt(price)}. Check one of the three fields.`
+  })()
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (priceMismatchError) {
+      document.getElementById('price-per-cent')?.focus()
+      return
+    }
     if (emailRequired && !form.submitterEmail.trim()) {
       document.getElementById('submitter-email')?.focus()
       return
@@ -195,6 +222,7 @@ export default function SubmitPropertyPage() {
       title: form.title,
       description: form.description,
       totalPrice: Number(form.totalPrice),
+      pricePerCent: form.pricePerCent ? Number(form.pricePerCent) : undefined,
       areaInCents: Number(form.areaInCents),
       address: form.address,
       city: form.city,
@@ -426,6 +454,20 @@ export default function SubmitPropertyPage() {
                 </div>
               </Field>
             </Row>
+            <Field label="Price per Cent (₹) — optional"
+              hint={priceMismatchError ?? 'We cross-check this against the total price and area to catch typos.'}>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium">₹</span>
+                <input
+                  id="price-per-cent"
+                  type="number" min="1"
+                  value={form.pricePerCent}
+                  onChange={(e) => set('pricePerCent', e.target.value)}
+                  placeholder="150000"
+                  className="input-field pl-7"
+                  style={priceMismatchError ? { borderColor: '#B91C1C' } : undefined} />
+              </div>
+            </Field>
           </Section>
 
           {/* === Location === */}
