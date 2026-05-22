@@ -6,7 +6,7 @@ import SEO from '../components/common/SEO'
 import PropertyCard from '../components/properties/PropertyCard'
 import { propertiesApi } from '../services/api'
 
-const CITIES = ['Nagercoil', 'Marthandam', 'Thuckalay', 'Kanyakumari', 'Colachel', 'Padmanabhapuram', 'Boothapandi', 'Eraniel']
+const CITIES = ['Nagercoil', 'Marthandam', 'Thuckalay', 'Kanyakumari', 'Colachel', 'Kaliyakkavilai', 'Boothapandi', 'Eraniel']
 const PRICE_RANGES = [
   { label: 'All Prices', min: 0, max: 0 },
   { label: 'Below ₹15L', min: 0, max: 1500000 },

@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Search, MapPin, Star, Phone, Map as MapIcon } from 'lucide-react'
 import { propertiesApi } from '../../services/api'
 
-const CITIES = ['Nagercoil', 'Marthandam', 'Thuckalay', 'Kanyakumari', 'Colachel', 'Padmanabhapuram']
+const CITIES = ['Nagercoil', 'Marthandam', 'Thuckalay', 'Kanyakumari', 'Colachel', 'Kaliyakkavilai']
 
 export default function HeroSection() {
   const navigate = useNavigate()

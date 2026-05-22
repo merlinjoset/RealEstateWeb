@@ -21,7 +21,7 @@ const LOCATIONS: Record<string, { lat: number; lng: number }> = {
   Thuckalay:       { lat: 8.2400, lng: 77.2700 },
   Kanyakumari:     { lat: 8.0883, lng: 77.5385 },
   Colachel:        { lat: 8.1747, lng: 77.2583 },
-  Padmanabhapuram: { lat: 8.2490, lng: 77.3217 },
+  Kaliyakkavilai:  { lat: 8.2167, lng: 77.2667 },
   Boothapandi:     { lat: 8.2800, lng: 77.3600 },
   Eraniel:         { lat: 8.2058, lng: 77.3208 },
 }
@@ -167,7 +167,7 @@ const AREA_RANGES = [
   { value: '50+', label: 'Above 50 cents', min: 50, max: 0 },
 ]
 
-const CITIES = ['Nagercoil', 'Marthandam', 'Thuckalay', 'Kanyakumari', 'Colachel', 'Padmanabhapuram', 'Boothapandi', 'Eraniel']
+const CITIES = ['Nagercoil', 'Marthandam', 'Thuckalay', 'Kanyakumari', 'Colachel', 'Kaliyakkavilai', 'Boothapandi', 'Eraniel']
 
 const PAGE_SIZE = 10
 

@@ -1,13 +1,17 @@
 import { useNavigate } from 'react-router-dom'
 import { MapPin } from 'lucide-react'
 
+// Local photos served from /public/locations/. The previous Unsplash
+// stock photos misrepresented the towns; replace each file with a real
+// photo (or leave the missing-image fallback to /noimage.svg via
+// onError below). File names are lowercase + slug-safe.
 const LOCATIONS = [
-  { name: 'Nagercoil', count: 120, img: 'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=400&q=80&auto=format&fit=crop' },
-  { name: 'Marthandam', count: 65, img: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&q=80&auto=format&fit=crop' },
-  { name: 'Thuckalay', count: 48, img: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=400&q=80&auto=format&fit=crop' },
-  { name: 'Kanyakumari', count: 38, img: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80&auto=format&fit=crop' },
-  { name: 'Colachel', count: 29, img: 'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=400&q=80&auto=format&fit=crop' },
-  { name: 'Padmanabhapuram', count: 22, img: 'https://images.unsplash.com/photo-1501854140801-50d01698950b?w=400&q=80&auto=format&fit=crop' },
+  { name: 'Nagercoil',      count: 120, img: '/locations/nagercoil.jpg' },
+  { name: 'Marthandam',     count: 65,  img: '/locations/marthandam.jpg' },
+  { name: 'Thuckalay',      count: 48,  img: '/locations/thuckalay.jpg' },
+  { name: 'Kanyakumari',    count: 38,  img: '/locations/kanyakumari.jpg' },
+  { name: 'Colachel',       count: 29,  img: '/locations/colachel.jpg' },
+  { name: 'Kaliyakkavilai', count: 22,  img: '/locations/kaliyakkavilai.jpg' },
 ]
 
 export default function LocationSection() {
@@ -31,6 +35,9 @@ export default function LocationSection() {
               <img
                 src={img}
                 alt={name}
+                // Until the location photo is added to /public/locations/,
+                // gracefully fall back to the shared no-image placeholder.
+                onError={(e) => { e.currentTarget.src = '/noimage.svg' }}
                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />

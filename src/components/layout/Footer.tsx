@@ -94,7 +94,7 @@ export default function Footer() {
           <div className="space-y-4">
             <h4 className="text-white font-semibold">Locations</h4>
             <ul className="space-y-2 text-sm">
-              {['Nagercoil', 'Marthandam', 'Thuckalay', 'Kanyakumari', 'Colachel', 'Padmanabhapuram', 'Boothapandi'].map((city) => (
+              {['Nagercoil', 'Marthandam', 'Thuckalay', 'Kanyakumari', 'Colachel', 'Kaliyakkavilai', 'Boothapandi'].map((city) => (
                 <li key={city}>
                   <Link to={`/properties?city=${encodeURIComponent(city)}`} className="hover:text-white transition-colors" style={{ color: 'rgba(255,255,255,0.66)' }}>
                     {city}
