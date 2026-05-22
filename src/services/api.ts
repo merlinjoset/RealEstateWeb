@@ -183,6 +183,12 @@ export const propertiesApi = {
   getFavorites: () =>
     api.get<Property[]>('/properties/favorites').then((r) => r.data),
 
+  /** Approved-property counts grouped by city. Used to drive the home
+   *  page "Browse by Location" tiles with real numbers, and to derive
+   *  display labels that match what the filter will actually match. */
+  getCityCounts: () =>
+    api.get<{ city: string; count: number }[]>('/properties/city-counts').then((r) => r.data),
+
   /** Properties submitted by (or assigned to) the current user. */
   getMine: () =>
     api.get<Property[]>('/properties/mine').then((r) => r.data),

@@ -1,21 +1,38 @@
 import { useNavigate } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import { MapPin } from 'lucide-react'
+import { propertiesApi } from '../../services/api'
 
 // Local photos served from /public/locations/. The previous Unsplash
-// stock photos misrepresented the towns; replace each file with a real
-// photo (or leave the missing-image fallback to /noimage.svg via
-// onError below). File names are lowercase + slug-safe.
+// stock photos misrepresented the towns; drop a real photo in to
+// replace the noimage.svg fallback per location. File names are
+// lowercase + slug-safe.
 const LOCATIONS = [
-  { name: 'Nagercoil',      count: 120, img: '/locations/nagercoil.jpg' },
-  { name: 'Marthandam',     count: 65,  img: '/locations/marthandam.jpg' },
-  { name: 'Thuckalay',      count: 48,  img: '/locations/thuckalay.jpg' },
-  { name: 'Kanyakumari',    count: 38,  img: '/locations/kanyakumari.jpg' },
-  { name: 'Colachel',       count: 29,  img: '/locations/colachel.jpg' },
-  { name: 'Kaliyakkavilai', count: 22,  img: '/locations/kaliyakkavilai.jpg' },
+  { name: 'Nagercoil',      img: '/locations/nagercoil.jpg' },
+  { name: 'Marthandam',     img: '/locations/marthandam.jpg' },
+  { name: 'Thuckalay',      img: '/locations/thuckalay.jpg' },
+  { name: 'Kanyakumari',    img: '/locations/kanyakumari.jpg' },
+  { name: 'Colachel',       img: '/locations/colachel.jpg' },
+  { name: 'Kaliyakkavilai', img: '/locations/kaliyakkavilai.jpg' },
 ]
 
 export default function LocationSection() {
   const navigate = useNavigate()
+
+  // Real counts from the API, grouped by the city values actually stored
+  // in the DB (e.g. "Nagercoil Region", "Marthandam Region"). We sum
+  // anything that contains the short name as a substring — matches the
+  // backend's substring filter so the count on the tile and the count
+  // of results after click stay in sync.
+  const { data: rows = [] } = useQuery({
+    queryKey: ['city-counts'],
+    queryFn: propertiesApi.getCityCounts,
+    staleTime: 5 * 60_000,
+  })
+  const countFor = (shortName: string) =>
+    rows
+      .filter((r) => r.city?.toLowerCase().includes(shortName.toLowerCase()))
+      .reduce((sum, r) => sum + r.count, 0)
 
   return (
     <section className="py-16 bg-gray-50">
@@ -26,30 +43,35 @@ export default function LocationSection() {
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          {LOCATIONS.map(({ name, count, img }) => (
-            <button
-              key={name}
-              onClick={() => navigate(`/properties?city=${encodeURIComponent(name)}`)}
-              className="group relative overflow-hidden rounded-xl h-36 text-left"
-            >
-              <img
-                src={img}
-                alt={name}
-                // Until the location photo is added to /public/locations/,
-                // gracefully fall back to the shared no-image placeholder.
-                onError={(e) => { e.currentTarget.src = '/noimage.svg' }}
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-              <div className="absolute bottom-0 left-0 right-0 p-3">
-                <div className="flex items-center gap-1 text-white font-semibold text-sm">
-                  <MapPin className="w-3 h-3" />
-                  {name}
+          {LOCATIONS.map(({ name, img }) => {
+            const count = countFor(name)
+            return (
+              <button
+                key={name}
+                onClick={() => navigate(`/properties?city=${encodeURIComponent(name)}`)}
+                className="group relative overflow-hidden rounded-xl h-36 text-left"
+              >
+                <img
+                  src={img}
+                  alt={name}
+                  // Until the location photo is added to /public/locations/,
+                  // gracefully fall back to the shared no-image placeholder.
+                  onError={(e) => { e.currentTarget.src = '/noimage.svg' }}
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-3">
+                  <div className="flex items-center gap-1 text-white font-semibold text-sm">
+                    <MapPin className="w-3 h-3" />
+                    {name}
+                  </div>
+                  <div className="text-white/70 text-xs">
+                    {count > 0 ? `${count} propert${count === 1 ? 'y' : 'ies'}` : 'No listings yet'}
+                  </div>
                 </div>
-                <div className="text-white/70 text-xs">{count} properties</div>
-              </div>
-            </button>
-          ))}
+              </button>
+            )
+          })}
         </div>
       </div>
     </section>
