@@ -133,15 +133,16 @@ export default function PropertyCard({ property }: Props) {
 
       <div className="p-4">
         <Link to={`/properties/${property.id}`}>
-          {/* Admin-assigned serial / ref code, shown as a small monospace tag
-              above the title. Hidden when no serial is set (most legacy
-              imports). */}
-          {property.serialNo && (
-            <div className="text-[10px] font-mono font-semibold uppercase tracking-wider text-gray-400 mb-1">
-              {property.serialNo}
-            </div>
-          )}
+          {/* Serial / ref code sits inline with the title as a leading chip
+              rather than a separate row above — saves vertical space and
+              reads as "ref → title" without doubling the line height.
+              Hidden when no serial is set (most legacy imports). */}
           <h3 className="font-semibold text-gray-900 transition-colors line-clamp-1 mb-1 hover:text-[#FF5A5F]">
+            {property.serialNo && (
+              <span className="inline-block text-[10px] font-mono font-semibold uppercase tracking-wider text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded mr-1.5 align-middle">
+                {property.serialNo}
+              </span>
+            )}
             {property.title}
           </h3>
         </Link>
