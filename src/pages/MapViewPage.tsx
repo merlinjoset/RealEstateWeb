@@ -810,9 +810,9 @@ function FilterSelect({
         <ChevronDown className={`w-3.5 h-3.5 transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
 
+      {/* Dropdown sits above Leaflet's panes (up to z-1000) so it doesn't
+          get clipped by the map below the filter strip. */}
       {open && (
-        {/* Sits above Leaflet's panes (up to z-1000) so the dropdown
-            doesn't get clipped by the map below the filter strip. */}
         <div className="absolute top-full left-0 mt-1 w-full min-w-[200px] bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-[1100] max-h-72 overflow-y-auto">
           {options.map(opt => (
             <button
