@@ -811,7 +811,9 @@ function FilterSelect({
       </button>
 
       {open && (
-        <div className="absolute top-full left-0 mt-1 w-full min-w-[200px] bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-30 max-h-72 overflow-y-auto">
+        {/* Sits above Leaflet's panes (up to z-1000) so the dropdown
+            doesn't get clipped by the map below the filter strip. */}
+        <div className="absolute top-full left-0 mt-1 w-full min-w-[200px] bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-[1100] max-h-72 overflow-y-auto">
           {options.map(opt => (
             <button
               key={opt.value}
