@@ -825,7 +825,7 @@ function FilterSelect({
               style={value === opt.value ? { backgroundColor: 'rgba(255,90,95,0.06)', color: '#FF5A5F', fontWeight: 600 } : { color: '#374151' }}
             >
               {opt.label}
-              {value === opt.value && <span style={{ color: '#FF5A5F' }}>âœ“</span>}
+              {value === opt.value && <span style={{ color: '#FF5A5F' }}>✓</span>}
             </button>
           ))}
         </div>
