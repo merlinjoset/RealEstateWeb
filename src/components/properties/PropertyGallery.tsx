@@ -65,7 +65,10 @@ export default function PropertyGallery({ images, title }: Props) {
       </div>
 
       {lightbox !== null && (
-        <div className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center">
+        // z-index has to clear the Leaflet map's internal panes (up to
+        // ~z-1000) plus our navbar at z-[1200], otherwise the property-
+        // location map below the fold paints on top of the lightbox.
+        <div className="fixed inset-0 bg-black/95 z-[1300] flex items-center justify-center">
           <button
             onClick={() => setLightbox(null)}
             className="absolute top-4 right-4 text-white hover:text-gray-300 p-2"
