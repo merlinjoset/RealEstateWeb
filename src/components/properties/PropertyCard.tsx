@@ -139,8 +139,11 @@ export default function PropertyCard({ property }: Props) {
               Hidden when no serial is set (most legacy imports). */}
           <h3 className="font-semibold text-gray-900 transition-colors line-clamp-1 mb-1 hover:text-[#FF5A5F]">
             {property.serialNo && (
-              <span className="inline-block text-[10px] font-mono font-semibold uppercase tracking-wider text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded mr-1.5 align-middle">
-                {property.serialNo}
+              // Same #N treatment as the detail page — brand-red, same
+              // weight/size as the title so the two read as one phrase
+              // ("#685 commercial property") rather than chip + title.
+              <span className="font-semibold mr-1.5" style={{ color: '#FF5A5F' }}>
+                #{property.serialNo}
               </span>
             )}
             {property.title}

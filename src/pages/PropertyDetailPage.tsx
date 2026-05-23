@@ -162,8 +162,11 @@ export default function PropertyDetailPage() {
                   </div>
                   <h1 className="text-3xl md:text-4xl font-bold text-gray-900 leading-tight tracking-tight">
                     {property.serialNo && (
-                      <span className="inline-block text-sm font-mono font-semibold uppercase tracking-wider text-gray-500 bg-gray-100 px-2.5 py-1 rounded mr-3 align-middle">
-                        {property.serialNo}
+                      // Serial reads as a peer of the title now — same font
+                      // family + weight, just in the brand red so it stands
+                      // apart without needing the muted chip styling.
+                      <span className="text-3xl md:text-4xl font-bold mr-3 align-middle" style={{ color: '#FF5A5F' }}>
+                        #{property.serialNo}
                       </span>
                     )}
                     {property.title}

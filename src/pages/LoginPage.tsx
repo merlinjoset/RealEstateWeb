@@ -132,9 +132,6 @@ export default function LoginPage() {
                 Register
               </Link>
             </p>
-            <p className="text-[11px] text-gray-400 mt-3">
-              Demo admin · admin@joseforland.com / Admin@123
-            </p>
           </div>
         </div>
       </div>
