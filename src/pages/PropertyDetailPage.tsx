@@ -160,9 +160,9 @@ export default function PropertyDetailPage() {
                       </span>
                     )}
                   </div>
-                  <h1 className="text-2xl font-bold text-gray-900">
+                  <h1 className="text-3xl md:text-4xl font-bold text-gray-900 leading-tight tracking-tight">
                     {property.serialNo && (
-                      <span className="inline-block text-xs font-mono font-semibold uppercase tracking-wider text-gray-500 bg-gray-100 px-2 py-0.5 rounded mr-2 align-middle">
+                      <span className="inline-block text-sm font-mono font-semibold uppercase tracking-wider text-gray-500 bg-gray-100 px-2.5 py-1 rounded mr-3 align-middle">
                         {property.serialNo}
                       </span>
                     )}
