@@ -14,7 +14,6 @@ const CITY_COORDS: Record<string, { lat: number; lng: number }> = {
   Kanyakumari:      { lat: 8.0883, lng: 77.5385 },
   Colachel:         { lat: 8.1747, lng: 77.2583 },
   Kaliyakkavilai:   { lat: 8.2167, lng: 77.2667 },
-  Eraniel:          { lat: 8.2058, lng: 77.3208 },
   Aralvaimozhy:     { lat: 8.2208, lng: 77.4583 },
   Kuzhithurai:      { lat: 8.3361, lng: 77.1972 },
 }
