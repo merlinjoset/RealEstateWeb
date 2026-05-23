@@ -14,7 +14,7 @@ import type { MarketingPlan, PropertyDocument, Property } from '../../types'
 
 const CITIES = [
   'Nagercoil', 'Marthandam', 'Thuckalay', 'Kanyakumari', 'Colachel',
-  'Kaliyakkavilai', 'Boothapandi', 'Eraniel', 'Aralvaimozhy', 'Kuzhithurai',
+  'Kaliyakkavilai', 'Eraniel', 'Aralvaimozhy', 'Kuzhithurai',
 ]
 
 const FEATURES_OPTIONS = [
