@@ -160,7 +160,14 @@ export default function PropertyDetailPage() {
                       </span>
                     )}
                   </div>
-                  <h1 className="text-2xl font-bold text-gray-900">{property.title}</h1>
+                  <h1 className="text-2xl font-bold text-gray-900">
+                    {property.serialNo && (
+                      <span className="inline-block text-xs font-mono font-semibold uppercase tracking-wider text-gray-500 bg-gray-100 px-2 py-0.5 rounded mr-2 align-middle">
+                        {property.serialNo}
+                      </span>
+                    )}
+                    {property.title}
+                  </h1>
                   <div className="flex items-center gap-1 text-gray-500 text-sm mt-1">
                     <MapPin className="w-4 h-4" />
                     {property.address}, {property.city}, {property.district} – {property.pinCode}
