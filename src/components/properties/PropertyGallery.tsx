@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { X, ChevronLeft, ChevronRight } from 'lucide-react'
 import { resolveMediaUrl } from '../../services/api'
 
@@ -28,6 +28,26 @@ export default function PropertyGallery({ images, title }: Props) {
 
   const prev = () => setLightbox((i) => (i !== null ? (i - 1 + displayImages.length) % displayImages.length : 0))
   const next = () => setLightbox((i) => (i !== null ? (i + 1) % displayImages.length : 0))
+
+  // Lock the page scroll while the lightbox is open so the photo
+  // stays anchored and the map / page content below can't slip
+  // behind the overlay. Also: Esc closes the lightbox, ← / → step
+  // through images — keyboard parity with the on-screen buttons.
+  useEffect(() => {
+    if (lightbox === null) return
+    const prevOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape')      setLightbox(null)
+      else if (e.key === 'ArrowLeft')  prev()
+      else if (e.key === 'ArrowRight') next()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => {
+      document.body.style.overflow = prevOverflow
+      window.removeEventListener('keydown', onKey)
+    }
+  }, [lightbox])
 
   return (
     <>
