@@ -1,10 +1,10 @@
 ﻿import { useState, useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'
+import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
-import { MapPin, Phone, Ruler, X, ExternalLink, Search, SlidersHorizontal, ChevronDown, ChevronLeft, ChevronRight, List as ListIcon } from 'lucide-react'
+import { MapPin, Phone, Ruler, X, ExternalLink, Search, SlidersHorizontal, ChevronDown, ChevronLeft, ChevronRight, List as ListIcon, Crosshair, AlertCircle } from 'lucide-react'
 import { propertiesApi } from '../services/api'
 import type { Property } from '../types'
 
@@ -170,6 +170,18 @@ const CITIES = ['Nagercoil', 'Marthandam', 'Thuckalay', 'Kanyakumari', 'Colachel
 
 const PAGE_SIZE = 10
 
+// "Near me" radius options shown as a chip row above the map. 500 m is
+// the default per product spec; the others give the visitor a way to
+// widen the search when they're in a rural area without many close
+// listings. `null` means "no geo filter" (show everything from the API).
+const RADIUS_OPTIONS: { label: string; metres: number | null }[] = [
+  { label: '500 m', metres: 500 },
+  { label: '1 km',  metres: 1000 },
+  { label: '2 km',  metres: 2000 },
+  { label: '5 km',  metres: 5000 },
+  { label: 'All',   metres: null },
+]
+
 export default function MapViewPage() {
   const [selected, setSelected] = useState<Property | null>(null)
   const [search, setSearch] = useState('')
@@ -180,13 +192,55 @@ export default function MapViewPage() {
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [listOpen, setListOpen] = useState(false)
   const [page, setPage] = useState(1)
+  // Geolocation — set once the browser grants permission. `geoError`
+  // captures denied / unavailable so we can surface a friendly message
+  // instead of silently falling back.
+  const [userPos, setUserPos] = useState<{ lat: number; lng: number } | null>(null)
+  const [geoError, setGeoError] = useState<string | null>(null)
+  // Default radius is 500 m as per product spec. Set to null to disable
+  // the radius filter and fall back to the unscoped query.
+  const [radiusM, setRadiusM] = useState<number | null>(500)
+
+  // Ask once on mount. Don't auto-prompt repeatedly — the browser dialog
+  // is sticky enough on its own. Falls back gracefully when denied so
+  // the rest of the page still works.
+  useEffect(() => {
+    if (typeof navigator === 'undefined' || !navigator.geolocation) {
+      setGeoError('Your browser doesn’t support geolocation — showing all listings.')
+      return
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => setUserPos({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      (err) => {
+        setGeoError(err.code === err.PERMISSION_DENIED
+          ? 'Location permission denied — showing all listings.'
+          : 'Couldn’t read your location — showing all listings.')
+      },
+      { enableHighAccuracy: true, timeout: 8_000, maximumAge: 60_000 },
+    )
+  }, [])
+
+  // Reset to page 1 whenever the geo filter changes — otherwise paging
+  // beyond the new (smaller) result count would land on a stale empty
+  // page.
+  useEffect(() => { setPage(1) }, [userPos, radiusM])
+
+  const geoActive = userPos != null && radiusM != null
 
   // Map view paginates 10-at-a-time so the pin density stays readable
-  // and the page stays light. Cache key includes `page` so React Query
-  // memoises per page and back/forward navigation is instant.
+  // and the page stays light. Cache key includes `page` AND the geo
+  // filter so React Query memoises the per-radius result independently.
   const query = useQuery({
-    queryKey: ['map-properties', page],
-    queryFn: () => propertiesApi.getAll({ page, pageSize: PAGE_SIZE, sortBy: 'newest' }),
+    queryKey: ['map-properties', page, userPos?.lat, userPos?.lng, radiusM],
+    queryFn: () => propertiesApi.getAll({
+      page,
+      pageSize: PAGE_SIZE,
+      sortBy: 'newest',
+      // Only attach the geo params when the user has shared their
+      // location AND chosen a radius. Otherwise the API returns the
+      // un-scoped default.
+      ...(geoActive ? { nearLat: userPos!.lat, nearLng: userPos!.lng, radiusM: radiusM! } : {}),
+    }),
     placeholderData: (prev) => prev,    // keep last page visible while next loads
     staleTime: 60_000,
   })
@@ -387,6 +441,35 @@ export default function MapViewPage() {
               </button>
             )}
           </div>
+
+          {/* "Near me" radius selector — only shown once the browser has
+              granted geolocation. Chip styling matches the type filter
+              above so the controls feel related. */}
+          {userPos && (
+            <div className="flex items-center gap-2 mt-3 flex-wrap">
+              <span className="inline-flex items-center gap-1 text-xs font-semibold text-gray-500">
+                <Crosshair className="w-3.5 h-3.5" style={{ color: '#4F46E5' }} />
+                Near me
+              </span>
+              {RADIUS_OPTIONS.map((opt) => (
+                <button
+                  key={opt.label}
+                  onClick={() => setRadiusM(opt.metres)}
+                  className="px-3 py-1.5 rounded-full text-xs font-medium transition-colors border"
+                  style={radiusM === opt.metres
+                    ? { backgroundColor: '#4F46E5', color: 'white', borderColor: '#4F46E5' }
+                    : { backgroundColor: 'white', color: '#374151', borderColor: '#e5e7eb' }}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          )}
+          {geoError && (
+            <p className="mt-2 text-xs flex items-center gap-1" style={{ color: '#B45309' }}>
+              <AlertCircle className="w-3.5 h-3.5" /> {geoError}
+            </p>
+          )}
         </div>
       </div>
 
@@ -597,8 +680,10 @@ export default function MapViewPage() {
         {/* Map area */}
         <div className="flex-1 relative min-h-0">
           <MapContainer
-            center={[8.18, 77.41]}
-            zoom={11}
+            // Centre on the visitor's position when we have it, otherwise
+            // fall back to the geographic centre of Kanyakumari district.
+            center={userPos ? [userPos.lat, userPos.lng] : [8.18, 77.41]}
+            zoom={userPos ? 14 : 11}
             scrollWheelZoom={true}
             style={{ height: '100%', width: '100%' }}
           >
@@ -607,7 +692,29 @@ export default function MapViewPage() {
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
 
-            <MapFlyTo position={selectedPos} />
+            <MapFlyTo position={selectedPos ?? (userPos ? [userPos.lat, userPos.lng] : null)} />
+
+            {/* Crosshair pin + radius ring at the visitor's position so
+                they can see where the "near me" filter is anchored. The
+                Circle radius is in metres which matches the API filter. */}
+            {userPos && (
+              <Marker
+                position={[userPos.lat, userPos.lng]}
+                icon={L.divIcon({
+                  className: 'jfl-user-pin',
+                  iconSize: [18, 18],
+                  iconAnchor: [9, 9],
+                  html: `<div style="width:18px;height:18px;border-radius:50%;background:#4F46E5;border:3px solid #fff;box-shadow:0 0 0 2px rgba(79,70,229,0.35);"></div>`,
+                })}
+              />
+            )}
+            {userPos && radiusM != null && (
+              <Circle
+                center={[userPos.lat, userPos.lng]}
+                radius={radiusM}
+                pathOptions={{ color: '#4F46E5', fillColor: '#4F46E5', fillOpacity: 0.08, weight: 1.5 }}
+              />
+            )}
 
             {visible.map((property) => {
               const pos = getPropertyCoords(property)

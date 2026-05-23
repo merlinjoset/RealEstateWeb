@@ -141,6 +141,11 @@ export interface PropertyFilters {
   sortBy?: 'price_asc' | 'price_desc' | 'newest' | 'oldest' | 'area_asc' | 'area_desc'
   page?: number
   pageSize?: number
+  /** Geolocation filter — when all three are set, the API returns only
+   *  properties whose coordinates lie within radiusM metres of (lat, lng). */
+  nearLat?: number
+  nearLng?: number
+  radiusM?: number
 }
 
 export interface PaginatedResponse<T> {
