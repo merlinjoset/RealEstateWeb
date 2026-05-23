@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useMemo } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from 'react-leaflet'
@@ -220,22 +220,37 @@ export default function MapViewPage() {
     )
   }, [])
 
-  // Reset to page 1 whenever the geo filter changes — otherwise paging
-  // beyond the new (smaller) result count would land on a stale empty
-  // page.
-  useEffect(() => { setPage(1) }, [userPos, radiusM])
+  // Reset to page 1 whenever any filter (incl. geo) changes — otherwise
+  // paging beyond the new (smaller) result count would land on a stale
+  // empty page.
+  useEffect(() => {
+    setPage(1)
+  }, [userPos, radiusM, search, typeFilter, cityFilter, priceFilter, areaFilter])
 
   const geoActive = userPos != null && radiusM != null
 
+  // Resolve the dropdown values into the min/max bounds the API expects.
+  const priceBounds = PRICE_RANGES.find(r => r.value === priceFilter)
+  const areaBounds  = AREA_RANGES.find(r => r.value === areaFilter)
+
   // Map view paginates 10-at-a-time so the pin density stays readable
-  // and the page stays light. Cache key includes `page` AND the geo
-  // filter so React Query memoises the per-radius result independently.
+  // and the page stays light. Every filter is sent to the API so the
+  // total + pagination reflect the filtered result set (was broken
+  // earlier because filtering happened client-side on a single page).
   const query = useQuery({
-    queryKey: ['map-properties', page, userPos?.lat, userPos?.lng, radiusM],
+    queryKey: ['map-properties', page, search, typeFilter, cityFilter,
+               priceFilter, areaFilter, userPos?.lat, userPos?.lng, radiusM],
     queryFn: () => propertiesApi.getAll({
       page,
       pageSize: PAGE_SIZE,
       sortBy: 'newest',
+      search: search.trim() || undefined,
+      city: cityFilter || undefined,
+      propertyType: (typeFilter as 'open_land' | undefined) || undefined,
+      minPrice: priceBounds?.min || undefined,
+      maxPrice: priceBounds?.max || undefined,
+      minAreaCents: areaBounds?.min || undefined,
+      maxAreaCents: areaBounds?.max || undefined,
       // Only attach the geo params when the user has shared their
       // location AND chosen a radius. Otherwise the API returns the
       // un-scoped default.
@@ -244,45 +259,10 @@ export default function MapViewPage() {
     placeholderData: (prev) => prev,    // keep last page visible while next loads
     staleTime: 60_000,
   })
-  const allProperties = query.data?.data ?? []
-  // Total approved properties in the DB — used in the "Showing 10 of N"
-  // label so users know how many we're capping below.
+  const visible = query.data?.data ?? []
+  // Total matching the active filters — drives the "Page N of M · T total"
+  // header and the pagination bar.
   const totalInDb = query.data?.total ?? 0
-
-  const filtered = useMemo(() => {
-    return allProperties.filter(p => {
-      const q = search.trim().toLowerCase()
-      if (q && !p.title.toLowerCase().includes(q) && !p.city.toLowerCase().includes(q) && !p.address.toLowerCase().includes(q)) {
-        return false
-      }
-      if (typeFilter && p.propertyType !== typeFilter) return false
-      if (cityFilter && p.city !== cityFilter) return false
-
-      if (priceFilter) {
-        const r = PRICE_RANGES.find(x => x.value === priceFilter)
-        if (r) {
-          if (r.min && p.totalPrice < r.min) return false
-          if (r.max && p.totalPrice > r.max) return false
-        }
-      }
-
-      if (areaFilter) {
-        const r = AREA_RANGES.find(x => x.value === areaFilter)
-        if (r) {
-          if (r.min && p.areaInCents < r.min) return false
-          if (r.max && p.areaInCents > r.max) return false
-        }
-      }
-
-      return true
-    })
-  }, [allProperties, search, typeFilter, cityFilter, priceFilter, areaFilter])
-
-  // The map shows whatever the current page returns (always ≤ PAGE_SIZE).
-  // Filters are still applied client-side on top of the page, so changing
-  // a filter doesn't refetch — the user pages through the underlying
-  // dataset rather than searching across it.
-  const visible = filtered
   const totalPages = Math.max(1, Math.ceil(totalInDb / PAGE_SIZE))
   // Windowed page-number bar — at most MAX_PAGE_BUTTONS visible at once,
   // centred on the current page. First/last are always anchored with
