@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Top-level sitemap index. Owned by the front-end and shipped as a
+  static file because the URLs here never change between deploys.
+
+  The /sitemap-properties.xml reference below is rewritten to the API
+  (see Render → Static Site → Redirects/Rewrites) — that's where the
+  dynamic per-property entries live and they need to reflect the
+  current approved-property catalogue without a redeploy.
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://joseforland.com/</loc>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://joseforland.com/properties</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://joseforland.com/map</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://joseforland.com/about</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://joseforland.com/contact</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://joseforland.com/sell</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- City landing pages — each has its own canonical via the
+       PropertiesPage SEO config, so they're worth indexing -->
+  <url>
+    <loc>https://joseforland.com/properties?city=Nagercoil</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://joseforland.com/properties?city=Marthandam</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://joseforland.com/properties?city=Thuckalay</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://joseforland.com/properties?city=Kanyakumari</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://joseforland.com/properties?city=Colachel</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://joseforland.com/properties?city=Kaliyakkavilai</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <!-- Per-property sitemap (proxied to api.joseforland.com) -->
+  <url>
+    <loc>https://joseforland.com/sitemap-properties.xml</loc>
+  </url>
+</urlset>
