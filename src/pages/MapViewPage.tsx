@@ -64,20 +64,34 @@ function makePinIcon(
   isSelected: boolean,
 ) {
   void _priceTone
-  const scale = isSelected ? 1.18 : 1
-  const isSel = isSelected
-  // Default: brand olive pill with bold white text. Selected: coral for emphasis.
-  const bg = isSel ? '#FF5A5F' : '#6A9739'
-  const tailColor = isSel ? '#FF5A5F' : '#6A9739'
+  // Selected pins jump from 1× to 1.45× — large enough to read as
+  // "popped" without clipping neighbouring labels at most zoom levels.
+  const scale = isSelected ? 1.45 : 1
+  // Default: brand olive pill with bold white text. Selected: coral pill
+  // with a thick white border + tinted glow ring around it for emphasis.
+  const bg = isSelected ? '#FF5A5F' : '#6A9739'
+  const tailColor = bg
+  const ringStyle = isSelected
+    // Doubled drop-shadow + a coral glow ring so the pin reads as
+    // "lifted off the map" even against busy pin clusters.
+    ? `filter:
+         drop-shadow(0 0 0 #fff)
+         drop-shadow(0 0 6px rgba(255,90,95,0.85))
+         drop-shadow(0 6px 12px rgba(0,0,0,0.30))
+         drop-shadow(0 14px 28px rgba(0,0,0,0.30));`
+    : `filter:
+         drop-shadow(0 3px 5px rgba(0,0,0,0.20))
+         drop-shadow(0 8px 16px rgba(0,0,0,0.25));`
+
+  const borderStyle = isSelected ? 'border: 2.5px solid #fff;' : ''
 
   const html = `
     <div style="
       transform: translate(-50%, -100%) scale(${scale});
       transform-origin: center bottom;
-      transition: transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1);
-      filter:
-        drop-shadow(0 3px 5px rgba(0,0,0,0.20))
-        drop-shadow(0 8px 16px rgba(0,0,0,0.25));
+      transition: transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1),
+                  filter 220ms ease-out;
+      ${ringStyle}
     ">
       <div style="
         display: inline-flex;
@@ -89,6 +103,7 @@ function makePinIcon(
         font-size: 13px;
         padding: 7px 13px;
         border-radius: 22px;
+        ${borderStyle}
         white-space: nowrap;
         position: relative;
         font-family: Inter, system-ui, sans-serif;
@@ -112,6 +127,7 @@ function makePinIcon(
           width: 10px;
           height: 10px;
           background: ${tailColor};
+          ${isSelected ? 'border-right: 2.5px solid #fff; border-bottom: 2.5px solid #fff;' : ''}
         "></div>
       </div>
     </div>
@@ -636,6 +652,11 @@ export default function MapViewPage() {
                     formatPriceShort(property.totalPrice),
                     isSelected,
                   )}
+                  // Selected marker pops above the rest of the cluster so
+                  // its bigger pill + glow aren't clipped by overlapping
+                  // pins. Leaflet default is 0; +1000 puts it above every
+                  // unselected marker.
+                  zIndexOffset={isSelected ? 1000 : 0}
                   eventHandlers={{
                     click: () => setSelected(property),
                   }}
