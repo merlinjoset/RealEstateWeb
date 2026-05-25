@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
-import { MapPin, Phone, Ruler, X, ExternalLink, Search, SlidersHorizontal, ChevronDown, ChevronLeft, ChevronRight, List as ListIcon, Crosshair, AlertCircle } from 'lucide-react'
+import { MapPin, Phone, Ruler, X, ExternalLink, Search, SlidersHorizontal, ChevronDown, List as ListIcon, Crosshair, AlertCircle } from 'lucide-react'
 import { propertiesApi } from '../services/api'
 import type { Property } from '../types'
 
@@ -167,7 +167,13 @@ const AREA_RANGES = [
 
 const CITIES = ['Nagercoil', 'Marthandam', 'Thuckalay', 'Kanyakumari', 'Colachel', 'Kaliyakkavilai']
 
-const PAGE_SIZE = 10
+// Map view shows the entire filtered result set in a single fetch — no
+// pagination chunking. Markers + the sidebar list both render against
+// the same array, so the visitor can see every available property
+// without having to page through. 500 is well above the current
+// approved-property total (~420) and gives headroom for growth without
+// touching the API's default pageSize cap.
+const PAGE_SIZE = 500
 
 // "Near me" radius options shown as a chip row above the map. 500 m is
 // the default per product spec; the others give the visitor a way to
@@ -190,7 +196,6 @@ export default function MapViewPage() {
   const [areaFilter, setAreaFilter] = useState<string>('')
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [listOpen, setListOpen] = useState(false)
-  const [page, setPage] = useState(1)
   // Geolocation — set once the browser grants permission. `geoError`
   // captures denied / unavailable so we can surface a friendly message
   // instead of silently falling back.
@@ -219,13 +224,6 @@ export default function MapViewPage() {
     )
   }, [])
 
-  // Reset to page 1 whenever any filter (incl. geo) changes — otherwise
-  // paging beyond the new (smaller) result count would land on a stale
-  // empty page.
-  useEffect(() => {
-    setPage(1)
-  }, [userPos, radiusM, search, typeFilter, cityFilter, priceFilter, areaFilter])
-
   const geoActive = userPos != null && radiusM != null
 
   // Resolve the dropdown values into the min/max bounds the API expects.
@@ -237,10 +235,10 @@ export default function MapViewPage() {
   // total + pagination reflect the filtered result set (was broken
   // earlier because filtering happened client-side on a single page).
   const query = useQuery({
-    queryKey: ['map-properties', page, search, typeFilter, cityFilter,
+    queryKey: ['map-properties', search, typeFilter, cityFilter,
                priceFilter, areaFilter, userPos?.lat, userPos?.lng, radiusM],
     queryFn: () => propertiesApi.getAll({
-      page,
+      page: 1,
       pageSize: PAGE_SIZE,
       sortBy: 'newest',
       search: search.trim() || undefined,
@@ -259,27 +257,11 @@ export default function MapViewPage() {
     staleTime: 60_000,
   })
   const visible = query.data?.data ?? []
-  // Total matching the active filters — drives the "Page N of M · T total"
-  // header and the pagination bar.
+  // Total matching the active filters — drives the count badge in the
+  // sidebar header. Pagination removed: we fetch + render the full
+  // filtered set in a single pass so every pin shows on the map at
+  // once.
   const totalInDb = query.data?.total ?? 0
-  const totalPages = Math.max(1, Math.ceil(totalInDb / PAGE_SIZE))
-  // Windowed page-number bar — at most MAX_PAGE_BUTTONS visible at once,
-  // centred on the current page. First/last are always anchored with
-  // ellipses bridging the gap. Matches the PropertiesPage pattern.
-  const MAX_PAGE_BUTTONS = 7
-  const pageWindow: number[] = (() => {
-    if (totalPages <= MAX_PAGE_BUTTONS) {
-      return Array.from({ length: totalPages }, (_, i) => i + 1)
-    }
-    const half = Math.floor(MAX_PAGE_BUTTONS / 2)
-    let start = Math.max(1, page - half)
-    let end = start + MAX_PAGE_BUTTONS - 1
-    if (end > totalPages) {
-      end = totalPages
-      start = end - MAX_PAGE_BUTTONS + 1
-    }
-    return Array.from({ length: end - start + 1 }, (_, i) => start + i)
-  })()
 
   const activeCount = [typeFilter, cityFilter, priceFilter, areaFilter].filter(Boolean).length
   const hasFilters = activeCount > 0 || search.trim().length > 0
@@ -540,7 +522,7 @@ export default function MapViewPage() {
           <div className="p-3 border-b border-gray-100 flex items-center justify-between">
             <p className="text-xs text-gray-500 font-medium">
               {totalInDb > 0
-                ? `Page ${page} of ${totalPages} · ${totalInDb} total`
+                ? `${totalInDb} propert${totalInDb === 1 ? 'y' : 'ies'}`
                 : `${visible.length} properties`}
             </p>
             <button
@@ -592,60 +574,6 @@ export default function MapViewPage() {
             ))}
           </div>
 
-          {/* Pagination — windowed at MAX_PAGE_BUTTONS, sits at the bottom
-              of the sidebar list so it's always reachable. */}
-          {totalPages > 1 && (
-            <div className="p-3 border-t border-gray-100 flex items-center justify-center gap-1 sticky bottom-0 bg-white">
-              <button
-                disabled={page === 1}
-                onClick={() => { setPage(p => p - 1); setSelected(null) }}
-                className="p-1.5 rounded-lg border border-gray-200 disabled:opacity-40 hover:bg-gray-50 transition-colors"
-                aria-label="Previous page">
-                <ChevronLeft className="w-3.5 h-3.5" />
-              </button>
-
-              {pageWindow[0] > 1 && (
-                <>
-                  <button onClick={() => { setPage(1); setSelected(null) }}
-                    className="w-7 h-7 rounded-lg text-xs font-medium border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors">
-                    1
-                  </button>
-                  {pageWindow[0] > 2 && <span className="px-0.5 text-gray-400 text-xs">…</span>}
-                </>
-              )}
-
-              {pageWindow.map((n) => (
-                <button key={n}
-                  onClick={() => { setPage(n); setSelected(null) }}
-                  className={`w-7 h-7 rounded-lg text-xs font-medium transition-colors ${
-                    n === page ? 'text-white' : 'border border-gray-200 text-gray-600 hover:bg-gray-50'
-                  }`}
-                  style={n === page ? { backgroundColor: '#FF5A5F' } : {}}>
-                  {n}
-                </button>
-              ))}
-
-              {pageWindow[pageWindow.length - 1] < totalPages && (
-                <>
-                  {pageWindow[pageWindow.length - 1] < totalPages - 1 && (
-                    <span className="px-0.5 text-gray-400 text-xs">…</span>
-                  )}
-                  <button onClick={() => { setPage(totalPages); setSelected(null) }}
-                    className="w-7 h-7 rounded-lg text-xs font-medium border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors">
-                    {totalPages}
-                  </button>
-                </>
-              )}
-
-              <button
-                disabled={page === totalPages}
-                onClick={() => { setPage(p => p + 1); setSelected(null) }}
-                className="p-1.5 rounded-lg border border-gray-200 disabled:opacity-40 hover:bg-gray-50 transition-colors"
-                aria-label="Next page">
-                <ChevronRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          )}
         </div>
 
         {/* Drawer scrim (mobile only) */}
@@ -749,7 +677,7 @@ export default function MapViewPage() {
             style={{ color: '#FF5A5F' }}
           >
             <ListIcon className="w-4 h-4" />
-            {totalInDb > 0 ? `Page ${page}/${totalPages}` : `${visible.length} listings`}
+            {totalInDb > 0 ? `${totalInDb} listings` : `${visible.length} listings`}
           </button>
 
           {/* Legend (hidden on mobile to free up screen space) */}
