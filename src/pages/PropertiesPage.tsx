@@ -107,13 +107,52 @@ export default function PropertiesPage() {
 
   const hasFilters = search || selectedCity || priceRange > 0 || propertyType
 
+  // City-aware SEO — when the visitor narrows to a specific town the
+  // title + description follow ("Land for Sale in Nagercoil"), which is
+  // the kind of long-tail phrase Google actually surfaces. Canonical URL
+  // also drops to the filtered path so each town has its own indexable
+  // page. We don't include search/price/area in the canonical because
+  // those create infinite combinations and aren't useful as landing
+  // pages — only the city slug is treated as an SEO axis.
+  const seoTitle = selectedCity
+    ? `Land for Sale in ${selectedCity}, Kanyakumari`
+    : 'Kanyakumari Properties — Land for Sale'
+  const seoDescription = selectedCity
+    ? `Verified land properties for sale in ${selectedCity}, Kanyakumari district — open plots, residential, agricultural and commercial. Direct seller phone numbers, zero brokerage for buyers, free doorstep consultation.`
+    : 'Land for sale across Kanyakumari district — Nagercoil, Marthandam, Thuckalay, Colachel, Kaliyakkavilai and more. Verified plots with direct seller contact, ₹0 brokerage for buyers, free site visits.'
+  const seoPath = selectedCity
+    ? `/properties?city=${encodeURIComponent(selectedCity)}`
+    : '/properties'
+  // BreadcrumbList helps Google render a richer SERP and reinforces the
+  // hierarchy "Home → Properties → {city}".
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://joseforland.com/' },
+      { '@type': 'ListItem', position: 2, name: 'Properties', item: 'https://joseforland.com/properties' },
+      ...(selectedCity
+        ? [{ '@type': 'ListItem', position: 3, name: selectedCity,
+             item: `https://joseforland.com/properties?city=${encodeURIComponent(selectedCity)}` }]
+        : []),
+    ],
+  }
+
   return (
     <main className="min-h-screen bg-gray-50">
       <SEO
-        path="/properties"
-        title="Browse Land Listings"
-        description="Browse verified plots and land for sale across Kanyakumari district — Nagercoil, Marthandam, Thuckalay, Colachel and more. Filter by price, area, and type."
+        path={seoPath}
+        title={seoTitle}
+        description={seoDescription}
+        jsonLd={breadcrumbJsonLd}
       />
+      {/* Visually-hidden H1 — gives crawlers an unambiguous primary
+          heading on the listing page without disrupting the search bar
+          UI at the top. The sticky filter row above is a UI affordance
+          rather than a semantic heading. */}
+      <h1 className="sr-only">
+        {seoTitle}
+      </h1>
       <div className="bg-white border-b border-gray-200 sticky top-16 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
           <div className="flex items-center gap-3">

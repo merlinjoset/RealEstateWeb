@@ -89,32 +89,77 @@ export default function PropertyDetailPage() {
     (property.roadAccess ? ' Road access.' : '') +
     (property.legalStatus ? ` ${property.legalStatus.slice(0, 60)}.` : '')
 
+  // Combined Product + Place JSON-LD via @graph — gives Google enough
+  // signal to surface this as both a real-estate listing and a
+  // geo-located result for "land for sale in {city}" queries.
+  const propertyUrl = `https://joseforland.com/properties/${property.id}`
   const jsonLd = {
     '@context': 'https://schema.org',
-    '@type': 'Product',
-    name: property.title,
-    description: property.description?.slice(0, 300),
-    image: resolveMediaUrl(property.images?.[0]),
-    offers: {
-      '@type': 'Offer',
-      priceCurrency: 'INR',
-      price: property.totalPrice,
-      availability: property.status === 'sold'
-        ? 'https://schema.org/SoldOut'
-        : 'https://schema.org/InStock',
-    },
-    additionalProperty: [
-      { '@type': 'PropertyValue', name: 'Area (cents)', value: property.areaInCents },
-      { '@type': 'PropertyValue', name: 'City', value: property.city },
-      { '@type': 'PropertyValue', name: 'District', value: property.district },
+    '@graph': [
+      {
+        '@type': 'Product',
+        '@id': `${propertyUrl}#product`,
+        name: property.title,
+        description: property.description?.slice(0, 300),
+        image: resolveMediaUrl(property.images?.[0]),
+        url: propertyUrl,
+        category: 'Real Estate / Land',
+        offers: {
+          '@type': 'Offer',
+          priceCurrency: 'INR',
+          price: property.totalPrice,
+          availability: property.status === 'sold'
+            ? 'https://schema.org/SoldOut'
+            : 'https://schema.org/InStock',
+          areaServed: 'Kanyakumari district, Tamil Nadu, India',
+        },
+        additionalProperty: [
+          { '@type': 'PropertyValue', name: 'Area (cents)', value: property.areaInCents },
+          { '@type': 'PropertyValue', name: 'City', value: property.city },
+          { '@type': 'PropertyValue', name: 'District', value: property.district },
+          ...(property.serialNo ? [{ '@type': 'PropertyValue', name: 'Reference', value: property.serialNo }] : []),
+        ],
+      },
+      {
+        '@type': 'Place',
+        '@id': `${propertyUrl}#place`,
+        name: `${property.city}, Kanyakumari`,
+        address: {
+          '@type': 'PostalAddress',
+          streetAddress: property.address,
+          addressLocality: property.city,
+          addressRegion: property.district,
+          postalCode: property.pinCode,
+          addressCountry: 'IN',
+        },
+        ...(property.latitude && property.longitude ? {
+          geo: { '@type': 'GeoCoordinates', latitude: property.latitude, longitude: property.longitude },
+        } : {}),
+      },
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://joseforland.com/' },
+          { '@type': 'ListItem', position: 2, name: 'Properties', item: 'https://joseforland.com/properties' },
+          { '@type': 'ListItem', position: 3, name: property.city,
+            item: `https://joseforland.com/properties?city=${encodeURIComponent(property.city)}` },
+          { '@type': 'ListItem', position: 4, name: property.title, item: propertyUrl },
+        ],
+      },
     ],
   }
+
+  // SEO title slots the city + district behind the listing title so the
+  // search snippet reads like "{property} | {city}, Kanyakumari — Jose
+  // For Land", which catches both "{property name}" and "{city} land"
+  // search variants.
+  const seoTitle = `${property.title} | ${property.city}, Kanyakumari`
 
   return (
     <main className="min-h-screen bg-gray-50">
       <SEO
         path={`/properties/${property.id}`}
-        title={property.title}
+        title={seoTitle}
         description={seoDescription}
         image={resolveMediaUrl(property.images?.[0])}
         type="article"
