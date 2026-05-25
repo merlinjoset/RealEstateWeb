@@ -251,7 +251,22 @@ export default function LocationPicker({
           />
           <MapClickHandler onPick={(la, ln) => onChange(la.toFixed(6), ln.toFixed(6))} />
           <MapRecenter position={markerPos} />
-          {markerPos && <Marker position={markerPos} icon={pinIcon} />}
+          {markerPos && (
+            <Marker
+              position={markerPos}
+              icon={pinIcon}
+              // Let the user fine-tune the pin by dragging it instead of
+              // forcing a re-click. dragend writes the final position back
+              // through onChange (intermediate drag positions are noisy).
+              draggable
+              eventHandlers={{
+                dragend: (e) => {
+                  const ll = (e.target as L.Marker).getLatLng()
+                  onChange(ll.lat.toFixed(6), ll.lng.toFixed(6))
+                },
+              }}
+            />
+          )}
         </MapContainer>
       </div>
 
@@ -277,7 +292,7 @@ export default function LocationPicker({
         ) : (
           <span className="text-gray-400">
             <MapPin className="w-3 h-3 inline mr-1" />
-            Click on the map, paste a URL, or type coordinates to pin the location.
+            Click anywhere on the map to pin the location (then drag the pin to fine-tune), paste a URL, or type coordinates.
           </span>
         )}
       </div>
