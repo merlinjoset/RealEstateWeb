@@ -2,58 +2,7 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Play, Pause, Quote, Star, MapPin, X, Loader2 } from 'lucide-react'
 import { testimonialsApi, type Testimonial } from '../../services/api'
-
-/**
- * Classify a video URL so the modal can pick the right player.
- *
- *  - youtube/youtu.be/shorts  → iframe embed (YouTube)
- *  - instagram.com/reel|p|tv  → iframe embed (Instagram)
- *  - everything else          → native <video src=...> (MP4 / WebM / etc.)
- *
- * Returns the embeddable URL alongside the kind so callers don't need
- * to re-parse. Reels + Shorts get a portrait flag so the modal can
- * swap to a 9:16 aspect ratio.
- */
-type VideoSource =
-  | { kind: 'youtube';   src: string; portrait: boolean }
-  | { kind: 'instagram'; src: string; portrait: boolean }
-  | { kind: 'native';    src: string }
-
-function classifyVideoUrl(raw: string | null | undefined): VideoSource {
-  const url = (raw ?? '').trim()
-  if (!url) return { kind: 'native', src: '' }
-
-  // ── YouTube ──────────────────────────────────────────────────────
-  // Shorts:  https://youtube.com/shorts/{id}[?...]
-  const shorts = url.match(/youtube\.com\/shorts\/([A-Za-z0-9_-]{6,})/)
-  if (shorts) return { kind: 'youtube', src: `https://www.youtube.com/embed/${shorts[1]}?autoplay=1&playsinline=1`, portrait: true }
-  // Short-link:  https://youtu.be/{id}[?...]
-  const short = url.match(/youtu\.be\/([A-Za-z0-9_-]{6,})/)
-  if (short) return { kind: 'youtube', src: `https://www.youtube.com/embed/${short[1]}?autoplay=1`, portrait: false }
-  // Watch / embed:  ?v={id} OR /embed/{id}
-  const watch = url.match(/[?&]v=([A-Za-z0-9_-]{6,})/)
-  if (watch) return { kind: 'youtube', src: `https://www.youtube.com/embed/${watch[1]}?autoplay=1`, portrait: false }
-  const embed = url.match(/youtube\.com\/embed\/([A-Za-z0-9_-]{6,})/)
-  if (embed) return { kind: 'youtube', src: `https://www.youtube.com/embed/${embed[1]}?autoplay=1`, portrait: false }
-
-  // ── Instagram ────────────────────────────────────────────────────
-  // Reels are portrait, posts are usually square (but plenty of post
-  // videos are portrait too — Instagram pads accordingly inside the
-  // iframe so 9:16 wraps both gracefully). TV (IGTV) is portrait.
-  //
-  //   https://www.instagram.com/reel/{id}/
-  //   https://www.instagram.com/reels/{id}/   (rarer plural form)
-  //   https://www.instagram.com/p/{id}/
-  //   https://www.instagram.com/tv/{id}/
-  const igReel = url.match(/instagram\.com\/reels?\/([A-Za-z0-9_-]+)/)
-  if (igReel) return { kind: 'instagram', src: `https://www.instagram.com/reel/${igReel[1]}/embed/`, portrait: true }
-  const igTv = url.match(/instagram\.com\/tv\/([A-Za-z0-9_-]+)/)
-  if (igTv) return { kind: 'instagram', src: `https://www.instagram.com/tv/${igTv[1]}/embed/`, portrait: true }
-  const igPost = url.match(/instagram\.com\/p\/([A-Za-z0-9_-]+)/)
-  if (igPost) return { kind: 'instagram', src: `https://www.instagram.com/p/${igPost[1]}/embed/`, portrait: false }
-
-  return { kind: 'native', src: url }
-}
+import { classifyVideoUrl } from '../../utils/video'
 
 export default function VideoTestimonials() {
   const [active, setActive] = useState<Testimonial | null>(null)
