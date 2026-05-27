@@ -6,34 +6,51 @@ import { testimonialsApi, type Testimonial } from '../../services/api'
 /**
  * Classify a video URL so the modal can pick the right player.
  *
- *  - youtube/youtu.be/shorts → iframe embed (HTML <video> can't decode them)
- *  - everything else → native <video src=...> (MP4 / WebM / etc.)
+ *  - youtube/youtu.be/shorts  → iframe embed (YouTube)
+ *  - instagram.com/reel|p|tv  → iframe embed (Instagram)
+ *  - everything else          → native <video src=...> (MP4 / WebM / etc.)
  *
  * Returns the embeddable URL alongside the kind so callers don't need
- * to re-parse. Shorts get a portrait flag so the modal can swap to a
- * 9:16 aspect ratio.
+ * to re-parse. Reels + Shorts get a portrait flag so the modal can
+ * swap to a 9:16 aspect ratio.
  */
 type VideoSource =
-  | { kind: 'youtube'; src: string; portrait: boolean }
-  | { kind: 'native';  src: string }
+  | { kind: 'youtube';   src: string; portrait: boolean }
+  | { kind: 'instagram'; src: string; portrait: boolean }
+  | { kind: 'native';    src: string }
 
 function classifyVideoUrl(raw: string | null | undefined): VideoSource {
   const url = (raw ?? '').trim()
   if (!url) return { kind: 'native', src: '' }
 
+  // ── YouTube ──────────────────────────────────────────────────────
   // Shorts:  https://youtube.com/shorts/{id}[?...]
   const shorts = url.match(/youtube\.com\/shorts\/([A-Za-z0-9_-]{6,})/)
   if (shorts) return { kind: 'youtube', src: `https://www.youtube.com/embed/${shorts[1]}?autoplay=1&playsinline=1`, portrait: true }
-
   // Short-link:  https://youtu.be/{id}[?...]
   const short = url.match(/youtu\.be\/([A-Za-z0-9_-]{6,})/)
   if (short) return { kind: 'youtube', src: `https://www.youtube.com/embed/${short[1]}?autoplay=1`, portrait: false }
-
   // Watch / embed:  ?v={id} OR /embed/{id}
   const watch = url.match(/[?&]v=([A-Za-z0-9_-]{6,})/)
   if (watch) return { kind: 'youtube', src: `https://www.youtube.com/embed/${watch[1]}?autoplay=1`, portrait: false }
   const embed = url.match(/youtube\.com\/embed\/([A-Za-z0-9_-]{6,})/)
   if (embed) return { kind: 'youtube', src: `https://www.youtube.com/embed/${embed[1]}?autoplay=1`, portrait: false }
+
+  // ── Instagram ────────────────────────────────────────────────────
+  // Reels are portrait, posts are usually square (but plenty of post
+  // videos are portrait too — Instagram pads accordingly inside the
+  // iframe so 9:16 wraps both gracefully). TV (IGTV) is portrait.
+  //
+  //   https://www.instagram.com/reel/{id}/
+  //   https://www.instagram.com/reels/{id}/   (rarer plural form)
+  //   https://www.instagram.com/p/{id}/
+  //   https://www.instagram.com/tv/{id}/
+  const igReel = url.match(/instagram\.com\/reels?\/([A-Za-z0-9_-]+)/)
+  if (igReel) return { kind: 'instagram', src: `https://www.instagram.com/reel/${igReel[1]}/embed/`, portrait: true }
+  const igTv = url.match(/instagram\.com\/tv\/([A-Za-z0-9_-]+)/)
+  if (igTv) return { kind: 'instagram', src: `https://www.instagram.com/tv/${igTv[1]}/embed/`, portrait: true }
+  const igPost = url.match(/instagram\.com\/p\/([A-Za-z0-9_-]+)/)
+  if (igPost) return { kind: 'instagram', src: `https://www.instagram.com/p/${igPost[1]}/embed/`, portrait: false }
 
   return { kind: 'native', src: url }
 }
@@ -183,12 +200,19 @@ function VideoModal({ testimonial, onClose }: { testimonial: Testimonial; onClos
   const [playing, setPlaying] = useState(true)
   const source = classifyVideoUrl(testimonial.videoUrl)
 
-  // YouTube Shorts are filmed portrait (9:16); regular YouTube videos
-  // and native MP4s default to landscape (16:9). Pick the right modal
-  // width too — portrait shorts shouldn't stretch to 4xl.
-  const isPortrait = source.kind === 'youtube' && source.portrait
+  // Shorts + Instagram Reels/TV are filmed portrait; regular YouTube
+  // videos + Instagram posts default to landscape / square. Pick the
+  // right modal width too — portrait content shouldn't stretch to 4xl.
+  // Instagram's embed adds a header/footer strip with the username
+  // and "View on Instagram" link, so we give portrait IG embeds a
+  // taller aspect ratio than the 9:16 we'd use for YouTube.
+  const isPortrait =
+    (source.kind === 'youtube' && source.portrait) ||
+    (source.kind === 'instagram' && source.portrait)
   const modalWidth = isPortrait ? 'max-w-md' : 'max-w-4xl'
-  const aspectClass = isPortrait ? 'aspect-[9/16]' : 'aspect-video'
+  const aspectClass = source.kind === 'instagram'
+    ? (source.portrait ? 'aspect-[9/17]' : 'aspect-[4/5]')
+    : (isPortrait ? 'aspect-[9/16]' : 'aspect-video')
 
   return (
     <div
@@ -210,15 +234,19 @@ function VideoModal({ testimonial, onClose }: { testimonial: Testimonial; onClos
       >
         {/* Video — YouTube/Shorts iframe vs native MP4/WebM player */}
         <div className={`relative ${aspectClass}`}>
-          {source.kind === 'youtube' ? (
+          {source.kind === 'youtube' || source.kind === 'instagram' ? (
             <iframe
               key={testimonial.id}
               src={source.src}
               title={testimonial.name}
               loading="lazy"
               referrerPolicy="strict-origin-when-cross-origin"
+              // Instagram's embed needs autoplay + encrypted-media; YouTube
+              // wants the broader allow list including picture-in-picture.
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
               allowFullScreen
+              // Instagram's embed enforces a white background even on dark
+              // ancestors, so don't fight it — let the iframe paint as-is.
               className="w-full h-full border-0"
             />
           ) : (
