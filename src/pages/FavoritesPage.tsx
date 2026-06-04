@@ -122,9 +122,11 @@ export default function FavoritesPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {items.map((p) => (
               <div key={p.id} className="relative group">
-                <PropertyCard property={p}
-                  isFavorited
-                  onFavorite={(id) => unfavorite.mutate(id)} />
+                {/* PropertyCard self-manages the heart (reads ['favorites']
+                    cache, toggles via propertiesApi). The hover-only Trash
+                    overlay below is the explicit "remove" affordance for
+                    this page specifically. */}
+                <PropertyCard property={p} />
                 {/* Unfavorite quick-action overlay */}
                 <button
                   onClick={() => unfavorite.mutate(p.id)}

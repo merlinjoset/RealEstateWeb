@@ -1,38 +1,129 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import {
   LayoutDashboard, Home, Plus, ClipboardList, Users,
-  MessageSquare, Settings, Menu, X, LogOut, Bell, Video, Send,
-  ChevronDown, User as UserIcon, ExternalLink,
+  MessageSquare, Settings, Menu, X, LogOut, Video, Send,
+  ChevronDown, User as UserIcon, ExternalLink, Briefcase,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
+import { propertiesApi, inquiriesApi } from '../../services/api'
+import ConfirmDialog from '../../components/common/ConfirmDialog'
+import SEO from '../../components/common/SEO'
+import NotificationsBell from './NotificationsBell'
 
-const NAV_ITEMS = [
-  { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, end: true },
-  { to: '/admin/properties', label: 'All Properties', icon: Home },
-  { to: '/admin/add-property', label: 'Add Property', icon: Plus },
-  { to: '/admin/pending', label: 'Pending Approvals', icon: ClipboardList, badge: 4 },
-  { to: '/admin/testimonials', label: 'Testimonials', icon: Video },
-  { to: '/admin/inquiries', label: 'Inquiries', icon: MessageSquare, badge: 7 },
-  { to: '/admin/users', label: 'Users', icon: Users },
-  { to: '/admin/sms-templates', label: 'SMS Templates', icon: Send },
-  { to: '/admin/settings', label: 'Settings', icon: Settings },
+// Sidebar items — badges are filled in below from live queries so the
+// numbers next to "Pending Approvals" / "Inquiries" / "Video Listings"
+// actually reflect what's in the DB, not the static 4 / 7 / 2 we used
+// to ship.
+//
+// `roles` controls who sees each entry. Routes themselves are guarded by
+// RequireAdmin inside App.tsx so an Employee who types a URL directly
+// still gets bounced — this is just the UI affordance.
+type NavItem = {
+  to: string
+  label: string
+  icon: React.ComponentType<{ className?: string }>
+  end?: boolean
+  badgeKey?: 'pending' | 'video' | 'unread'
+  roles?: Array<'Admin' | 'Employee'>
+}
+
+const NAV_ITEMS: NavItem[] = [
+  { to: '/admin/my-work', label: 'My Work', icon: Briefcase, roles: ['Employee'] },
+  { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, end: true, roles: ['Admin'] },
+  { to: '/admin/properties', label: 'All Properties', icon: Home, roles: ['Admin'] },
+  { to: '/admin/video-listings', label: 'Video Listings', icon: Video, badgeKey: 'video', roles: ['Admin'] },
+  { to: '/admin/add-property', label: 'Add Property', icon: Plus, roles: ['Admin'] },
+  { to: '/admin/pending', label: 'Pending Approvals', icon: ClipboardList, badgeKey: 'pending', roles: ['Admin', 'Employee'] },
+  { to: '/admin/testimonials', label: 'Testimonials', icon: Video, roles: ['Admin'] },
+  { to: '/admin/inquiries', label: 'Inquiries', icon: MessageSquare, badgeKey: 'unread', roles: ['Admin', 'Employee'] },
+  { to: '/admin/users', label: 'Users', icon: Users, roles: ['Admin'] },
+  { to: '/admin/sms-templates', label: 'SMS Templates', icon: Send, roles: ['Admin'] },
+  { to: '/admin/settings', label: 'Settings', icon: Settings, roles: ['Admin'] },
 ]
 
 export default function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const [confirmSignOut, setConfirmSignOut] = useState(false)
+  const [signingOut, setSigningOut] = useState(false)
+  const userMenuRef = useRef<HTMLDivElement>(null)
   const navigate = useNavigate()
   const { user, logout } = useAuth()
+
+  // Close the user dropdown when clicking anywhere outside it. We can't use
+  // onBlur + setTimeout — closing the menu on mousedown unmounts the <Link>
+  // child before its click event fires, so navigation never happens.
+  useEffect(() => {
+    if (!userMenuOpen) return
+    const onClick = (e: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setUserMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', onClick)
+    return () => document.removeEventListener('mousedown', onClick)
+  }, [userMenuOpen])
 
   const initials = user
     ? ((user.firstName[0] ?? '') + (user.lastName[0] ?? '')).toUpperCase() || 'A'
     : 'A'
 
-  const handleSignOut = async () => {
+  // Live counts that drive the sidebar badges. Both refresh on a 60s cadence
+  // and are shared (via the same query keys) with the NotificationsBell so
+  // we don't double-fetch — for Admins. Employees get role-scoped queries
+  // (their own unread inquiries) under different keys.
+  const isEmployee = user?.role === 'Employee'
+
+  // Admins call /pending (the whole queue); Employees call
+  // /assigned-to-verify (just their share). Different cache keys so they
+  // can coexist if a session ever flips role.
+  const pendingQuery = useQuery({
+    queryKey: isEmployee
+      ? ['my-work', 'properties']
+      : ['admin-notifications', 'pending'],
+    queryFn: isEmployee ? propertiesApi.getAssignedToVerify : propertiesApi.getPending,
+    refetchInterval: 60_000,
+    staleTime: 30_000,
+  })
+  const inquiriesQuery = useQuery({
+    queryKey: isEmployee
+      ? ['my-work', 'inquiries']  // shares MyWorkPage's cache
+      : ['admin-notifications', 'unread-inquiries'],
+    queryFn: isEmployee ? inquiriesApi.getMine : inquiriesApi.getUnread,
+    refetchInterval: 60_000,
+    staleTime: 30_000,
+  })
+  const pendingList = Array.isArray(pendingQuery.data) ? pendingQuery.data : []
+  const myInquiries = Array.isArray(inquiriesQuery.data) ? inquiriesQuery.data : []
+  const badges: Record<'pending' | 'video' | 'unread', number> = {
+    pending: pendingList.length,
+    video: pendingList.filter((p) => p.marketingPlan === 'VideoPromotion').length,
+    // For employees the badge shows their unread; for admins it's the global
+    // unread queue (already filtered to unread by getUnread()).
+    unread: isEmployee
+      ? myInquiries.filter((i) => !i.isRead).length
+      : myInquiries.length,
+  }
+
+  // First step — close any open menus and surface the confirmation dialog.
+  const handleSignOut = () => {
     setUserMenuOpen(false)
-    await logout()
-    navigate('/login', { replace: true })
+    setSidebarOpen(false)
+    setConfirmSignOut(true)
+  }
+
+  // Second step — only runs once the user actually confirms.
+  const performSignOut = async () => {
+    setSigningOut(true)
+    try {
+      await logout()
+      navigate('/login', { replace: true })
+    } finally {
+      setSigningOut(false)
+      setConfirmSignOut(false)
+    }
   }
 
   const handleExitToSite = () => {
@@ -42,6 +133,8 @@ export default function AdminLayout() {
 
   return (
     <div className="flex h-screen bg-gray-100 overflow-hidden">
+      {/* Keep the admin / employee workspace out of Google. */}
+      <SEO title="Workspace" noindex />
       <aside
         className={`fixed inset-y-0 left-0 z-50 w-64 bg-gray-900 text-white flex flex-col transition-transform duration-200 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
@@ -64,30 +157,40 @@ export default function AdminLayout() {
         </div>
 
         <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
-          {NAV_ITEMS.map(({ to, label, icon: Icon, end, badge }) => (
-            <NavLink
-              key={to}
-              to={to}
-              end={end}
-              onClick={() => setSidebarOpen(false)}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                  isActive
-                    ? 'text-white'
-                    : 'text-gray-400 hover:text-white hover:bg-gray-800'
-                }`
-              }
-              style={({ isActive }) => isActive ? { backgroundColor: '#FF5A5F' } : {}}
-            >
-              <Icon className="w-4 h-4 shrink-0" />
-              <span className="flex-1">{label}</span>
-              {badge != null && (
-                <span className="w-5 h-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center">
-                  {badge}
-                </span>
-              )}
-            </NavLink>
-          ))}
+          {NAV_ITEMS
+            // Filter to the items this role is allowed to see. If `roles`
+            // is omitted on an item, both roles see it.
+            .filter((item) => !item.roles || (user?.role && item.roles.includes(user.role as 'Admin' | 'Employee')))
+            .map((item) => {
+            const badge = item.badgeKey ? badges[item.badgeKey] : undefined
+            return (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.end}
+                onClick={() => setSidebarOpen(false)}
+                className={({ isActive }) =>
+                  `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                    isActive
+                      ? 'text-white'
+                      : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                  }`
+                }
+                style={({ isActive }) => isActive ? { backgroundColor: '#FF5A5F' } : {}}
+              >
+                <item.icon className="w-4 h-4 shrink-0" />
+                <span className="flex-1">{item.label}</span>
+                {/* Only show the badge when there's actually something to count.
+                    Stops the sidebar from misleading the admin about a queue
+                    that's really empty. */}
+                {badge != null && badge > 0 && (
+                  <span className="min-w-[20px] h-5 px-1.5 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">
+                    {badge > 99 ? '99+' : badge}
+                  </span>
+                )}
+              </NavLink>
+            )
+          })}
         </nav>
 
         <div className="p-3 border-t border-gray-800 space-y-1">
@@ -128,18 +231,14 @@ export default function AdminLayout() {
           </button>
 
           <h1 className="font-semibold text-gray-900 flex-1 text-sm md:text-base">
-            Admin Dashboard
+            {isEmployee ? 'Employee Workspace' : 'Admin Dashboard'}
           </h1>
 
-          <button className="relative p-2 text-gray-500 hover:bg-gray-100 rounded-lg">
-            <Bell className="w-4 h-4" />
-            <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500" />
-          </button>
+          <NotificationsBell />
 
-          <div className="relative">
+          <div className="relative" ref={userMenuRef}>
             <button
               onClick={() => setUserMenuOpen(!userMenuOpen)}
-              onBlur={() => setTimeout(() => setUserMenuOpen(false), 200)}
               className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-gray-50 transition-colors"
             >
               <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-semibold"
@@ -168,20 +267,20 @@ export default function AdminLayout() {
                 )}
                 <Link
                   to="/profile"
-                  onMouseDown={() => setUserMenuOpen(false)}
+                  onClick={() => setUserMenuOpen(false)}
                   className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                 >
                   <UserIcon className="w-4 h-4" /> Profile
                 </Link>
                 <button
-                  onMouseDown={handleExitToSite}
+                  onClick={handleExitToSite}
                   className="flex items-center gap-3 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 text-left"
                 >
                   <ExternalLink className="w-4 h-4" /> Exit to Site
                 </button>
                 <hr className="my-1 border-gray-100" />
                 <button
-                  onMouseDown={handleSignOut}
+                  onClick={handleSignOut}
                   className="flex items-center gap-3 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 text-left font-semibold"
                 >
                   <LogOut className="w-4 h-4" /> Sign out
@@ -191,10 +290,23 @@ export default function AdminLayout() {
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto p-4 md:p-6">
+        <main className="flex-1 overflow-y-auto p-4 md:p-6" data-scroll-on-nav>
           <Outlet />
         </main>
       </div>
+
+      <ConfirmDialog
+        open={confirmSignOut}
+        title="Sign out of admin?"
+        message="You'll need to log in again to access the admin panel."
+        confirmLabel="Sign out"
+        cancelLabel="Stay signed in"
+        tone="danger"
+        icon={LogOut}
+        loading={signingOut}
+        onConfirm={performSignOut}
+        onCancel={() => setConfirmSignOut(false)}
+      />
     </div>
   )
 }

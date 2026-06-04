@@ -1,11 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { X, ChevronLeft, ChevronRight } from 'lucide-react'
+import { resolveMediaUrl } from '../../services/api'
 
-const FALLBACK_IMAGES = [
-  'https://images.unsplash.com/photo-1570129477492-45c003edd2be?w=800&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1560185127-6a4a8c0c3e7d?w=800&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&auto=format&fit=crop',
-]
+// Single static placeholder shown when a property has no uploaded
+// images. Lives in /public so it ships with the bundle.
+const NO_IMAGE = '/noimage.svg'
 
 interface Props {
   images: string[]
@@ -14,10 +13,41 @@ interface Props {
 
 export default function PropertyGallery({ images, title }: Props) {
   const [lightbox, setLightbox] = useState<number | null>(null)
-  const displayImages = images.length > 0 ? images : FALLBACK_IMAGES
+  // Resolve every DB-relative path against the API origin so the
+  // browser can fetch directly from api.joseforland.com (or whatever
+  // VITE_API_BASE_URL points at). When the seller hasn't uploaded any
+  // images, fall through to a single placeholder rather than rotating
+  // through stock photos that misrepresent the listing.
+  const displayImages = images.length > 0
+    ? images.map(resolveMediaUrl)
+    : [NO_IMAGE]
+  const handleImgError = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    const img = e.currentTarget
+    if (img.src !== window.location.origin + NO_IMAGE) img.src = NO_IMAGE
+  }
 
   const prev = () => setLightbox((i) => (i !== null ? (i - 1 + displayImages.length) % displayImages.length : 0))
   const next = () => setLightbox((i) => (i !== null ? (i + 1) % displayImages.length : 0))
+
+  // Lock the page scroll while the lightbox is open so the photo
+  // stays anchored and the map / page content below can't slip
+  // behind the overlay. Also: Esc closes the lightbox, ← / → step
+  // through images — keyboard parity with the on-screen buttons.
+  useEffect(() => {
+    if (lightbox === null) return
+    const prevOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape')      setLightbox(null)
+      else if (e.key === 'ArrowLeft')  prev()
+      else if (e.key === 'ArrowRight') next()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => {
+      document.body.style.overflow = prevOverflow
+      window.removeEventListener('keydown', onKey)
+    }
+  }, [lightbox])
 
   return (
     <>
@@ -29,6 +59,7 @@ export default function PropertyGallery({ images, title }: Props) {
           <img
             src={displayImages[0]}
             alt={`${title} - photo 1`}
+            onError={handleImgError}
             className="w-full h-full object-cover hover:opacity-95 transition-opacity"
           />
         </div>
@@ -41,6 +72,7 @@ export default function PropertyGallery({ images, title }: Props) {
             <img
               src={src}
               alt={`${title} - photo ${i + 2}`}
+              onError={handleImgError}
               className="w-full h-full object-cover hover:opacity-95 transition-opacity"
             />
             {i === 3 && displayImages.length > 5 && (
@@ -53,7 +85,10 @@ export default function PropertyGallery({ images, title }: Props) {
       </div>
 
       {lightbox !== null && (
-        <div className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center">
+        // z-index has to clear the Leaflet map's internal panes (up to
+        // ~z-1000) plus our navbar at z-[1200], otherwise the property-
+        // location map below the fold paints on top of the lightbox.
+        <div className="fixed inset-0 bg-black/95 z-[1300] flex items-center justify-center">
           <button
             onClick={() => setLightbox(null)}
             className="absolute top-4 right-4 text-white hover:text-gray-300 p-2"
@@ -68,6 +103,7 @@ export default function PropertyGallery({ images, title }: Props) {
           <img
             src={displayImages[lightbox]}
             alt={`${title} - photo ${lightbox + 1}`}
+            onError={handleImgError}
             className="max-w-5xl max-h-[85vh] object-contain mx-16"
           />
 

@@ -10,6 +10,7 @@ import {
   type Testimonial,
   type TestimonialPayload,
 } from '../../services/api'
+import { classifyVideoUrl } from '../../utils/video'
 
 interface FormState {
   name: string
@@ -404,8 +405,15 @@ export default function AdminTestimonialsPage() {
                   </label>
                   <input value={form.videoUrl}
                     onChange={(e) => setForm({ ...form, videoUrl: e.target.value })}
-                    placeholder="https://… (MP4 or YouTube/Vimeo embed)"
+                    placeholder="YouTube, YouTube Shorts, Instagram Reel / Post, or direct MP4"
                     className="input-field" />
+                  <p className="text-[11px] text-gray-400 mt-1 leading-snug">
+                    Paste the full share URL — e.g.{' '}
+                    <code className="px-1 py-0.5 bg-gray-100 rounded">youtube.com/shorts/abc123</code>,{' '}
+                    <code className="px-1 py-0.5 bg-gray-100 rounded">instagram.com/reel/xyz</code>,{' '}
+                    or a direct{' '}
+                    <code className="px-1 py-0.5 bg-gray-100 rounded">.mp4</code> link.
+                  </p>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -514,16 +522,40 @@ export default function AdminTestimonialsPage() {
             className="absolute top-5 right-5 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center backdrop-blur-sm">
             <X className="w-5 h-5" />
           </button>
-          <div onClick={(e) => e.stopPropagation()} className="w-full max-w-3xl bg-black rounded-2xl overflow-hidden">
-            <video src={previewing.videoUrl ?? ''} poster={previewing.thumbnail ?? ''} controls autoPlay
-              className="w-full aspect-video" />
-            <div className="p-4 text-white">
-              <div className="font-bold">{previewing.name}</div>
-              <div className="text-xs text-gray-400 mt-0.5">
-                {previewing.location}{previewing.propertyDetail && ` · ${previewing.propertyDetail}`}
+          {(() => {
+            const source = classifyVideoUrl(previewing.videoUrl)
+            const isPortrait =
+              (source.kind === 'youtube'   && source.portrait) ||
+              (source.kind === 'instagram' && source.portrait)
+            const modalWidth = isPortrait ? 'max-w-md' : 'max-w-3xl'
+            const aspectClass = source.kind === 'instagram'
+              ? (source.portrait ? 'aspect-[9/17]' : 'aspect-[4/5]')
+              : (isPortrait ? 'aspect-[9/16]' : 'aspect-video')
+            return (
+              <div onClick={(e) => e.stopPropagation()} className={`w-full ${modalWidth} bg-black rounded-2xl overflow-hidden`}>
+                {source.kind === 'youtube' || source.kind === 'instagram' ? (
+                  <iframe
+                    src={source.src}
+                    title={previewing.name}
+                    loading="lazy"
+                    referrerPolicy="strict-origin-when-cross-origin"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowFullScreen
+                    className={`w-full ${aspectClass} border-0`}
+                  />
+                ) : (
+                  <video src={source.src} poster={previewing.thumbnail ?? ''} controls autoPlay
+                    className={`w-full ${aspectClass}`} />
+                )}
+                <div className="p-4 text-white">
+                  <div className="font-bold">{previewing.name}</div>
+                  <div className="text-xs text-gray-400 mt-0.5">
+                    {previewing.location}{previewing.propertyDetail && ` · ${previewing.propertyDetail}`}
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
+            )
+          })()}
         </div>
       )}
     </div>

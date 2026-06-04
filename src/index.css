@@ -28,6 +28,23 @@
     background: #ffffff;
   }
   h1, h2, h3, h4, h5, h6 { color: #111111; }
+
+  /* All actionable elements get the pointer cursor by default. Tailwind's
+     preflight resets <button> to cursor: default, which makes every custom
+     button feel unclickable — restore the expected hand cursor. */
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  a[href],
+  label[for],
+  summary,
+  select:not(:disabled) {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  [role="button"][aria-disabled="true"] {
+    cursor: not-allowed;
+  }
 }
 
 @layer components {
@@ -79,4 +96,50 @@
   .card {
     @apply bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow duration-200;
   }
+}
+
+/* === Attention-grabbing buyer-callout animations === */
+@keyframes jfl-blink {
+  0%, 60%, 100% { opacity: 1; transform: scale(1); }
+  30% { opacity: 0.55; transform: scale(0.96); }
+}
+.jfl-blink {
+  animation: jfl-blink 1.6s ease-in-out infinite;
+}
+
+/* Softer, slower pulse — for the "Premium" ribbon */
+@keyframes jfl-blink-soft {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(255, 90, 95, 0.45); }
+  50%      { opacity: 0.95; box-shadow: 0 0 0 8px rgba(255, 90, 95, 0); }
+}
+.jfl-blink-soft {
+  animation: jfl-blink-soft 2.2s ease-in-out infinite;
+}
+
+/* Card glow — subtle outer ring that breathes */
+@keyframes jfl-buyer-glow {
+  0%, 100% { box-shadow: 0 4px 18px rgba(255, 90, 95, 0.08); }
+  50%      { box-shadow: 0 8px 28px rgba(255, 90, 95, 0.18); }
+}
+.jfl-buyer-card {
+  animation: jfl-buyer-glow 3s ease-in-out infinite;
+}
+
+/* Down-arrow nudge that guides the eye to the buyer cards */
+@keyframes jfl-bounce {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(8px); }
+}
+.jfl-bounce {
+  animation: jfl-bounce 1.4s ease-in-out infinite;
+}
+
+/* Buyer-card hover — slight lift on top of the breathing glow */
+.jfl-buyer-card:hover { transform: translateY(-4px); }
+.jfl-buyer-card { transition: transform 0.25s ease, box-shadow 0.25s ease; }
+
+/* Respect reduced-motion users — turn all the buyer-callout animations off */
+@media (prefers-reduced-motion: reduce) {
+  .jfl-blink, .jfl-blink-soft, .jfl-buyer-card, .jfl-bounce { animation: none; }
+  .jfl-buyer-card:hover { transform: none; }
 }

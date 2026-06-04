@@ -2,10 +2,51 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="/favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Jose For Land — Find your perfect land in Kanyakumari district. Free doorstep consultation. 400+ verified land listings." />
-    <title>Jose For Land — Live where you want</title>
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/favicon.png" />
+    <meta name="theme-color" content="#FF5A5F" />
+
+    <!--
+      Per-page SEO (title, description, canonical, OG, Twitter) is owned by
+      <SEO> components mounted in each route via react-helmet-async. Keeping
+      those tags out of this static shell prevents duplicates in <head> and
+      ensures crawlers see exactly one value per tag.
+
+      The title below is a no-JS fallback only — Helmet overrides it on
+      every route. The Open Graph tags below are also a JS-disabled fallback
+      so link previews on WhatsApp / Twitter don't end up empty for crawlers
+      that don't run client-side scripts.
+    -->
+    <title>Jose For Land — Land for sale in Kanyakumari, Tamil Nadu</title>
+    <meta property="og:site_name" content="Jose For Land" />
+    <meta property="og:image" content="https://joseforland.com/og-cover.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:locale" content="en_IN" />
+    <meta name="author" content="Jose For Land" />
+
+    <!-- ── JSON-LD: RealEstateAgent organisation schema (stable, page-agnostic) ── -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "RealEstateAgent",
+        "name": "Jose For Land",
+        "description": "Land property consultancy serving Kanyakumari district, Tamil Nadu.",
+        "url": "https://joseforland.com/",
+        "telephone": "+91-99944-88490",
+        "areaServed": { "@type": "AdministrativeArea", "name": "Kanyakumari district, Tamil Nadu, India" },
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "Appattuvilai",
+          "addressLocality": "Thuckalay",
+          "addressRegion": "Tamil Nadu",
+          "postalCode": "629175",
+          "addressCountry": "IN"
+        },
+        "openingHours": "Mo-Sa 09:00-19:00"
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

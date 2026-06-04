@@ -1,17 +1,33 @@
 import { useState } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
-import { Menu, X, Phone, Heart, ChevronDown, LogOut, User, Building2, Shield } from 'lucide-react'
+import { Menu, X, Phone, Heart, ChevronDown, LogOut, User, Building2, Shield, Briefcase } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
+import ConfirmDialog from '../common/ConfirmDialog'
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const [confirmSignOut, setConfirmSignOut] = useState(false)
+  const [signingOut, setSigningOut] = useState(false)
   const { user, isAuthenticated, logout } = useAuth()
   const navigate = useNavigate()
 
-  const handleLogout = async () => {
-    await logout()
-    navigate('/')
+  // Open the confirmation modal instead of signing out immediately.
+  const handleLogout = () => {
+    setUserMenuOpen(false)
+    setIsOpen(false)
+    setConfirmSignOut(true)
+  }
+
+  const performLogout = async () => {
+    setSigningOut(true)
+    try {
+      await logout()
+      navigate('/')
+    } finally {
+      setSigningOut(false)
+      setConfirmSignOut(false)
+    }
   }
 
   const navLinks = [
@@ -35,16 +51,19 @@ export default function Navbar() {
               <Phone className="w-3.5 h-3.5" style={{ color: '#FF5A5F' }} />
               +91 99944 88490
             </a>
-            <a href="tel:+919698712904" className="flex items-center gap-1.5 hover:text-gray-300 transition-colors">
+            <a href="tel:+919944885542" className="flex items-center gap-1.5 hover:text-gray-300 transition-colors">
               <Phone className="w-3.5 h-3.5" style={{ color: '#FF5A5F' }} />
-              +91 96987 12904
+              +91 99448 85542
             </a>
           </div>
         </div>
       </div>
 
       {/* Main navbar — white */}
-      <nav className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
+      {/* z-index has to clear the leaflet map panes (up to z-1000) plus our
+          own map overlays (sidebar drawer at z-[1100]), otherwise the navbar
+          and its dropdown get clipped by map content on /map. */}
+      <nav className="sticky top-0 z-[1200] bg-white border-b border-gray-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
 
@@ -100,7 +119,10 @@ export default function Navbar() {
                     <ChevronDown className="w-4 h-4 text-gray-400" />
                   </button>
                   {userMenuOpen && (
-                    <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50">
+                    // Leaflet panes stack up to ~z-1000 on the map page, so a
+                    // bare z-50 lets the map clip the dropdown. Lift it above
+                    // every overlay the app paints on top of the map.
+                    <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-[1200]">
                       {/* Identity header */}
                       <div className="px-4 py-3 border-b border-gray-100">
                         <div className="text-sm font-semibold text-gray-900 truncate">
@@ -131,11 +153,17 @@ export default function Navbar() {
                         <Heart className="w-4 h-4" /> Saved Properties
                       </Link>
 
-                      {/* Admins → Admin Dashboard */}
+                      {/* Admins → Admin Dashboard. Employees → their queue. */}
                       {user?.role === 'Admin' && (
                         <Link to="/admin" className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                           onClick={() => setUserMenuOpen(false)}>
                           <Shield className="w-4 h-4" /> Admin Dashboard
+                        </Link>
+                      )}
+                      {user?.role === 'Employee' && (
+                        <Link to="/admin/my-work" className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                          onClick={() => setUserMenuOpen(false)}>
+                          <Briefcase className="w-4 h-4" /> My Work
                         </Link>
                       )}
 
@@ -195,6 +223,12 @@ export default function Navbar() {
                   <Shield className="w-4 h-4" /> Admin Dashboard
                 </Link>
               )}
+              {isAuthenticated && user?.role === 'Employee' && (
+                <Link to="/admin/my-work" onClick={() => setIsOpen(false)}
+                  className="px-4 py-2 rounded-lg font-medium text-sm text-gray-600 hover:bg-gray-50 flex items-center gap-2">
+                  <Briefcase className="w-4 h-4" /> My Work
+                </Link>
+              )}
               {isAuthenticated
                 ? <button onClick={handleLogout} className="btn-ghost text-sm justify-start"><LogOut className="w-4 h-4" /> Sign out</button>
                 : <Link to="/login" onClick={() => setIsOpen(false)} className="btn-ghost text-sm">Sign in</Link>
@@ -203,6 +237,19 @@ export default function Navbar() {
           </div>
         )}
       </nav>
+
+      <ConfirmDialog
+        open={confirmSignOut}
+        title="Sign out?"
+        message="You'll need to sign in again to access your saved properties and profile."
+        confirmLabel="Sign out"
+        cancelLabel="Stay signed in"
+        tone="danger"
+        icon={LogOut}
+        loading={signingOut}
+        onConfirm={performLogout}
+        onCancel={() => setConfirmSignOut(false)}
+      />
     </>
   )
 }

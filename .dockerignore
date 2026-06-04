@@ -1,0 +1,40 @@
+# Dependencies will be reinstalled inside the image
+node_modules
+npm-debug.log*
+
+# Build outputs (will be rebuilt inside the image)
+dist
+dist-ssr
+build
+
+# Local-only configs and editor artifacts
+.git
+.gitignore
+.vscode
+.idea
+.DS_Store
+*.swp
+
+# Env files (use Render env vars instead)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Tests / coverage / caches
+coverage
+.nyc_output
+.cache
+.eslintcache
+.vite
+*.tsbuildinfo
+
+# Documentation / proposal artifacts
+README.md
+*.md
+.claude
+
+# OS junk
+Thumbs.db
+desktop.ini

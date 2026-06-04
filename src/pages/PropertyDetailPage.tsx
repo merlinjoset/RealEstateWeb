@@ -1,14 +1,17 @@
-import { Link } from 'react-router-dom'
+import { Link, useParams, useNavigate, useLocation } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import {
-  MapPin, Ruler, Phone, MessageCircle, Heart, Share2, ChevronLeft,
-  CheckCircle, Home, FileText, Calendar, FolderOpen,
+  MapPin, Ruler, Phone, MessageCircle, Heart, ChevronLeft,
+  CheckCircle, Home, FileText, Calendar, FolderOpen, Loader2, AlertCircle,
 } from 'lucide-react'
+import SEO from '../components/common/SEO'
 import PropertyGallery from '../components/properties/PropertyGallery'
 import { PropertyDocumentsView } from '../components/properties/PropertyDocuments'
 import PropertyDocumentsPublic from '../components/properties/PropertyDocumentsPublic'
 import PropertyLocationMap from '../components/properties/PropertyLocationMap'
+import ShareButton from '../components/properties/ShareButton'
 import { useAuth } from '../context/AuthContext'
-import type { Property } from '../types'
+import { propertiesApi, resolveMediaUrl } from '../services/api'
 
 function formatLakhs(amount: number) {
   if (amount >= 10000000) return `₹${(amount / 10000000).toFixed(2)} Cr`
@@ -16,73 +19,152 @@ function formatLakhs(amount: number) {
   return `₹${amount.toLocaleString('en-IN')}`
 }
 
-const MOCK_PROPERTY: Property = {
-  id: 1,
-  title: '15 Cents Prime Land Near Highway – Nagercoil',
-  description: `This is a prime land parcel located close to the main road in Nagercoil, Kanyakumari district.
-The plot has excellent road frontage and is ideal for residential or commercial construction.
-
-Highlights:
-- Located in a rapidly developing area
-- Clear legal documents (EC, Patta, Chitta verified)
-- All utilities available (electricity, water)
-- Well-connected to schools, hospitals, and markets
-- No encroachments
-- Immediate registration possible
-
-This property is personally verified by our agents. Reach out for a free site visit.`,
-  totalPrice: 2250000,
-  pricePerCent: 150000,
-  address: 'Kottar, Near NH 44',
-  city: 'Nagercoil',
-  district: 'Kanyakumari',
-  state: 'Tamil Nadu',
-  pinCode: '629001',
-  areaInCents: 15,
-  areaInSqFt: 6534,
-  propertyType: 'open_land',
-  status: 'for_sale',
-  images: [],
-  features: ['Road Access', 'Clear Title', 'Near Market', 'Water Source', 'Electricity', 'Boundary Wall'],
-  agentId: 1,
-  createdAt: '2024-01-15',
-  updatedAt: '2024-01-15',
-  isFeatured: true,
-  isVerified: true,
-  roadAccess: true,
-  nearbyLandmarks: ['Nagercoil Railway Station (2 km)', 'KK Hospitals (1.5 km)', 'NH 44 (200 m)', 'City Bus Stand (800 m)'],
-  legalStatus: 'Clear – EC, Patta, Chitta available',
-  documents: [
-    {
-      id: 1, propertyId: 1, type: 'ec', name: 'EC for last 13 years (2010 – 2023)',
-      fileName: 'ec-2010-2023.pdf', fileUrl: 'https://www.africau.edu/images/default/sample.pdf',
-      fileSize: 248000, mimeType: 'application/pdf', isPublic: true, uploadedAt: '2024-01-10',
-    },
-    {
-      id: 2, propertyId: 1, type: 'patta', name: 'Patta Document',
-      fileName: 'patta.pdf', fileUrl: 'https://www.africau.edu/images/default/sample.pdf',
-      fileSize: 156000, mimeType: 'application/pdf', isPublic: true, uploadedAt: '2024-01-10',
-    },
-    {
-      id: 3, propertyId: 1, type: 'chitta', name: 'Chitta Extract',
-      fileName: 'chitta.pdf', fileUrl: 'https://www.africau.edu/images/default/sample.pdf',
-      fileSize: 98000, mimeType: 'application/pdf', isPublic: true, uploadedAt: '2024-01-10',
-    },
-    {
-      id: 4, propertyId: 1, type: 'layout', name: 'Survey & Layout Plan',
-      fileName: 'layout.jpg', fileUrl: 'https://images.unsplash.com/photo-1577415124269-fc1140a69e91?w=1200&q=80',
-      fileSize: 1240000, mimeType: 'image/jpeg', isPublic: true, uploadedAt: '2024-01-12',
-    },
-  ],
-}
-
 export default function PropertyDetailPage() {
-  const property = MOCK_PROPERTY
+  const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
+  const location = useLocation()
+
+  /**
+   * "Back to listings" — return to whatever listing page the user came
+   * from with all its state (page number, filters, scroll position)
+   * intact, by walking one step back in browser history. We only do
+   * that when we actually arrived here from inside the app; if someone
+   * opened the detail URL directly (external link, refresh on detail
+   * page), fall back to a fresh /properties.
+   *
+   * Detection: react-router seeds location.key to "default" on the
+   * first navigation and to a random hash on every subsequent one. A
+   * non-default key means at least one prior in-app navigation, so
+   * `navigate(-1)` will land on it.
+   */
+  const handleBack = () => {
+    if (location.key !== 'default') navigate(-1)
+    else navigate('/properties')
+  }
+  const propertyId = Number(id)
   const { user } = useAuth()
   const canSeeDocuments = user?.role === 'Admin' || user?.role === 'Employee'
 
+  const query = useQuery({
+    queryKey: ['property', propertyId],
+    queryFn: () => propertiesApi.getById(propertyId),
+    enabled: Number.isFinite(propertyId) && propertyId > 0,
+    staleTime: 60_000,
+  })
+
+  if (query.isLoading) {
+    return (
+      <main className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center text-gray-400">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-3" />
+          <p className="text-sm">Loading property…</p>
+        </div>
+      </main>
+    )
+  }
+  if (query.isError || !query.data) {
+    return (
+      <main className="min-h-screen flex items-center justify-center bg-gray-50 px-6">
+        <div className="max-w-md text-center">
+          <AlertCircle className="w-10 h-10 text-red-400 mx-auto mb-3" />
+          <h1 className="text-xl font-bold text-gray-900 mb-2">Property not found</h1>
+          <p className="text-sm text-gray-500 mb-4">
+            This listing may have been removed or you may need to{' '}
+            <Link to="/login" className="font-semibold underline" style={{ color: '#FF5A5F' }}>sign in</Link>{' '}
+            to view free listings.
+          </p>
+          <Link to="/properties" className="btn-primary inline-flex">
+            <ChevronLeft className="w-4 h-4" /> Browse all properties
+          </Link>
+        </div>
+      </main>
+    )
+  }
+  const property = query.data
+
+  // SEO copy — concise summary the search engines + WhatsApp previews pick up
+  const seoDescription =
+    `${property.areaInCents} cents ${property.propertyType === 'open_land' ? 'open land' : 'plot'} for sale ` +
+    `in ${property.city}, ${property.district}. ${formatLakhs(property.totalPrice)}.` +
+    (property.roadAccess ? ' Road access.' : '') +
+    (property.legalStatus ? ` ${property.legalStatus.slice(0, 60)}.` : '')
+
+  // Combined Product + Place JSON-LD via @graph — gives Google enough
+  // signal to surface this as both a real-estate listing and a
+  // geo-located result for "land for sale in {city}" queries.
+  const propertyUrl = `https://joseforland.com/properties/${property.id}`
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'Product',
+        '@id': `${propertyUrl}#product`,
+        name: property.title,
+        description: property.description?.slice(0, 300),
+        image: resolveMediaUrl(property.images?.[0]),
+        url: propertyUrl,
+        category: 'Real Estate / Land',
+        offers: {
+          '@type': 'Offer',
+          priceCurrency: 'INR',
+          price: property.totalPrice,
+          availability: property.status === 'sold'
+            ? 'https://schema.org/SoldOut'
+            : 'https://schema.org/InStock',
+          areaServed: 'Kanyakumari district, Tamil Nadu, India',
+        },
+        additionalProperty: [
+          { '@type': 'PropertyValue', name: 'Area (cents)', value: property.areaInCents },
+          { '@type': 'PropertyValue', name: 'City', value: property.city },
+          { '@type': 'PropertyValue', name: 'District', value: property.district },
+          ...(property.serialNo ? [{ '@type': 'PropertyValue', name: 'Reference', value: property.serialNo }] : []),
+        ],
+      },
+      {
+        '@type': 'Place',
+        '@id': `${propertyUrl}#place`,
+        name: `${property.city}, Kanyakumari`,
+        address: {
+          '@type': 'PostalAddress',
+          streetAddress: property.address,
+          addressLocality: property.city,
+          addressRegion: property.district,
+          postalCode: property.pinCode,
+          addressCountry: 'IN',
+        },
+        ...(property.latitude && property.longitude ? {
+          geo: { '@type': 'GeoCoordinates', latitude: property.latitude, longitude: property.longitude },
+        } : {}),
+      },
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://joseforland.com/' },
+          { '@type': 'ListItem', position: 2, name: 'Properties', item: 'https://joseforland.com/properties' },
+          { '@type': 'ListItem', position: 3, name: property.city,
+            item: `https://joseforland.com/properties?city=${encodeURIComponent(property.city)}` },
+          { '@type': 'ListItem', position: 4, name: property.title, item: propertyUrl },
+        ],
+      },
+    ],
+  }
+
+  // SEO title slots the city + district behind the listing title so the
+  // search snippet reads like "{property} | {city}, Kanyakumari — Jose
+  // For Land", which catches both "{property name}" and "{city} land"
+  // search variants.
+  const seoTitle = `${property.title} | ${property.city}, Kanyakumari`
+
   return (
     <main className="min-h-screen bg-gray-50">
+      <SEO
+        path={`/properties/${property.id}`}
+        title={seoTitle}
+        description={seoDescription}
+        image={resolveMediaUrl(property.images?.[0])}
+        type="article"
+        jsonLd={jsonLd}
+      />
       <div className="bg-white border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center gap-2 text-sm text-gray-500">
           <Link to="/" className="hover:text-[#FF5A5F] transition-colors">Home</Link>
@@ -94,9 +176,10 @@ export default function PropertyDetailPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <Link to="/properties" className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-[#FF5A5F] mb-4 transition-colors">
+        <button onClick={handleBack}
+          className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-[#FF5A5F] mb-4 transition-colors">
           <ChevronLeft className="w-4 h-4" /> Back to listings
-        </Link>
+        </button>
 
         <div className="mb-6">
           <PropertyGallery images={property.images} title={property.title} />
@@ -122,7 +205,17 @@ export default function PropertyDetailPage() {
                       </span>
                     )}
                   </div>
-                  <h1 className="text-2xl font-bold text-gray-900">{property.title}</h1>
+                  <h1 className="text-3xl md:text-4xl font-bold text-gray-900 leading-tight tracking-tight">
+                    {property.serialNo && (
+                      // Serial reads as a peer of the title now — same font
+                      // family + weight, just in the brand red so it stands
+                      // apart without needing the muted chip styling.
+                      <span className="text-3xl md:text-4xl font-bold mr-3 align-middle" style={{ color: '#FF5A5F' }}>
+                        #{property.serialNo}
+                      </span>
+                    )}
+                    {property.title}
+                  </h1>
                   <div className="flex items-center gap-1 text-gray-500 text-sm mt-1">
                     <MapPin className="w-4 h-4" />
                     {property.address}, {property.city}, {property.district} – {property.pinCode}
@@ -132,9 +225,11 @@ export default function PropertyDetailPage() {
                   <button className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
                     <Heart className="w-4 h-4 text-gray-400" />
                   </button>
-                  <button className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
-                    <Share2 className="w-4 h-4 text-gray-400" />
-                  </button>
+                  <ShareButton
+                    variant="icon"
+                    title={property.title}
+                    description={`${property.areaInCents} cents · ${formatLakhs(property.totalPrice)} · ${property.address}, ${property.city}`}
+                  />
                 </div>
               </div>
 
@@ -285,14 +380,14 @@ export default function PropertyDetailPage() {
                   WhatsApp Inquiry
                 </a>
                 <a
-                  href="tel:+919698712904"
+                  href="tel:+919944885542"
                   className="flex items-center justify-center gap-2 w-full py-3 border-2 font-semibold rounded-xl transition-colors"
                   style={{ borderColor: '#6A9739', color: '#6A9739' }}
                   onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(106,151,57,0.06)' }}
                   onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent' }}
                 >
                   <Phone className="w-4 h-4" />
-                  Alt: +91 96987 12904
+                  Alt: +91 99448 85542
                 </a>
               </div>
 

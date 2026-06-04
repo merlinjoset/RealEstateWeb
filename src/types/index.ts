@@ -1,6 +1,16 @@
 export type PropertyType = 'open_land' | 'land_with_building' | 'agricultural' | 'commercial' | 'residential_plot'
 export type ListingStatus = 'for_sale' | 'for_rent' | 'sold'
 
+/**
+ * Marketing tier chosen by the seller at submission time.
+ * - Free            → zero brokerage, basic listing
+ * - VideoPromotion  → 2% brokerage on sale price; includes promotional video
+ */
+export type MarketingPlan = 'Free' | 'VideoPromotion'
+
+/** 2% brokerage on Video Promotion plan */
+export const VIDEO_PROMOTION_FEE_RATE = 0.02
+
 export type DocumentType =
   | 'ec'              // Encumbrance Certificate
   | 'patta'           // Patta document
@@ -27,6 +37,8 @@ export interface PropertyDocument {
 
 export interface Property {
   id: number
+  /** Optional admin-assigned serial / reference number (e.g. "JFL-2026-001"). */
+  serialNo?: string | null
   title: string
   description: string
   totalPrice: number
@@ -56,6 +68,17 @@ export interface Property {
   nearbyLandmarks?: string[]
   legalStatus?: string
   documents?: PropertyDocument[]
+  marketingPlan?: MarketingPlan
+  /** Employee/Agent assigned by an admin to verify the listing. */
+  assignedToVerifyUserId?: number | null
+  assignedToVerifyName?: string | null
+  assignedToVerifyAt?: string | null
+  /** Free-form findings submitted by the verifier after their site visit. */
+  verificationNotes?: string | null
+  verificationDoneAt?: string | null
+  /** Display name of the seller (joined from SubmittedByUser or anon submitter). */
+  submittedByName?: string | null
+  submittedByPhone?: string | null
 }
 
 export interface Agent {
@@ -78,7 +101,7 @@ export interface User {
   lastName: string
   email: string
   phone?: string
-  role: 'Employee' | 'Seller' | 'Agent' | 'Admin'
+  role: 'Employee' | 'Seller' | 'Agent' | 'Admin' | 'Buyer'
   avatar?: string
   createdAt: string
 }
@@ -100,7 +123,7 @@ export interface RegisterData {
   email: string
   password: string
   phone?: string
-  role: 'Agent' | 'Seller'
+  role: 'Agent' | 'Seller' | 'Buyer'
 }
 
 export interface PropertyFilters {
@@ -114,9 +137,15 @@ export interface PropertyFilters {
   minAreaCents?: number
   maxAreaCents?: number
   roadAccess?: boolean
+  marketingPlan?: 'Free' | 'VideoPromotion'
   sortBy?: 'price_asc' | 'price_desc' | 'newest' | 'oldest' | 'area_asc' | 'area_desc'
   page?: number
   pageSize?: number
+  /** Geolocation filter — when all three are set, the API returns only
+   *  properties whose coordinates lie within radiusM metres of (lat, lng). */
+  nearLat?: number
+  nearLng?: number
+  radiusM?: number
 }
 
 export interface PaginatedResponse<T> {

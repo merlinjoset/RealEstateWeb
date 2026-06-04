@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Plus, Search, Edit2, Trash2, Eye, Star, StarOff } from 'lucide-react'
-import type { Property } from '../../types'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { Plus, Search, Edit2, Trash2, Eye, Star, StarOff, Loader2, AlertCircle } from 'lucide-react'
+import { propertiesApi } from '../../services/api'
 
 function formatLakhs(amount: number) {
   if (amount >= 10000000) return `₹${(amount / 10000000).toFixed(2)} Cr`
@@ -9,46 +10,57 @@ function formatLakhs(amount: number) {
   return `₹${amount.toLocaleString('en-IN')}`
 }
 
-const MOCK: Property[] = Array.from({ length: 10 }, (_, i) => ({
-  id: i + 1,
-  title: ['15 Cents Prime Land - Nagercoil', '10 Cents + 3BHK - Marthandam', '50 Cents Farm - Thuckalay',
-          '8 Cents Plot - Kanyakumari', '20 Cents Open Land - Colachel', '5 Cents Corner Plot - Padmanabhapuram',
-          '30 Cents Agricultural - Boothapandi', '12 Cents Plot - Nagercoil', '25 Cents Land - Eraniel', '7 Cents Plot - Kanyakumari'][i],
-  description: '', totalPrice: [2250000, 4500000, 3500000, 1600000, 2800000, 750000, 4200000, 1800000, 3750000, 1400000][i],
-  pricePerCent: [150000, 450000, 70000, 200000, 140000, 150000, 140000, 150000, 150000, 200000][i],
-  address: '', city: ['Nagercoil', 'Marthandam', 'Thuckalay', 'Kanyakumari', 'Colachel', 'Padmanabhapuram', 'Boothapandi', 'Nagercoil', 'Eraniel', 'Kanyakumari'][i],
-  district: 'Kanyakumari', state: 'Tamil Nadu', pinCode: '629001',
-  areaInCents: [15, 10, 50, 8, 20, 5, 30, 12, 25, 7][i],
-  propertyType: (['open_land', 'land_with_building', 'agricultural', 'residential_plot', 'open_land', 'residential_plot', 'agricultural', 'open_land', 'open_land', 'residential_plot'] as Property['propertyType'][])[i],
-  status: 'for_sale',
-  images: [], features: [], agentId: 1,
-  createdAt: '2024-01-01', updatedAt: '2024-01-01',
-  isFeatured: i < 3, isVerified: i % 2 === 0, roadAccess: i % 3 !== 2,
-}))
-
 export default function AdminPropertiesPage() {
-  const [properties, setProperties] = useState(MOCK)
+  const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
   const [deleteId, setDeleteId] = useState<number | null>(null)
+  const [page, setPage] = useState(1)
+  const PAGE_SIZE = 20
 
-  const toggleFeatured = (id: number) =>
-    setProperties((prev) => prev.map((p) => p.id === id ? { ...p, isFeatured: !p.isFeatured } : p))
+  const query = useQuery({
+    queryKey: ['admin-properties', { search, page }],
+    queryFn: () => propertiesApi.getAll({
+      search: search.trim() || undefined,
+      page,
+      pageSize: PAGE_SIZE,
+      sortBy: 'newest',
+    }),
+    placeholderData: (prev) => prev,
+    staleTime: 30_000,
+  })
 
-  const confirmDelete = (id: number) => {
-    setProperties((prev) => prev.filter((p) => p.id !== id))
-    setDeleteId(null)
-  }
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => propertiesApi.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-properties'] })
+      setDeleteId(null)
+    },
+  })
 
-  const filtered = properties.filter(
-    (p) => !search || p.title.toLowerCase().includes(search.toLowerCase()) || p.city.toLowerCase().includes(search.toLowerCase())
-  )
+  const updateMutation = useMutation({
+    mutationFn: ({ id, isFeatured }: { id: number; isFeatured: boolean }) =>
+      propertiesApi.update(id, { isFeatured }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-properties'] }),
+  })
+
+  const filtered = query.data?.data ?? []
+  const totalCount = query.data?.total ?? 0
+  const totalPages = query.data?.totalPages ?? 1
+
+  const toggleFeatured = (id: number, current: boolean) =>
+    updateMutation.mutate({ id, isFeatured: !current })
+
+  const confirmDelete = (id: number) => deleteMutation.mutate(id)
 
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-xl font-bold text-gray-900">All Properties</h2>
-          <p className="text-sm text-gray-500 mt-0.5">{properties.length} total listings</p>
+          <p className="text-sm text-gray-500 mt-0.5 inline-flex items-center gap-2">
+            {totalCount.toLocaleString('en-IN')} total listings
+            {query.isFetching && <Loader2 className="w-3 h-3 animate-spin text-gray-400" />}
+          </p>
         </div>
         <Link
           to="/admin/add-property"
@@ -117,7 +129,7 @@ export default function AdminPropertiesPage() {
                         <Eye className="w-4 h-4" />
                       </Link>
                       <button
-                        onClick={() => toggleFeatured(p.id)}
+                        onClick={() => toggleFeatured(p.id, p.isFeatured)}
                         className={`p-1.5 rounded-lg transition-colors ${
                           p.isFeatured ? 'text-yellow-500 hover:bg-yellow-50' : 'text-gray-400 hover:text-yellow-500 hover:bg-yellow-50'
                         }`}
@@ -146,8 +158,39 @@ export default function AdminPropertiesPage() {
             </tbody>
           </table>
 
-          {filtered.length === 0 && (
+          {query.isLoading ? (
+            <div className="text-center py-10 text-gray-400">
+              <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />
+              Loading properties…
+            </div>
+          ) : query.isError ? (
+            <div className="text-center py-10 text-red-500">
+              <AlertCircle className="w-6 h-6 mx-auto mb-2" />
+              Couldn't load properties. <button onClick={() => query.refetch()} className="underline font-semibold">Try again</button>
+            </div>
+          ) : filtered.length === 0 ? (
             <div className="text-center py-10 text-gray-400">No properties found.</div>
+          ) : (
+            // Simple pagination footer when there's more than one page
+            totalPages > 1 && (
+              <div className="flex items-center justify-between gap-3 px-4 py-3 border-t border-gray-100 bg-gray-50 text-xs">
+                <span className="text-gray-500">Page {page} of {totalPages}</span>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                    disabled={page === 1}
+                    className="px-3 py-1.5 rounded-lg border border-gray-200 disabled:opacity-40 hover:bg-white">
+                    Prev
+                  </button>
+                  <button
+                    onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                    disabled={page === totalPages}
+                    className="px-3 py-1.5 rounded-lg border border-gray-200 disabled:opacity-40 hover:bg-white">
+                    Next
+                  </button>
+                </div>
+              </div>
+            )
           )}
         </div>
       </div>

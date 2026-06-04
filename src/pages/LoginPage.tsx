@@ -31,6 +31,9 @@ export default function LoginPage() {
         navigate(from, { replace: true })
       } else if (role === 'Admin') {
         navigate('/admin', { replace: true })
+      } else if (role === 'Employee') {
+        // Employees land directly on their assigned work queue.
+        navigate('/admin/my-work', { replace: true })
       } else {
         navigate('/', { replace: true })
       }
@@ -86,9 +89,9 @@ export default function LoginPage() {
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label className="text-sm font-medium text-gray-700">Password</label>
-                <button type="button" className="text-xs hover:underline" style={{ color: '#6A9739' }}>
+                <Link to="/forgot-password" className="text-xs hover:underline" style={{ color: '#6A9739' }}>
                   Forgot password?
-                </button>
+                </Link>
               </div>
               <div className="relative">
                 <input
@@ -128,9 +131,6 @@ export default function LoginPage() {
               <Link to="/register" className="font-semibold hover:underline" style={{ color: '#FF5A5F' }}>
                 Register
               </Link>
-            </p>
-            <p className="text-[11px] text-gray-400 mt-3">
-              Demo admin · admin@joseforland.com / Admin@123
             </p>
           </div>
         </div>

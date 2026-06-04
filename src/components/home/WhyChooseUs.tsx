@@ -1,4 +1,6 @@
+import { useQuery } from '@tanstack/react-query'
 import { ArrowUpRight, Phone } from 'lucide-react'
+import { propertiesApi } from '../../services/api'
 
 const POINTS = [
   {
@@ -29,6 +31,19 @@ const POINTS = [
 ]
 
 export default function WhyChooseUs() {
+  // Live count drives the "Verified listings" tile. Shares the query key
+  // with StatsSection so the network call is deduped by React Query.
+  const { data } = useQuery({
+    queryKey: ['properties-total'],
+    queryFn: () => propertiesApi.getAll({ page: 1, pageSize: 1, sortBy: 'newest' }),
+    staleTime: 5 * 60_000,
+  })
+  const total = data?.total ?? 0
+  // Same anonymous-gating concession as StatsSection — show a round
+  // marketing number when API count is suspiciously low (logged-out user
+  // sees only the VideoPromotion subset).
+  const verifiedListings = total >= 100 ? String(total) : '400'
+
   return (
     <section className="bg-white">
       {/* === Top: Editorial intro on warm cream canvas === */}
@@ -70,10 +85,10 @@ export default function WhyChooseUs() {
           {/* Stats strip */}
           <div className="mt-16 pt-10 border-t grid grid-cols-2 md:grid-cols-4 gap-8" style={{ borderColor: 'rgba(17,17,17,0.08)' }}>
             {[
-              { v: '10+', l: 'Years in Kanyakumari' },
-              { v: '434', l: 'Verified listings' },
-              { v: '500+', l: 'Families served' },
-              { v: '100%', l: 'Personally inspected' },
+              { v: '10+',              l: 'Years in Kanyakumari' },
+              { v: verifiedListings,   l: 'Verified listings' },
+              { v: '500+',             l: 'Families served' },
+              { v: '100%',             l: 'Personally inspected' },
             ].map(({ v, l }) => (
               <div key={l}>
                 <div className="text-3xl md:text-4xl font-bold tracking-tight" style={{ color: '#111111' }}>

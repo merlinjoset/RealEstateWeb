@@ -3,17 +3,19 @@ import { Navigate, useNavigate, Link } from 'react-router-dom'
 import {
   User as UserIcon, Mail, Phone, MapPin, Calendar, Shield, LogOut,
   Edit2, Save, Lock, Eye, EyeOff, Loader2, AlertCircle, CheckCircle2,
-  Building2,
+  Building2, Briefcase,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { authApi } from '../services/api'
 import PageHeader from '../components/layout/PageHeader'
+import ConfirmDialog from '../components/common/ConfirmDialog'
 
 const ROLE_BADGE: Record<string, { bg: string; color: string; label: string }> = {
   Admin:    { bg: 'rgba(255,90,95,0.10)',  color: '#FF5A5F', label: 'Admin' },
   Agent:    { bg: 'rgba(41,50,55,0.08)',   color: '#293237', label: 'Agent' },
   Seller:   { bg: 'rgba(245,158,11,0.10)', color: '#B45309', label: 'Seller' },
   Employee: { bg: 'rgba(106,151,57,0.10)', color: '#6A9739', label: 'Employee' },
+  Buyer:    { bg: 'rgba(99,102,241,0.10)', color: '#4F46E5', label: 'Buyer' },
 }
 
 interface FormState {
@@ -121,12 +123,23 @@ export default function ProfilePage() {
     }
   }
 
-  const handleLogout = async () => {
-    await logout()
-    navigate('/')
+  const [confirmSignOut, setConfirmSignOut] = useState(false)
+  const [signingOut, setSigningOut] = useState(false)
+
+  const handleLogout = () => setConfirmSignOut(true)
+  const performLogout = async () => {
+    setSigningOut(true)
+    try {
+      await logout()
+      navigate('/')
+    } finally {
+      setSigningOut(false)
+      setConfirmSignOut(false)
+    }
   }
 
   const isAdmin = user.role === 'Admin'
+  const isEmployee = user.role === 'Employee'
   const canSell = user.role === 'Seller' || user.role === 'Agent' || user.role === 'Admin'
 
   return (
@@ -319,6 +332,10 @@ export default function ProfilePage() {
                   <QuickLink to="/admin" icon={Shield} label="Admin Dashboard"
                     desc="Manage properties, users, inquiries" color="#FF5A5F" />
                 )}
+                {isEmployee && (
+                  <QuickLink to="/admin/my-work" icon={Briefcase} label="My Work"
+                    desc="Inquiries & properties assigned to you" color="#4F46E5" />
+                )}
                 {canSell && (
                   <QuickLink to="/sell" icon={Building2} label="Sell a Property"
                     desc="List your land for sale" color="#6A9739" />
@@ -345,6 +362,19 @@ export default function ProfilePage() {
           </aside>
         </div>
       </div>
+
+      <ConfirmDialog
+        open={confirmSignOut}
+        title="Sign out?"
+        message="You'll need to sign in again to manage your profile or access saved listings."
+        confirmLabel="Sign out"
+        cancelLabel="Stay signed in"
+        tone="danger"
+        icon={LogOut}
+        loading={signingOut}
+        onConfirm={performLogout}
+        onCancel={() => setConfirmSignOut(false)}
+      />
     </main>
   )
 }

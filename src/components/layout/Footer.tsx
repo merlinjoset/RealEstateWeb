@@ -1,7 +1,32 @@
 import { Link } from 'react-router-dom'
-import { Phone, Mail, MapPin, Share2, Video, Camera } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
+import { Phone, Mail, MapPin } from 'lucide-react'
+import { FacebookIcon, InstagramIcon, YoutubeIcon } from '../icons/Brands'
+import { settingsApi } from '../../services/api'
+
+// Static fallbacks — used when the /api/settings/site call is still in
+// flight, errors out, or returns empty strings. Keep these in sync with the
+// migration seed so first-page-load looks the same as the eventual fetched
+// state.
+const DEFAULT_SOCIAL = {
+  facebookUrl:  'https://facebook.com/joseforland',
+  instagramUrl: 'https://instagram.com/joseforland',
+  youtubeUrl:   'https://youtube.com/@joseforland',
+}
 
 export default function Footer() {
+  const siteQuery = useQuery({
+    queryKey: ['site-settings'],
+    queryFn: settingsApi.getSite,
+    staleTime: 5 * 60_000,      // settings change rarely — keep them warm
+  })
+  const site = siteQuery.data
+  const social = {
+    facebookUrl:  (site?.facebookUrl?.trim()  || DEFAULT_SOCIAL.facebookUrl),
+    instagramUrl: (site?.instagramUrl?.trim() || DEFAULT_SOCIAL.instagramUrl),
+    youtubeUrl:   (site?.youtubeUrl?.trim()   || DEFAULT_SOCIAL.youtubeUrl),
+  }
+
   return (
     <footer style={{ backgroundColor: '#111111' }} className="text-gray-400">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -22,13 +47,24 @@ export default function Footer() {
               Kanyakumari's most trusted land property platform. Free doorstep consultation on every listing.
             </p>
             <div className="flex items-center gap-3">
-              {[{ Icon: Share2, label: 'Facebook' }, { Icon: Video, label: 'YouTube' }, { Icon: Camera, label: 'Instagram' }].map(({ Icon, label }) => (
-                <button key={label} aria-label={label} className="w-9 h-9 rounded-lg flex items-center justify-center transition-colors hover:text-white" style={{ backgroundColor: '#293237' }}
-                  onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#FF5A5F')}
-                  onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#293237')}
+              {[
+                { Icon: FacebookIcon,  label: 'Facebook',  href: social.facebookUrl,  hover: '#1877F2' },
+                { Icon: InstagramIcon, label: 'Instagram', href: social.instagramUrl, hover: '#E1306C' },
+                { Icon: YoutubeIcon,   label: 'YouTube',   href: social.youtubeUrl,   hover: '#FF0000' },
+              ].map(({ Icon, label, href, hover }) => (
+                <a
+                  key={label}
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={label}
+                  className="w-9 h-9 rounded-lg flex items-center justify-center transition-colors text-gray-400 hover:text-white"
+                  style={{ backgroundColor: '#293237' }}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = hover)}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#293237')}
                 >
                   <Icon className="w-4 h-4" />
-                </button>
+                </a>
               ))}
             </div>
           </div>
@@ -58,7 +94,7 @@ export default function Footer() {
           <div className="space-y-4">
             <h4 className="text-white font-semibold">Locations</h4>
             <ul className="space-y-2 text-sm">
-              {['Nagercoil', 'Marthandam', 'Thuckalay', 'Kanyakumari', 'Colachel', 'Padmanabhapuram', 'Boothapandi'].map((city) => (
+              {['Nagercoil', 'Marthandam', 'Thuckalay', 'Kanyakumari', 'Colachel', 'Kaliyakkavilai'].map((city) => (
                 <li key={city}>
                   <Link to={`/properties?city=${encodeURIComponent(city)}`} className="hover:text-white transition-colors" style={{ color: 'rgba(255,255,255,0.66)' }}>
                     {city}
@@ -83,9 +119,9 @@ export default function Footer() {
                 </a>
               </li>
               <li>
-                <a href="tel:+919698712904" className="flex items-center gap-3 hover:text-white transition-colors">
+                <a href="tel:+919944885542" className="flex items-center gap-3 hover:text-white transition-colors">
                   <Phone className="w-4 h-4 shrink-0" style={{ color: '#FF5A5F' }} />
-                  +91 96987 12904
+                  +91 99448 85542
                 </a>
               </li>
               <li>
@@ -108,6 +144,19 @@ export default function Footer() {
             <Link to="/privacy" className="hover:text-gray-300 transition-colors">Privacy Policy</Link>
             <Link to="/terms" className="hover:text-gray-300 transition-colors">Terms of Service</Link>
           </div>
+        </div>
+
+        {/* Subtle credit — muted, smaller than the copyright row */}
+        <div className="mt-2 text-center text-[11px]" style={{ color: '#3a3a3a' }}>
+          Powered by{' '}
+          <a
+            href="http://merlinjose.tech"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-gray-400 transition-colors underline-offset-2 hover:underline"
+          >
+            Merlin Jose
+          </a>
         </div>
       </div>
     </footer>

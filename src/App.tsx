@@ -1,9 +1,12 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { HelmetProvider } from 'react-helmet-async'
 import { AuthProvider } from './context/AuthContext'
 
 import Navbar from './components/layout/Navbar'
 import Footer from './components/layout/Footer'
+import FreeListingsBanner from './components/layout/FreeListingsBanner'
+import ScrollToTop from './components/common/ScrollToTop'
 
 import HomePage from './pages/HomePage'
 import PropertiesPage from './pages/PropertiesPage'
@@ -12,6 +15,8 @@ import AboutPage from './pages/AboutPage'
 import ContactPage from './pages/ContactPage'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
+import ForgotPasswordPage from './pages/ForgotPasswordPage'
+import ResetPasswordPage from './pages/ResetPasswordPage'
 
 import MapViewPage from './pages/MapViewPage'
 import SubmitPropertyPage from './pages/SubmitPropertyPage'
@@ -20,8 +25,10 @@ import FavoritesPage from './pages/FavoritesPage'
 import MyPropertiesPage from './pages/MyPropertiesPage'
 import NotFoundPage from './pages/NotFoundPage'
 import RequireAdmin from './components/auth/RequireAdmin'
+import RequireStaff from './components/auth/RequireStaff'
 import AdminLayout from './pages/admin/AdminLayout'
-import DashboardPage from './pages/admin/DashboardPage'
+import AdminHomeRoute from './pages/admin/AdminHomeRoute'
+import MyWorkPage from './pages/admin/MyWorkPage'
 import AdminPropertiesPage from './pages/admin/AdminPropertiesPage'
 import AddPropertyPage from './pages/admin/AddPropertyPage'
 import PendingApprovalsPage from './pages/admin/PendingApprovalsPage'
@@ -30,6 +37,7 @@ import AdminUsersPage from './pages/admin/AdminUsersPage'
 import AdminInquiriesPage from './pages/admin/AdminInquiriesPage'
 import AdminSettingsPage from './pages/admin/AdminSettingsPage'
 import AdminSmsTemplatesPage from './pages/admin/AdminSmsTemplatesPage'
+import AdminVideoListingsPage from './pages/admin/AdminVideoListingsPage'
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 1000 * 60 * 5 } },
@@ -38,6 +46,7 @@ const queryClient = new QueryClient({
 function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen flex flex-col">
+      <FreeListingsBanner />
       <Navbar />
       <div className="flex-1">{children}</div>
       <Footer />
@@ -47,12 +56,16 @@ function PublicLayout({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
+    <HelmetProvider>
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <BrowserRouter>
+          <ScrollToTop />
           <Routes>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
 
             <Route
               path="/"
@@ -135,18 +148,36 @@ export default function App() {
               }
             />
 
-            <Route path="/admin" element={<RequireAdmin><AdminLayout /></RequireAdmin>}>
-              <Route index element={<DashboardPage />} />
-              <Route path="properties" element={<AdminPropertiesPage />} />
-              <Route path="add-property" element={<AddPropertyPage />} />
-              <Route path="pending" element={<PendingApprovalsPage />} />
-              <Route path="pending/:id" element={<PendingApprovalsPage />} />
-              <Route path="edit-property/:id" element={<AddPropertyPage />} />
-              <Route path="testimonials" element={<AdminTestimonialsPage />} />
-              <Route path="users" element={<AdminUsersPage />} />
-              <Route path="inquiries" element={<AdminInquiriesPage />} />
-              <Route path="settings" element={<AdminSettingsPage />} />
-              <Route path="sms-templates" element={<AdminSmsTemplatesPage />} />
+            {/* The /admin layout itself is open to both Admin and Employee
+                accounts (RequireStaff). Admin-only routes are individually
+                gated by RequireAdmin inside the element prop — Employees
+                only get through to /admin/my-work. */}
+            <Route path="/admin" element={<RequireStaff><AdminLayout /></RequireStaff>}>
+              {/* /admin → Admin sees Dashboard, Employee gets redirected to
+                  /admin/my-work. Avoids the access-denied screen when an
+                  Employee clicks the logo, types the URL, or follows a
+                  link to /admin from elsewhere in the site. */}
+              <Route index element={<AdminHomeRoute />} />
+              <Route path="my-work" element={<MyWorkPage />} />
+              <Route path="properties" element={<RequireAdmin><AdminPropertiesPage /></RequireAdmin>} />
+              <Route path="video-listings" element={<RequireAdmin><AdminVideoListingsPage /></RequireAdmin>} />
+              <Route path="add-property" element={<RequireAdmin><AddPropertyPage /></RequireAdmin>} />
+              {/* Pending properties — shared. Admins see the full queue with
+                  approve/reject + assign powers; Employees see only the
+                  properties assigned to them to verify, with those actions
+                  hidden. */}
+              <Route path="pending" element={<RequireStaff><PendingApprovalsPage /></RequireStaff>} />
+              <Route path="pending/:id" element={<RequireStaff><PendingApprovalsPage /></RequireStaff>} />
+              <Route path="edit-property/:id" element={<RequireAdmin><AddPropertyPage /></RequireAdmin>} />
+              <Route path="testimonials" element={<RequireAdmin><AdminTestimonialsPage /></RequireAdmin>} />
+              <Route path="users" element={<RequireAdmin><AdminUsersPage /></RequireAdmin>} />
+              {/* Inquiries page is shared — AdminInquiriesPage detects the
+                  current role and fetches /inquiries (admin) or
+                  /inquiries/mine (employee), hiding admin-only controls
+                  for the employee variant. */}
+              <Route path="inquiries" element={<RequireStaff><AdminInquiriesPage /></RequireStaff>} />
+              <Route path="settings" element={<RequireAdmin><AdminSettingsPage /></RequireAdmin>} />
+              <Route path="sms-templates" element={<RequireAdmin><AdminSmsTemplatesPage /></RequireAdmin>} />
               <Route path="*" element={<NotFoundPage />} />
             </Route>
 
@@ -163,5 +194,6 @@ export default function App() {
         </BrowserRouter>
       </AuthProvider>
     </QueryClientProvider>
+    </HelmetProvider>
   )
 }

@@ -1,11 +1,18 @@
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useState, useMemo } from 'react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
-import { Eye, EyeOff, UserPlus, Loader2, AlertCircle, Briefcase, User as UserIcon } from 'lucide-react'
+import { Eye, EyeOff, UserPlus, Loader2, AlertCircle, Briefcase, User as UserIcon, Search, Video, Sparkles } from 'lucide-react'
 import { authApi } from '../services/api'
 import type { RegisterData } from '../types'
 
 const ROLE_OPTIONS = [
+  {
+    value: 'Buyer' as const,
+    label: 'Buyer',
+    desc: 'I want to browse and buy land',
+    icon: Search,
+    color: '#293237',
+  },
   {
     value: 'Seller' as const,
     label: 'Seller',
@@ -22,6 +29,8 @@ const ROLE_OPTIONS = [
   },
 ] as const
 
+type Role = (typeof ROLE_OPTIONS)[number]['value']
+
 interface FormState {
   firstName: string
   lastName: string
@@ -29,11 +38,11 @@ interface FormState {
   phone: string
   password: string
   confirmPassword: string
-  role: 'Agent' | 'Seller'
+  role: Role
 }
 
 const INITIAL: FormState = {
-  firstName: '', lastName: '', email: '', phone: '',
+  firstName: '', lastName: '', email: '', phone: '+91 ',
   password: '', confirmPassword: '', role: 'Seller',
 }
 
@@ -52,10 +61,33 @@ function isIndianMobile(phone: string): boolean {
 }
 
 export default function RegisterPage() {
-  const [form, setForm] = useState<FormState>(INITIAL)
+  const [params] = useSearchParams()
+  // Buyer-intent + plan picked from the home-page callout — drives the role,
+  // page copy, and (post-login) which listings the user is steered toward.
+  const intent = params.get('intent')         // "buyer" | null
+  const planHint = params.get('plan')         // "free" | "premium" | null
+  const buyerIntent = intent === 'buyer'
+
+  const [form, setForm] = useState<FormState>(() =>
+    buyerIntent ? { ...INITIAL, role: 'Buyer' } : INITIAL
+  )
   const [showPw, setShowPw] = useState(false)
   const [error, setError] = useState('')
   const navigate = useNavigate()
+
+  // Copy varies based on intent — keeps the existing seller/agent flow intact.
+  const pageCopy = useMemo(() => {
+    if (buyerIntent) {
+      return {
+        title: 'Create your buyer account',
+        sub:
+          planHint === 'premium'
+            ? 'Sign up to unlock premium video tours and agent-assisted visits.'
+            : 'Sign up to unlock direct seller contacts on zero service charge listings.',
+      }
+    }
+    return { title: 'Create account', sub: 'List your land or join as an agent' }
+  }, [buyerIntent, planHint])
 
   const registerMutation = useMutation({
     mutationFn: (data: RegisterData) => authApi.register(data),
@@ -111,8 +143,39 @@ export default function RegisterPage() {
         </div>
 
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-          <h1 className="text-2xl font-bold text-gray-900 mb-1">Create account</h1>
-          <p className="text-gray-500 text-sm mb-6">List your land or join as an agent</p>
+          <h1 className="text-2xl font-bold text-gray-900 mb-1">{pageCopy.title}</h1>
+          <p className="text-gray-500 text-sm mb-6">{pageCopy.sub}</p>
+
+          {/* Buyer-intent banner — explains what they'll see once signed in */}
+          {buyerIntent && (
+            <div
+              className="mb-5 p-3 rounded-xl border-2 flex items-start gap-3"
+              style={{
+                backgroundColor: planHint === 'premium' ? 'rgba(255,90,95,0.06)' : 'rgba(106,151,57,0.06)',
+                borderColor: planHint === 'premium' ? 'rgba(255,90,95,0.25)' : 'rgba(106,151,57,0.25)',
+              }}
+            >
+              <div
+                className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 text-white"
+                style={{ backgroundColor: planHint === 'premium' ? '#FF5A5F' : '#6A9739' }}
+              >
+                {planHint === 'premium' ? <Video className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
+              </div>
+              <div className="text-xs leading-relaxed" style={{ color: '#374151' }}>
+                {planHint === 'premium' ? (
+                  <>
+                    <strong style={{ color: '#111111' }}>Premium Video Tours</strong> — once signed in, you'll
+                    see hand-curated plots with full walkthrough videos and agent-assisted visits.
+                  </>
+                ) : (
+                  <>
+                    <strong style={{ color: '#111111' }}>Free Listings</strong> — once signed in, every free
+                    listing reveals the seller's direct phone so you can call them yourself.
+                  </>
+                )}
+              </div>
+            </div>
+          )}
 
           {error && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm flex items-start gap-2">
@@ -125,7 +188,7 @@ export default function RegisterPage() {
             {/* Role picker */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">I am a *</label>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-2">
                 {ROLE_OPTIONS.map(({ value, label, desc, icon: Icon, color }) => {
                   const isActive = form.role === value
                   return (

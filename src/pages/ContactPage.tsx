@@ -1,27 +1,20 @@
 import { useState } from 'react'
 import { Phone, Mail, MapPin, MessageCircle, Send, Clock } from 'lucide-react'
 import PageHeader from '../components/layout/PageHeader'
-
-function isIndianMobile(phone: string): boolean {
-  const trimmed = phone.trim()
-  if (!trimmed) return false
-  if (trimmed.startsWith('+')) return trimmed.startsWith('+91')
-  const digits = trimmed.replace(/\D/g, '')
-  if (digits.startsWith('91') && digits.length === 12) return true
-  return digits.length === 10
-}
+import SEO from '../components/common/SEO'
+import { isValidEmail, EMAIL_PATTERN } from '../utils/email'
 
 export default function ContactPage() {
   const [form, setForm] = useState({ name: '', phone: '', email: '', message: '', contact: 'phone' as 'phone' | 'whatsapp' })
   const [sent, setSent] = useState(false)
 
-  const phoneIsIndian = isIndianMobile(form.phone)
-  const emailRequired = !phoneIsIndian && form.phone.length > 0
+  const emailRequired = false
+  const emailLooksInvalid = form.email.length > 0 && !isValidEmail(form.email)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (emailRequired && !form.email.trim()) {
-      alert('Email is required for non-Indian phone numbers — we can only send SMS to Indian mobiles.')
+    if (form.email.trim() && !isValidEmail(form.email)) {
+      alert('Please enter a valid email address (e.g. you@example.com).')
       return
     }
     setSent(true)
@@ -29,6 +22,11 @@ export default function ContactPage() {
 
   return (
     <main className="min-h-screen bg-gray-50">
+      <SEO
+        path="/contact"
+        title="Contact Us"
+        description="Talk to the Jose For Land team. Call 99944 88490 (Mon-Sat 9 AM - 7 PM) or WhatsApp us. Free doorstep consultation, transparent dealings."
+      />
       <PageHeader
         eyebrow="Get in touch"
         title="Contact Us"
@@ -44,7 +42,7 @@ export default function ContactPage() {
               <div className="space-y-4">
                 {[
                   { icon: Phone, label: 'Primary', value: '+91 99944 88490', href: 'tel:+919994488490' },
-                  { icon: Phone, label: 'Alternate', value: '+91 96987 12904', href: 'tel:+919698712904' },
+                  { icon: Phone, label: 'Alternate', value: '+91 99448 85542', href: 'tel:+919944885542' },
                   { icon: MessageCircle, label: 'WhatsApp', value: '+91 99944 88490', href: 'https://wa.me/919994488490' },
                   { icon: Mail, label: 'Email', value: 'josepowerj@gmail.com', href: 'mailto:josepowerj@gmail.com' },
                 ].map(({ icon: Icon, label, value, href }) => (
@@ -120,23 +118,23 @@ export default function ContactPage() {
                         />
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-gray-700 mb-1.5 flex items-center justify-between">
-                          <span>Phone Number *</span>
-                          {form.phone && !phoneIsIndian && (
-                            <span className="text-[11px] font-normal" style={{ color: '#B45309' }}>
-                              ⚠ Email required
-                            </span>
-                          )}
-                        </label>
-                        <input
-                          required
-                          type="tel"
-                          value={form.phone}
-                          onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                          placeholder="+91 XXXXX XXXXX"
-                          className="input-field"
-                          style={form.phone && !phoneIsIndian ? { borderColor: '#F59E0B' } : undefined}
-                        />
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Phone Number *</label>
+                        <div className="relative">
+                          {/* Static "+91" prefix — visual only. */}
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-medium pointer-events-none">
+                            +91
+                          </span>
+                          <input
+                            required
+                            type="tel"
+                            inputMode="numeric"
+                            maxLength={10}
+                            value={form.phone}
+                            onChange={(e) => setForm({ ...form, phone: e.target.value.replace(/\D/g, '') })}
+                            placeholder="10-digit mobile"
+                            className="input-field pl-12"
+                          />
+                        </div>
                       </div>
                     </div>
 
@@ -148,15 +146,23 @@ export default function ContactPage() {
                             Required (non-Indian phone)
                           </span>
                         )}
+                        {emailLooksInvalid && (
+                          <span className="text-[11px] font-normal" style={{ color: '#B45309' }}>
+                            ⚠ Looks incomplete
+                          </span>
+                        )}
                       </label>
                       <input
                         required={emailRequired}
                         type="email"
+                        pattern={EMAIL_PATTERN}
                         value={form.email}
                         onChange={(e) => setForm({ ...form, email: e.target.value })}
                         placeholder="you@example.com"
                         className="input-field"
-                        style={emailRequired && !form.email ? { borderColor: '#F59E0B' } : undefined}
+                        style={(emailRequired && !form.email) || emailLooksInvalid
+                          ? { borderColor: '#F59E0B' }
+                          : undefined}
                       />
                     </div>
 

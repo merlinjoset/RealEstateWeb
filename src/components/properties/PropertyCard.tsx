@@ -1,11 +1,13 @@
-import { Link } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { MapPin, Heart, Ruler, Home, CheckCircle, Phone } from 'lucide-react'
 import type { Property } from '../../types'
+import { propertiesApi, resolveMediaUrl } from '../../services/api'
+import { useAuth } from '../../context/AuthContext'
+import ShareButton from './ShareButton'
 
 interface Props {
   property: Property
-  onFavorite?: (id: number) => void
-  isFavorited?: boolean
 }
 
 function formatLakhs(amount: number) {
@@ -22,14 +24,60 @@ const TYPE_LABELS: Record<Property['propertyType'], string> = {
   residential_plot: 'Residential Plot',
 }
 
-const FALLBACK_IMAGES = [
-  'https://images.unsplash.com/photo-1500076656116-558758c991c1?w=600&q=80&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1464082354059-27db6ce50048?w=600&q=80&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1592595896551-12b371d546d5?w=600&q=80&auto=format&fit=crop',
-]
+// Static placeholder used whenever the seller hasn't uploaded any
+// images yet. Lives in /public so it's served directly by the web
+// server — no API round-trip, no flicker. Replace the file in public/
+// to update the placeholder visual.
+const NO_IMAGE = '/noimage.svg'
 
-export default function PropertyCard({ property, onFavorite, isFavorited }: Props) {
-  const imageSrc = property.images?.[0] || FALLBACK_IMAGES[property.id % 3]
+export default function PropertyCard({ property }: Props) {
+  const imageSrc = property.images?.[0]
+    ? resolveMediaUrl(property.images[0])
+    : NO_IMAGE
+
+  // Favourite handling — self-contained so the heart works on every page
+  // (PropertiesPage, FeaturedProperties, MapView, etc.), not just the
+  // dedicated FavoritesPage. Reads the shared ['favorites'] query cache
+  // so all cards stay in sync. Anonymous users are redirected to /login
+  // with `from` state so they land back on the same page after sign-in.
+  const { isAuthenticated } = useAuth()
+  const navigate = useNavigate()
+  const location = useLocation()
+  const queryClient = useQueryClient()
+  const favoritesQuery = useQuery({
+    queryKey: ['favorites'],
+    queryFn: propertiesApi.getFavorites,
+    enabled: isAuthenticated,
+    staleTime: 60_000,
+  })
+  const isFavorited = Array.isArray(favoritesQuery.data)
+    && favoritesQuery.data.some((p) => p.id === property.id)
+  const toggleFavorite = useMutation({
+    mutationFn: () => propertiesApi.toggleFavorite(property.id),
+    // Optimistic flip — fill/empty the heart immediately, roll back on error.
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ['favorites'] })
+      const prev = queryClient.getQueryData<Property[]>(['favorites']) ?? []
+      const next = isFavorited
+        ? prev.filter((p) => p.id !== property.id)
+        : [property, ...prev]
+      queryClient.setQueryData(['favorites'], next)
+      return { prev }
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.prev) queryClient.setQueryData(['favorites'], ctx.prev)
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['favorites'] }),
+  })
+  const handleHeartClick = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!isAuthenticated) {
+      navigate('/login', { state: { from: location.pathname } })
+      return
+    }
+    if (!toggleFavorite.isPending) toggleFavorite.mutate()
+  }
 
   return (
     <div className="card group">
@@ -38,6 +86,12 @@ export default function PropertyCard({ property, onFavorite, isFavorited }: Prop
           <img
             src={imageSrc}
             alt={property.title}
+            // If the real image fails to load (404, broken URL), swap to
+            // the local placeholder so the card never shows a broken icon.
+            onError={(e) => {
+              const img = e.currentTarget
+              if (img.src !== window.location.origin + NO_IMAGE) img.src = NO_IMAGE
+            }}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
 
@@ -60,11 +114,13 @@ export default function PropertyCard({ property, onFavorite, isFavorited }: Prop
           )}
 
           <button
-            onClick={(e) => {
-              e.preventDefault()
-              onFavorite?.(property.id)
-            }}
-            className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center hover:bg-white transition-colors shadow-sm"
+            onClick={handleHeartClick}
+            disabled={toggleFavorite.isPending}
+            aria-label={isFavorited ? 'Remove from favourites' : 'Save to favourites'}
+            title={isAuthenticated
+              ? (isFavorited ? 'Remove from favourites' : 'Save to favourites')
+              : 'Sign in to save properties'}
+            className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center hover:bg-white transition-colors shadow-sm disabled:opacity-60"
           >
             <Heart
               className={`w-4 h-4 transition-colors ${
@@ -77,7 +133,19 @@ export default function PropertyCard({ property, onFavorite, isFavorited }: Prop
 
       <div className="p-4">
         <Link to={`/properties/${property.id}`}>
+          {/* Serial / ref code sits inline with the title as a leading chip
+              rather than a separate row above — saves vertical space and
+              reads as "ref → title" without doubling the line height.
+              Hidden when no serial is set (most legacy imports). */}
           <h3 className="font-semibold text-gray-900 transition-colors line-clamp-1 mb-1 hover:text-[#FF5A5F]">
+            {property.serialNo && (
+              // Same #N treatment as the detail page — brand-red, same
+              // weight/size as the title so the two read as one phrase
+              // ("#685 commercial property") rather than chip + title.
+              <span className="font-semibold mr-1.5" style={{ color: '#FF5A5F' }}>
+                #{property.serialNo}
+              </span>
+            )}
             {property.title}
           </h3>
         </Link>
@@ -117,15 +185,25 @@ export default function PropertyCard({ property, onFavorite, isFavorited }: Prop
           {property.roadAccess && (
             <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">Road Access</span>
           )}
-          <a
-            href="tel:+919994488490"
+          <div className="ml-auto flex items-center gap-2"
             onClick={(e) => e.stopPropagation()}
-            className="ml-auto flex items-center gap-1 text-xs font-medium hover:underline"
-            style={{ color: '#FF5A5F' }}
           >
-            <Phone className="w-3.5 h-3.5" />
-            Call
-          </a>
+            <ShareButton
+              variant="icon"
+              title={property.title}
+              description={`${property.areaInCents} cents in ${property.city} – ${formatLakhs(property.totalPrice)}`}
+              url={`${typeof window !== 'undefined' ? window.location.origin : ''}/properties/${property.id}`}
+            />
+            <a
+              href="tel:+919994488490"
+              onClick={(e) => e.stopPropagation()}
+              className="flex items-center gap-1 text-xs font-medium hover:underline"
+              style={{ color: '#FF5A5F' }}
+            >
+              <Phone className="w-3.5 h-3.5" />
+              Call
+            </a>
+          </div>
         </div>
       </div>
     </div>

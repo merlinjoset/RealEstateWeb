@@ -1,9 +1,11 @@
-import { useState, useEffect, useMemo } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'
+import { useQuery } from '@tanstack/react-query'
+import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
-import { MapPin, Phone, Ruler, X, ExternalLink, Search, SlidersHorizontal, ChevronDown, List as ListIcon } from 'lucide-react'
+import { MapPin, Phone, Ruler, X, ExternalLink, Search, SlidersHorizontal, ChevronDown, List as ListIcon, Crosshair, AlertCircle } from 'lucide-react'
+import { propertiesApi } from '../services/api'
 import type { Property } from '../types'
 
 function formatLakhs(amount: number) {
@@ -19,9 +21,7 @@ const LOCATIONS: Record<string, { lat: number; lng: number }> = {
   Thuckalay:       { lat: 8.2400, lng: 77.2700 },
   Kanyakumari:     { lat: 8.0883, lng: 77.5385 },
   Colachel:        { lat: 8.1747, lng: 77.2583 },
-  Padmanabhapuram: { lat: 8.2490, lng: 77.3217 },
-  Boothapandi:     { lat: 8.2800, lng: 77.3600 },
-  Eraniel:         { lat: 8.2058, lng: 77.3208 },
+  Kaliyakkavilai:  { lat: 8.2167, lng: 77.2667 },
 }
 
 // Slight jitter so multiple properties in the same city don't overlap exactly
@@ -29,80 +29,6 @@ function jitter(seed: number) {
   return ((seed * 9301 + 49297) % 233280) / 233280 * 0.02 - 0.01
 }
 
-const MOCK_PROPERTIES: Property[] = [
-  {
-    id: 1, title: '15 Cents Prime Land', description: 'Prime location near main road',
-    totalPrice: 2250000, pricePerCent: 150000, address: 'Kottar', city: 'Nagercoil',
-    district: 'Kanyakumari', state: 'Tamil Nadu', pinCode: '629001',
-    areaInCents: 15, propertyType: 'open_land', status: 'for_sale',
-    images: [], features: [], agentId: 1, createdAt: '2024-01-01', updatedAt: '2024-01-01',
-    isFeatured: true, isVerified: true, roadAccess: true,
-  },
-  {
-    id: 2, title: '10 Cents Land with 3BHK House', description: 'Ready to occupy',
-    totalPrice: 4500000, pricePerCent: 450000, address: 'Town Area', city: 'Marthandam',
-    district: 'Kanyakumari', state: 'Tamil Nadu', pinCode: '629165',
-    areaInCents: 10, bedrooms: 3, propertyType: 'land_with_building', status: 'for_sale',
-    images: [], features: [], agentId: 1, createdAt: '2024-01-02', updatedAt: '2024-01-02',
-    isFeatured: true, isVerified: true, roadAccess: true,
-  },
-  {
-    id: 3, title: '50 Cents Agricultural Land', description: 'Fertile land with water source',
-    totalPrice: 3500000, pricePerCent: 70000, address: 'Pechipparai Road', city: 'Thuckalay',
-    district: 'Kanyakumari', state: 'Tamil Nadu', pinCode: '629175',
-    areaInCents: 50, propertyType: 'agricultural', status: 'for_sale',
-    images: [], features: [], agentId: 1, createdAt: '2024-01-03', updatedAt: '2024-01-03',
-    isFeatured: false, isVerified: true, roadAccess: false,
-  },
-  {
-    id: 4, title: '8 Cents Residential Plot', description: 'Sea-view plot near beach',
-    totalPrice: 1600000, pricePerCent: 200000, address: 'Beach Road', city: 'Kanyakumari',
-    district: 'Kanyakumari', state: 'Tamil Nadu', pinCode: '629702',
-    areaInCents: 8, propertyType: 'residential_plot', status: 'for_sale',
-    images: [], features: [], agentId: 1, createdAt: '2024-01-04', updatedAt: '2024-01-04',
-    isFeatured: true, isVerified: false, roadAccess: true,
-  },
-  {
-    id: 5, title: '20 Cents Open Plot', description: 'Corner plot with road on two sides',
-    totalPrice: 2800000, pricePerCent: 140000, address: 'Main Road', city: 'Colachel',
-    district: 'Kanyakumari', state: 'Tamil Nadu', pinCode: '629251',
-    areaInCents: 20, propertyType: 'open_land', status: 'for_sale',
-    images: [], features: [], agentId: 1, createdAt: '2024-01-05', updatedAt: '2024-01-05',
-    isFeatured: false, isVerified: true, roadAccess: true,
-  },
-  {
-    id: 6, title: '5 Cents Corner Plot', description: 'Ideal for house construction',
-    totalPrice: 750000, pricePerCent: 150000, address: 'Palace Road', city: 'Padmanabhapuram',
-    district: 'Kanyakumari', state: 'Tamil Nadu', pinCode: '629401',
-    areaInCents: 5, propertyType: 'residential_plot', status: 'for_sale',
-    images: [], features: [], agentId: 1, createdAt: '2024-01-06', updatedAt: '2024-01-06',
-    isFeatured: false, isVerified: true, roadAccess: true,
-  },
-  {
-    id: 7, title: '30 Cents Farm Land', description: 'Suitable for farming with borewell',
-    totalPrice: 4200000, pricePerCent: 140000, address: 'Village Road', city: 'Boothapandi',
-    district: 'Kanyakumari', state: 'Tamil Nadu', pinCode: '629852',
-    areaInCents: 30, propertyType: 'agricultural', status: 'for_sale',
-    images: [], features: [], agentId: 1, createdAt: '2024-01-07', updatedAt: '2024-01-07',
-    isFeatured: false, isVerified: true, roadAccess: true,
-  },
-  {
-    id: 8, title: '12 Cents Plot Near Highway', description: 'Highway-facing prime plot',
-    totalPrice: 1800000, pricePerCent: 150000, address: 'NH Road', city: 'Nagercoil',
-    district: 'Kanyakumari', state: 'Tamil Nadu', pinCode: '629002',
-    areaInCents: 12, propertyType: 'open_land', status: 'for_sale',
-    images: [], features: [], agentId: 1, createdAt: '2024-01-08', updatedAt: '2024-01-08',
-    isFeatured: false, isVerified: true, roadAccess: true,
-  },
-  {
-    id: 9, title: '25 Cents Land with Well', description: 'Open well with year-round water',
-    totalPrice: 3750000, pricePerCent: 150000, address: 'Town Road', city: 'Eraniel',
-    district: 'Kanyakumari', state: 'Tamil Nadu', pinCode: '629902',
-    areaInCents: 25, propertyType: 'open_land', status: 'for_sale',
-    images: [], features: [], agentId: 1, createdAt: '2024-01-09', updatedAt: '2024-01-09',
-    isFeatured: false, isVerified: false, roadAccess: true,
-  },
-]
 
 const TYPE_LABELS: Record<Property['propertyType'], string> = {
   open_land: 'Open Land',
@@ -138,20 +64,34 @@ function makePinIcon(
   isSelected: boolean,
 ) {
   void _priceTone
-  const scale = isSelected ? 1.18 : 1
-  const isSel = isSelected
-  // Default: brand olive pill with bold white text. Selected: coral for emphasis.
-  const bg = isSel ? '#FF5A5F' : '#6A9739'
-  const tailColor = isSel ? '#FF5A5F' : '#6A9739'
+  // Selected pins jump from 1× to 1.45× — large enough to read as
+  // "popped" without clipping neighbouring labels at most zoom levels.
+  const scale = isSelected ? 1.45 : 1
+  // Default: brand olive pill with bold white text. Selected: coral pill
+  // with a thick white border + tinted glow ring around it for emphasis.
+  const bg = isSelected ? '#FF5A5F' : '#6A9739'
+  const tailColor = bg
+  const ringStyle = isSelected
+    // Doubled drop-shadow + a coral glow ring so the pin reads as
+    // "lifted off the map" even against busy pin clusters.
+    ? `filter:
+         drop-shadow(0 0 0 #fff)
+         drop-shadow(0 0 6px rgba(255,90,95,0.85))
+         drop-shadow(0 6px 12px rgba(0,0,0,0.30))
+         drop-shadow(0 14px 28px rgba(0,0,0,0.30));`
+    : `filter:
+         drop-shadow(0 3px 5px rgba(0,0,0,0.20))
+         drop-shadow(0 8px 16px rgba(0,0,0,0.25));`
+
+  const borderStyle = isSelected ? 'border: 2.5px solid #fff;' : ''
 
   const html = `
     <div style="
       transform: translate(-50%, -100%) scale(${scale});
       transform-origin: center bottom;
-      transition: transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1);
-      filter:
-        drop-shadow(0 3px 5px rgba(0,0,0,0.20))
-        drop-shadow(0 8px 16px rgba(0,0,0,0.25));
+      transition: transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1),
+                  filter 220ms ease-out;
+      ${ringStyle}
     ">
       <div style="
         display: inline-flex;
@@ -163,6 +103,7 @@ function makePinIcon(
         font-size: 13px;
         padding: 7px 13px;
         border-radius: 22px;
+        ${borderStyle}
         white-space: nowrap;
         position: relative;
         font-family: Inter, system-ui, sans-serif;
@@ -186,6 +127,7 @@ function makePinIcon(
           width: 10px;
           height: 10px;
           background: ${tailColor};
+          ${isSelected ? 'border-right: 2.5px solid #fff; border-bottom: 2.5px solid #fff;' : ''}
         "></div>
       </div>
     </div>
@@ -239,7 +181,27 @@ const AREA_RANGES = [
   { value: '50+', label: 'Above 50 cents', min: 50, max: 0 },
 ]
 
-const CITIES = ['Nagercoil', 'Marthandam', 'Thuckalay', 'Kanyakumari', 'Colachel', 'Padmanabhapuram', 'Boothapandi', 'Eraniel']
+const CITIES = ['Nagercoil', 'Marthandam', 'Thuckalay', 'Kanyakumari', 'Colachel', 'Kaliyakkavilai']
+
+// Map view shows the entire filtered result set in a single fetch — no
+// pagination chunking. Markers + the sidebar list both render against
+// the same array, so the visitor can see every available property
+// without having to page through. 500 is well above the current
+// approved-property total (~420) and gives headroom for growth without
+// touching the API's default pageSize cap.
+const PAGE_SIZE = 500
+
+// "Near me" radius options shown as a chip row above the map. 500 m is
+// the default per product spec; the others give the visitor a way to
+// widen the search when they're in a rural area without many close
+// listings. `null` means "no geo filter" (show everything from the API).
+const RADIUS_OPTIONS: { label: string; metres: number | null }[] = [
+  { label: '500 m', metres: 500 },
+  { label: '1 km',  metres: 1000 },
+  { label: '2 km',  metres: 2000 },
+  { label: '5 km',  metres: 5000 },
+  { label: 'All',   metres: null },
+]
 
 export default function MapViewPage() {
   const [selected, setSelected] = useState<Property | null>(null)
@@ -249,35 +211,73 @@ export default function MapViewPage() {
   const [priceFilter, setPriceFilter] = useState<string>('')
   const [areaFilter, setAreaFilter] = useState<string>('')
   const [showAdvanced, setShowAdvanced] = useState(false)
+  const [listOpen, setListOpen] = useState(false)
+  // Geolocation — set once the browser grants permission. `geoError`
+  // captures denied / unavailable so we can surface a friendly message
+  // instead of silently falling back.
+  const [userPos, setUserPos] = useState<{ lat: number; lng: number } | null>(null)
+  const [geoError, setGeoError] = useState<string | null>(null)
+  // Default radius is 500 m as per product spec. Set to null to disable
+  // the radius filter and fall back to the unscoped query.
+  const [radiusM, setRadiusM] = useState<number | null>(500)
 
-  const filtered = useMemo(() => {
-    return MOCK_PROPERTIES.filter(p => {
-      const q = search.trim().toLowerCase()
-      if (q && !p.title.toLowerCase().includes(q) && !p.city.toLowerCase().includes(q) && !p.address.toLowerCase().includes(q)) {
-        return false
-      }
-      if (typeFilter && p.propertyType !== typeFilter) return false
-      if (cityFilter && p.city !== cityFilter) return false
+  // Ask once on mount. Don't auto-prompt repeatedly — the browser dialog
+  // is sticky enough on its own. Falls back gracefully when denied so
+  // the rest of the page still works.
+  useEffect(() => {
+    if (typeof navigator === 'undefined' || !navigator.geolocation) {
+      setGeoError('Your browser doesn’t support geolocation — showing all listings.')
+      return
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => setUserPos({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      (err) => {
+        setGeoError(err.code === err.PERMISSION_DENIED
+          ? 'Location permission denied — showing all listings.'
+          : 'Couldn’t read your location — showing all listings.')
+      },
+      { enableHighAccuracy: true, timeout: 8_000, maximumAge: 60_000 },
+    )
+  }, [])
 
-      if (priceFilter) {
-        const r = PRICE_RANGES.find(x => x.value === priceFilter)
-        if (r) {
-          if (r.min && p.totalPrice < r.min) return false
-          if (r.max && p.totalPrice > r.max) return false
-        }
-      }
+  const geoActive = userPos != null && radiusM != null
 
-      if (areaFilter) {
-        const r = AREA_RANGES.find(x => x.value === areaFilter)
-        if (r) {
-          if (r.min && p.areaInCents < r.min) return false
-          if (r.max && p.areaInCents > r.max) return false
-        }
-      }
+  // Resolve the dropdown values into the min/max bounds the API expects.
+  const priceBounds = PRICE_RANGES.find(r => r.value === priceFilter)
+  const areaBounds  = AREA_RANGES.find(r => r.value === areaFilter)
 
-      return true
-    })
-  }, [search, typeFilter, cityFilter, priceFilter, areaFilter])
+  // Map view paginates 10-at-a-time so the pin density stays readable
+  // and the page stays light. Every filter is sent to the API so the
+  // total + pagination reflect the filtered result set (was broken
+  // earlier because filtering happened client-side on a single page).
+  const query = useQuery({
+    queryKey: ['map-properties', search, typeFilter, cityFilter,
+               priceFilter, areaFilter, userPos?.lat, userPos?.lng, radiusM],
+    queryFn: () => propertiesApi.getAll({
+      page: 1,
+      pageSize: PAGE_SIZE,
+      sortBy: 'newest',
+      search: search.trim() || undefined,
+      city: cityFilter || undefined,
+      propertyType: (typeFilter as 'open_land' | undefined) || undefined,
+      minPrice: priceBounds?.min || undefined,
+      maxPrice: priceBounds?.max || undefined,
+      minAreaCents: areaBounds?.min || undefined,
+      maxAreaCents: areaBounds?.max || undefined,
+      // Only attach the geo params when the user has shared their
+      // location AND chosen a radius. Otherwise the API returns the
+      // un-scoped default.
+      ...(geoActive ? { nearLat: userPos!.lat, nearLng: userPos!.lng, radiusM: radiusM! } : {}),
+    }),
+    placeholderData: (prev) => prev,    // keep last page visible while next loads
+    staleTime: 60_000,
+  })
+  const visible = query.data?.data ?? []
+  // Total matching the active filters — drives the count badge in the
+  // sidebar header. Pagination removed: we fetch + render the full
+  // filtered set in a single pass so every pin shows on the map at
+  // once.
+  const totalInDb = query.data?.total ?? 0
 
   const activeCount = [typeFilter, cityFilter, priceFilter, areaFilter].filter(Boolean).length
   const hasFilters = activeCount > 0 || search.trim().length > 0
@@ -418,20 +418,145 @@ export default function MapViewPage() {
               </button>
             )}
           </div>
+
+          {/* "Near me" radius selector — only shown once the browser has
+              granted geolocation. Chip styling matches the type filter
+              above so the controls feel related. */}
+          {userPos && (
+            <div className="flex items-center gap-2 mt-3 flex-wrap">
+              <span className="inline-flex items-center gap-1 text-xs font-semibold text-gray-500">
+                <Crosshair className="w-3.5 h-3.5" style={{ color: '#4F46E5' }} />
+                Near me
+              </span>
+              {RADIUS_OPTIONS.map((opt) => (
+                <button
+                  key={opt.label}
+                  onClick={() => setRadiusM(opt.metres)}
+                  className="px-3 py-1.5 rounded-full text-xs font-medium transition-colors border"
+                  style={radiusM === opt.metres
+                    ? { backgroundColor: '#4F46E5', color: 'white', borderColor: '#4F46E5' }
+                    : { backgroundColor: 'white', color: '#374151', borderColor: '#e5e7eb' }}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          )}
+          {geoError && (
+            <p className="mt-2 text-xs flex items-center gap-1" style={{ color: '#B45309' }}>
+              <AlertCircle className="w-3.5 h-3.5" /> {geoError}
+            </p>
+          )}
         </div>
       </div>
 
-      <div className="flex h-[calc(100vh-180px)]">
-        {/* Left sidebar — property list */}
-        <div className="w-80 shrink-0 bg-white border-r border-gray-200 overflow-y-auto">
-          <div className="p-3 border-b border-gray-100">
-            <p className="text-xs text-gray-500 font-medium">{filtered.length} properties</p>
+      {/* Selected-property banner — flows above the map row when something
+          is selected, so the details sit out of the map area entirely
+          instead of overlaying pins. Horizontal layout on desktop, wraps
+          gracefully on small screens. */}
+      {selected && (
+        <div className="bg-white border-b border-gray-200">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+            <div className="flex items-center gap-4 flex-wrap">
+              <div className="flex-1 min-w-[200px]">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="font-bold text-gray-900 text-sm leading-tight">{selected.title}</h3>
+                  <span className="text-xs px-2 py-0.5 rounded-full text-white whitespace-nowrap"
+                    style={{ backgroundColor: TYPE_COLORS[selected.propertyType] }}>
+                    {TYPE_LABELS[selected.propertyType]}
+                  </span>
+                  {selected.isVerified && (
+                    <span className="text-xs px-2 py-0.5 rounded-full whitespace-nowrap"
+                      style={{ backgroundColor: 'rgba(106,151,57,0.1)', color: '#6A9739' }}>
+                      ✓ Verified
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-1 text-gray-500 text-xs mt-1">
+                  <MapPin className="w-3 h-3" />
+                  {selected.city}, Kanyakumari Dist.
+                </div>
+              </div>
+
+              <div className="text-right">
+                <div className="text-lg font-bold leading-none" style={{ color: '#FF5A5F' }}>
+                  {formatLakhs(selected.totalPrice)}
+                </div>
+                {selected.pricePerCent && (
+                  <div className="text-[11px] text-gray-500 mt-0.5">{formatLakhs(selected.pricePerCent)}/cent</div>
+                )}
+              </div>
+
+              <div className="text-right border-l border-gray-200 pl-4">
+                <div className="text-sm font-semibold text-gray-900 leading-none">{selected.areaInCents} cents</div>
+                <div className="text-[11px] text-gray-500 mt-0.5">Total area</div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <a
+                  href="tel:+919994488490"
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold text-white transition-colors"
+                  style={{ backgroundColor: '#FF5A5F' }}
+                  onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#e04a4f')}
+                  onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#FF5A5F')}
+                >
+                  <Phone className="w-3.5 h-3.5" />
+                  Call
+                </a>
+                <Link
+                  to={`/properties/${selected.id}`}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold border transition-colors"
+                  style={{ borderColor: '#6A9739', color: '#6A9739' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(106,151,57,0.08)' }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent' }}
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  Details
+                </Link>
+                <button
+                  onClick={() => setSelected(null)}
+                  className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg"
+                  aria-label="Clear selection"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="flex flex-col md:flex-row h-[70vh] md:h-[calc(100vh-180px)] min-h-[480px] relative">
+        {/* Left sidebar — property list (drawer on mobile) */}
+        <div
+          className={`bg-white border-r border-gray-200 overflow-y-auto
+            md:w-80 md:shrink-0 md:relative md:translate-x-0
+            absolute inset-y-0 left-0 z-[1100] w-[85%] max-w-xs shadow-2xl md:shadow-none
+            transition-transform duration-200
+            ${listOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}
+        >
+          <div className="p-3 border-b border-gray-100 flex items-center justify-between">
+            <p className="text-xs text-gray-500 font-medium">
+              {totalInDb > 0
+                ? `${totalInDb} propert${totalInDb === 1 ? 'y' : 'ies'}`
+                : `${visible.length} properties`}
+            </p>
+            <button
+              onClick={() => setListOpen(false)}
+              className="md:hidden p-1 -m-1 text-gray-400 hover:text-gray-600"
+              aria-label="Close list"
+            >
+              <X className="w-4 h-4" />
+            </button>
           </div>
           <div className="divide-y divide-gray-100">
-            {filtered.map((property) => (
+            {visible.map((property) => (
               <button
                 key={property.id}
-                onClick={() => setSelected(selected?.id === property.id ? null : property)}
+                onClick={() => {
+                  setSelected(selected?.id === property.id ? null : property)
+                  setListOpen(false) // collapse drawer on mobile after picking
+                }}
                 className="w-full text-left p-3 hover:bg-gray-50 transition-colors"
                 style={selected?.id === property.id ? { backgroundColor: 'rgba(255,90,95,0.06)' } : {}}
               >
@@ -464,13 +589,24 @@ export default function MapViewPage() {
               </button>
             ))}
           </div>
+
         </div>
 
+        {/* Drawer scrim (mobile only) */}
+        {listOpen && (
+          <div
+            className="md:hidden fixed inset-0 bg-black/40 z-[1099]"
+            onClick={() => setListOpen(false)}
+          />
+        )}
+
         {/* Map area */}
-        <div className="flex-1 relative">
+        <div className="flex-1 relative min-h-0">
           <MapContainer
-            center={[8.18, 77.41]}
-            zoom={11}
+            // Centre on the visitor's position when we have it, otherwise
+            // fall back to the geographic centre of Kanyakumari district.
+            center={userPos ? [userPos.lat, userPos.lng] : [8.18, 77.41]}
+            zoom={userPos ? 14 : 11}
             scrollWheelZoom={true}
             style={{ height: '100%', width: '100%' }}
           >
@@ -479,9 +615,31 @@ export default function MapViewPage() {
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
 
-            <MapFlyTo position={selectedPos} />
+            <MapFlyTo position={selectedPos ?? (userPos ? [userPos.lat, userPos.lng] : null)} />
 
-            {filtered.map((property) => {
+            {/* Crosshair pin + radius ring at the visitor's position so
+                they can see where the "near me" filter is anchored. The
+                Circle radius is in metres which matches the API filter. */}
+            {userPos && (
+              <Marker
+                position={[userPos.lat, userPos.lng]}
+                icon={L.divIcon({
+                  className: 'jfl-user-pin',
+                  iconSize: [18, 18],
+                  iconAnchor: [9, 9],
+                  html: `<div style="width:18px;height:18px;border-radius:50%;background:#4F46E5;border:3px solid #fff;box-shadow:0 0 0 2px rgba(79,70,229,0.35);"></div>`,
+                })}
+              />
+            )}
+            {userPos && radiusM != null && (
+              <Circle
+                center={[userPos.lat, userPos.lng]}
+                radius={radiusM}
+                pathOptions={{ color: '#4F46E5', fillColor: '#4F46E5', fillOpacity: 0.08, weight: 1.5 }}
+              />
+            )}
+
+            {visible.map((property) => {
               const pos = getPropertyCoords(property)
               const isSelected = selected?.id === property.id
               return (
@@ -494,6 +652,11 @@ export default function MapViewPage() {
                     formatPriceShort(property.totalPrice),
                     isSelected,
                   )}
+                  // Selected marker pops above the rest of the cluster so
+                  // its bigger pill + glow aren't clipped by overlapping
+                  // pins. Leaflet default is 0; +1000 puts it above every
+                  // unselected marker.
+                  zIndexOffset={isSelected ? 1000 : 0}
                   eventHandlers={{
                     click: () => setSelected(property),
                   }}
@@ -528,82 +691,18 @@ export default function MapViewPage() {
             })}
           </MapContainer>
 
-          {/* Selected property side card */}
-          {selected && (
-            <div className="absolute top-4 right-4 w-72 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-[1000]">
-              <div className="p-4">
-                <div className="flex items-start justify-between gap-2 mb-3">
-                  <div>
-                    <h3 className="font-bold text-gray-900 text-sm leading-tight">{selected.title}</h3>
-                    <div className="flex items-center gap-1 text-gray-500 text-xs mt-0.5">
-                      <MapPin className="w-3 h-3" />
-                      {selected.city}, Kanyakumari Dist.
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => setSelected(null)}
-                    className="shrink-0 p-1 text-gray-400 hover:text-gray-600 rounded"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
+          {/* Floating "Show list" button (mobile only) */}
+          <button
+            onClick={() => setListOpen(true)}
+            className="md:hidden absolute top-3 left-3 z-[1000] inline-flex items-center gap-2 px-3 py-2 rounded-full bg-white shadow-md border border-gray-200 text-sm font-semibold"
+            style={{ color: '#FF5A5F' }}
+          >
+            <ListIcon className="w-4 h-4" />
+            {totalInDb > 0 ? `${totalInDb} listings` : `${visible.length} listings`}
+          </button>
 
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="text-xs px-2 py-0.5 rounded-full text-white"
-                    style={{ backgroundColor: TYPE_COLORS[selected.propertyType] }}>
-                    {TYPE_LABELS[selected.propertyType]}
-                  </span>
-                  {selected.isVerified && (
-                    <span className="text-xs px-2 py-0.5 rounded-full"
-                      style={{ backgroundColor: 'rgba(106,151,57,0.1)', color: '#6A9739' }}>
-                      ✓ Verified
-                    </span>
-                  )}
-                </div>
-
-                <div className="flex items-end justify-between mb-4">
-                  <div>
-                    <div className="text-2xl font-bold" style={{ color: '#FF5A5F' }}>
-                      {formatLakhs(selected.totalPrice)}
-                    </div>
-                    {selected.pricePerCent && (
-                      <div className="text-xs text-gray-500">{formatLakhs(selected.pricePerCent)}/cent</div>
-                    )}
-                  </div>
-                  <div className="text-right">
-                    <div className="text-sm font-semibold text-gray-900">{selected.areaInCents} cents</div>
-                    <div className="text-xs text-gray-500">Total area</div>
-                  </div>
-                </div>
-
-                <div className="flex gap-2">
-                  <a
-                    href="tel:+919994488490"
-                    className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-semibold text-white transition-colors"
-                    style={{ backgroundColor: '#FF5A5F' }}
-                    onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#e04a4f')}
-                    onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#FF5A5F')}
-                  >
-                    <Phone className="w-3.5 h-3.5" />
-                    Call
-                  </a>
-                  <Link
-                    to={`/properties/${selected.id}`}
-                    className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-semibold border transition-colors"
-                    style={{ borderColor: '#6A9739', color: '#6A9739' }}
-                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(106,151,57,0.08)' }}
-                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent' }}
-                  >
-                    <ExternalLink className="w-3.5 h-3.5" />
-                    Details
-                  </Link>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Legend */}
-          <div className="absolute bottom-4 left-4 bg-white rounded-xl shadow-md border border-gray-100 p-3 z-[1000]">
+          {/* Legend (hidden on mobile to free up screen space) */}
+          <div className="hidden md:block absolute bottom-4 left-4 bg-white rounded-xl shadow-md border border-gray-100 p-3 z-[1000]">
             <p className="text-xs font-semibold text-gray-700 mb-2">Property Types</p>
             <div className="space-y-1.5">
               {[
@@ -659,8 +758,10 @@ function FilterSelect({
         <ChevronDown className={`w-3.5 h-3.5 transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
 
+      {/* Dropdown sits above Leaflet's panes (up to z-1000) so it doesn't
+          get clipped by the map below the filter strip. */}
       {open && (
-        <div className="absolute top-full left-0 mt-1 w-full min-w-[200px] bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-30 max-h-72 overflow-y-auto">
+        <div className="absolute top-full left-0 mt-1 w-full min-w-[200px] bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-[1100] max-h-72 overflow-y-auto">
           {options.map(opt => (
             <button
               key={opt.value}

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Play, Pause, Quote, Star, MapPin, X, Loader2 } from 'lucide-react'
 import { testimonialsApi, type Testimonial } from '../../services/api'
+import { classifyVideoUrl } from '../../utils/video'
 
 export default function VideoTestimonials() {
   const [active, setActive] = useState<Testimonial | null>(null)
@@ -146,6 +147,21 @@ export default function VideoTestimonials() {
 
 function VideoModal({ testimonial, onClose }: { testimonial: Testimonial; onClose: () => void }) {
   const [playing, setPlaying] = useState(true)
+  const source = classifyVideoUrl(testimonial.videoUrl)
+
+  // Shorts + Instagram Reels/TV are filmed portrait; regular YouTube
+  // videos + Instagram posts default to landscape / square. Pick the
+  // right modal width too — portrait content shouldn't stretch to 4xl.
+  // Instagram's embed adds a header/footer strip with the username
+  // and "View on Instagram" link, so we give portrait IG embeds a
+  // taller aspect ratio than the 9:16 we'd use for YouTube.
+  const isPortrait =
+    (source.kind === 'youtube' && source.portrait) ||
+    (source.kind === 'instagram' && source.portrait)
+  const modalWidth = isPortrait ? 'max-w-md' : 'max-w-4xl'
+  const aspectClass = source.kind === 'instagram'
+    ? (source.portrait ? 'aspect-[9/17]' : 'aspect-[4/5]')
+    : (isPortrait ? 'aspect-[9/16]' : 'aspect-video')
 
   return (
     <div
@@ -162,28 +178,47 @@ function VideoModal({ testimonial, onClose }: { testimonial: Testimonial; onClos
       </button>
 
       <div
-        className="relative w-full max-w-4xl bg-black rounded-2xl overflow-hidden shadow-2xl"
+        className={`relative w-full ${modalWidth} bg-black rounded-2xl overflow-hidden shadow-2xl`}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Video */}
-        <div className="relative aspect-video">
-          <video
-            key={testimonial.id}
-            src={testimonial.videoUrl ?? ''}
-            poster={testimonial.thumbnail ?? ''}
-            controls
-            autoPlay
-            playsInline
-            className="w-full h-full"
-            onPlay={() => setPlaying(true)}
-            onPause={() => setPlaying(false)}
-          />
-          {!playing && (
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="w-20 h-20 rounded-full bg-white/15 flex items-center justify-center">
-                <Pause className="w-8 h-8 text-white" />
-              </div>
-            </div>
+        {/* Video — YouTube/Shorts iframe vs native MP4/WebM player */}
+        <div className={`relative ${aspectClass}`}>
+          {source.kind === 'youtube' || source.kind === 'instagram' ? (
+            <iframe
+              key={testimonial.id}
+              src={source.src}
+              title={testimonial.name}
+              loading="lazy"
+              referrerPolicy="strict-origin-when-cross-origin"
+              // Instagram's embed needs autoplay + encrypted-media; YouTube
+              // wants the broader allow list including picture-in-picture.
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+              // Instagram's embed enforces a white background even on dark
+              // ancestors, so don't fight it — let the iframe paint as-is.
+              className="w-full h-full border-0"
+            />
+          ) : (
+            <>
+              <video
+                key={testimonial.id}
+                src={source.src}
+                poster={testimonial.thumbnail ?? ''}
+                controls
+                autoPlay
+                playsInline
+                className="w-full h-full"
+                onPlay={() => setPlaying(true)}
+                onPause={() => setPlaying(false)}
+              />
+              {!playing && (
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div className="w-20 h-20 rounded-full bg-white/15 flex items-center justify-center">
+                    <Pause className="w-8 h-8 text-white" />
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
 

@@ -2,8 +2,8 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   Search, Edit2, Trash2, Mail, Phone, Shield, UserPlus,
-  X, Save, Eye, Users as UsersIcon, UserCheck, UserX, Calendar,
-  CheckCircle2, MapPin, Loader2, AlertCircle,
+  X, Save, Eye, EyeOff, Users as UsersIcon, UserCheck, UserX, Calendar,
+  CheckCircle2, MapPin, Loader2, AlertCircle, ShoppingBag, Lock,
 } from 'lucide-react'
 import {
   usersApi,
@@ -14,13 +14,19 @@ import {
   type CreateUserPayload,
   type UpdateUserPayload,
 } from '../../services/api'
+import { isValidEmail, EMAIL_PATTERN } from '../../utils/email'
 
 const ROLE_BADGE: Record<AdminUserRole, { bg: string; color: string; label: string }> = {
-  Admin:  { bg: 'rgba(255,90,95,0.10)',  color: '#FF5A5F', label: 'Admin' },
-  Agent:  { bg: 'rgba(41,50,55,0.08)',   color: '#293237', label: 'Agent' },
-  Seller: { bg: 'rgba(245,158,11,0.10)', color: '#B45309', label: 'Seller' },
+  Admin:    { bg: 'rgba(255,90,95,0.10)',  color: '#FF5A5F', label: 'Admin' },
+  Agent:    { bg: 'rgba(41,50,55,0.08)',   color: '#293237', label: 'Agent' },
+  Seller:   { bg: 'rgba(245,158,11,0.10)', color: '#B45309', label: 'Seller' },
   Employee: { bg: 'rgba(106,151,57,0.10)', color: '#6A9739', label: 'Employee' },
+  Buyer:    { bg: 'rgba(99,102,241,0.10)', color: '#4F46E5', label: 'Buyer' },
 }
+
+/** Fallback used if the API returns an unknown role — prevents the whole
+ *  page from crashing on a stale role value. */
+const UNKNOWN_BADGE = { bg: '#F3F4F6', color: '#6B7280', label: 'Unknown' }
 
 interface FormState {
   firstName: string
@@ -30,15 +36,17 @@ interface FormState {
   city: string
   role: AdminUserRole
   isActive: boolean
+  /** Plaintext password — only used on create. Ignored when editing. */
+  password: string
 }
 
 const EMPTY_FORM: FormState = {
   firstName: '', lastName: '', email: '', phone: '', city: '',
-  role: 'Employee', isActive: true,
+  role: 'Employee', isActive: true, password: '',
 }
 
 const ZERO_COUNTS: UserCounts = {
-  all: 0, employee: 0, seller: 0, agent: 0, admin: 0, active: 0, inactive: 0,
+  all: 0, employee: 0, seller: 0, agent: 0, admin: 0, buyer: 0, active: 0, inactive: 0,
 }
 
 function relativeTime(iso: string | null) {
@@ -64,6 +72,7 @@ export default function AdminUsersPage() {
   const [editingUser, setEditingUser] = useState<AdminUser | null>(null)
   const [form, setForm] = useState<FormState>(EMPTY_FORM)
   const [formError, setFormError] = useState<string | null>(null)
+  const [showPw, setShowPw] = useState(false)
 
   const [viewing, setViewing] = useState<AdminUser | null>(null)
   const [deleteId, setDeleteId] = useState<number | null>(null)
@@ -117,6 +126,7 @@ export default function AdminUsersPage() {
     setEditingUser(null)
     setForm(EMPTY_FORM)
     setFormError(null)
+    setShowPw(false)
     setShowForm(true)
   }
 
@@ -125,8 +135,11 @@ export default function AdminUsersPage() {
     setForm({
       firstName: u.firstName, lastName: u.lastName, email: u.email,
       phone: u.phone, city: u.city ?? '', role: u.role, isActive: u.isActive,
+      password: '',  // Password isn't editable here — admin uses the
+                    // forgot-password flow or the user changes it themselves.
     })
     setFormError(null)
+    setShowPw(false)
     setShowForm(true)
   }
 
@@ -140,12 +153,31 @@ export default function AdminUsersPage() {
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault()
     setFormError(null)
-    const payload = { ...form, city: form.city.trim() || null }
 
     if (editingUser) {
-      updateMutation.mutate({ id: editingUser.id, payload: payload as UpdateUserPayload })
+      // password isn't part of the update payload — strip it before sending
+      const { password: _ignored, ...rest } = form
+      const payload: UpdateUserPayload = { ...rest, city: rest.city.trim() || null }
+      updateMutation.mutate({ id: editingUser.id, payload })
     } else {
-      createMutation.mutate(payload as CreateUserPayload)
+      // For create, password is optional but recommended; backend falls back
+      // to a default placeholder if we omit it, but the admin really should
+      // set one explicitly so the new user can sign in right away.
+      const pw = form.password.trim()
+      if (pw && pw.length < 8) {
+        setFormError('Password must be at least 8 characters.')
+        return
+      }
+      const payload: CreateUserPayload = {
+        firstName: form.firstName,
+        lastName:  form.lastName,
+        email:     form.email,
+        phone:     form.phone,
+        city:      form.city.trim() || null,
+        role:      form.role,
+        password:  pw || undefined,
+      }
+      createMutation.mutate(payload)
     }
   }
 
@@ -178,12 +210,13 @@ export default function AdminUsersPage() {
       </div>
 
       {/* Stat cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
         {[
-          { label: 'Employees',  value: counts.employee,  color: '#6A9739', bg: 'rgba(106,151,57,0.08)', icon: UsersIcon },
-          { label: 'Sellers', value: counts.seller, color: '#B45309', bg: 'rgba(245,158,11,0.08)', icon: UserCheck },
-          { label: 'Agents',  value: counts.agent,  color: '#293237', bg: 'rgba(41,50,55,0.06)',   icon: Shield },
-          { label: 'Admins',  value: counts.admin,  color: '#FF5A5F', bg: 'rgba(255,90,95,0.08)',  icon: UserX },
+          { label: 'Employees', value: counts.employee, color: '#6A9739', bg: 'rgba(106,151,57,0.08)', icon: UsersIcon },
+          { label: 'Sellers',   value: counts.seller,   color: '#B45309', bg: 'rgba(245,158,11,0.08)', icon: UserCheck },
+          { label: 'Buyers',    value: counts.buyer,    color: '#4F46E5', bg: 'rgba(99,102,241,0.08)', icon: ShoppingBag },
+          { label: 'Agents',    value: counts.agent,    color: '#293237', bg: 'rgba(41,50,55,0.06)',   icon: Shield },
+          { label: 'Admins',    value: counts.admin,    color: '#FF5A5F', bg: 'rgba(255,90,95,0.08)',  icon: UserX },
         ].map(({ label, value, color, bg, icon: Icon }) => (
           <div key={label} className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm">
             <div className="flex items-center gap-3">
@@ -219,7 +252,7 @@ export default function AdminUsersPage() {
           </div>
 
           <div className="flex flex-wrap gap-2">
-            {(['all', 'employee', 'seller', 'agent', 'admin'] as const).map(r => (
+            {(['all', 'employee', 'seller', 'buyer', 'agent', 'admin'] as const).map(r => (
               <button
                 key={r}
                 onClick={() => setRoleFilter(r)}
@@ -280,7 +313,7 @@ export default function AdminUsersPage() {
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {items.map((u) => {
-                  const roleBadge = ROLE_BADGE[u.role]
+                  const roleBadge = ROLE_BADGE[u.role] ?? UNKNOWN_BADGE
                   const initials = (u.firstName[0] ?? '') + (u.lastName[0] ?? '')
                   return (
                     <tr key={u.id} className="hover:bg-gray-50 transition-colors">
@@ -413,18 +446,35 @@ export default function AdminUsersPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Email *</label>
-                <input required type="email" value={form.email}
+                <label className="text-sm font-medium text-gray-700 mb-1.5 flex items-center justify-between">
+                  <span>Email *</span>
+                  {form.email.length > 0 && !isValidEmail(form.email) && (
+                    <span className="text-[11px] font-normal" style={{ color: '#B45309' }}>
+                      ⚠ Looks incomplete
+                    </span>
+                  )}
+                </label>
+                <input required type="email" pattern={EMAIL_PATTERN} value={form.email}
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  className="input-field" placeholder="user@example.com" />
+                  className="input-field" placeholder="user@example.com"
+                  style={form.email.length > 0 && !isValidEmail(form.email)
+                    ? { borderColor: '#F59E0B' } : undefined} />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">Phone *</label>
-                  <input required type="tel" value={form.phone}
-                    onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                    className="input-field" placeholder="+91 XXXXX XXXXX" />
+                  <div className="relative">
+                    {/* Static "+91" prefix — visual only. */}
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-medium pointer-events-none">
+                      +91
+                    </span>
+                    <input required type="tel" value={form.phone}
+                      inputMode="numeric"
+                      maxLength={10}
+                      onChange={(e) => setForm({ ...form, phone: e.target.value.replace(/\D/g, '') })}
+                      className="input-field pl-12" placeholder="10-digit mobile" />
+                  </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">City</label>
@@ -437,7 +487,7 @@ export default function AdminUsersPage() {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Role *</label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  {(['Employee', 'Seller', 'Agent', 'Admin'] as const).map(r => {
+                  {(['Employee', 'Seller', 'Buyer', 'Agent', 'Admin'] as const).map(r => {
                     const isActive = form.role === r
                     const badge = ROLE_BADGE[r]
                     return (
@@ -456,6 +506,53 @@ export default function AdminUsersPage() {
                   })}
                 </div>
               </div>
+
+              {/* Password — create flow only. On edit the admin sends the
+                  user through forgot-password instead of overwriting silently. */}
+              {!editingUser && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                    Initial password{' '}
+                    <span className="text-xs font-normal text-gray-400">
+                      (at least 8 characters — leave blank to use a default)
+                    </span>
+                  </label>
+                  <div className="relative">
+                    <Lock className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <input
+                      type={showPw ? 'text' : 'password'}
+                      value={form.password}
+                      onChange={(e) => setForm({ ...form, password: e.target.value })}
+                      placeholder="Set a password the new user will sign in with"
+                      className="input-field pl-10 pr-11"
+                      autoComplete="new-password"
+                      minLength={form.password ? 8 : undefined}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPw((p) => !p)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      tabIndex={-1}
+                    >
+                      {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  <p className="text-[11px] text-gray-400 mt-1.5">
+                    Share this password with the user — they can change it later from their profile.
+                  </p>
+                </div>
+              )}
+
+              {editingUser && (
+                <div className="text-xs text-gray-500 rounded-lg p-3 border border-gray-100 bg-gray-50 flex items-start gap-2">
+                  <Lock className="w-3.5 h-3.5 mt-0.5 shrink-0 text-gray-400" />
+                  <span>
+                    Passwords aren't editable here. Send the user to{' '}
+                    <strong>/forgot-password</strong> to reset, or have them update it from
+                    their own profile.
+                  </span>
+                </div>
+              )}
 
               <label className="flex items-center gap-3 cursor-pointer p-3 rounded-xl border border-gray-200 hover:bg-gray-50">
                 <div onClick={() => setForm({ ...form, isActive: !form.isActive })}

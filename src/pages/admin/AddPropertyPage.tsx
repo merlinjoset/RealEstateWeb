@@ -3,15 +3,18 @@ import { useNavigate, useParams } from 'react-router-dom'
 import {
   Save, X, Upload, FolderOpen, Info, IndianRupee, MapPin, Sparkles,
   Image as ImageIcon, Settings as SettingsIcon, Check, Star, GripVertical,
-  Trash2, Eye, AlertCircle, ArrowLeft,
+  Trash2, Eye, AlertCircle, ArrowLeft, Video,
   Home as HomeIcon, Trees, Wheat, Building2, Map as MapPinIcon,
 } from 'lucide-react'
 import { PropertyDocumentsEditor } from '../../components/properties/PropertyDocuments'
-import type { PropertyDocument } from '../../types'
+import LocationPicker from '../../components/properties/LocationPicker'
+import MarketingPlanPicker from '../../components/properties/MarketingPlanPicker'
+import { propertiesApi, uploadsApi, type PropertySubmission } from '../../services/api'
+import type { MarketingPlan, PropertyDocument, Property } from '../../types'
 
 const CITIES = [
   'Nagercoil', 'Marthandam', 'Thuckalay', 'Kanyakumari', 'Colachel',
-  'Padmanabhapuram', 'Boothapandi', 'Eraniel', 'Aralvaimozhy', 'Kuzhithurai',
+  'Kaliyakkavilai', 'Aralvaimozhy', 'Kuzhithurai',
 ]
 
 const FEATURES_OPTIONS = [
@@ -29,6 +32,7 @@ const PROPERTY_TYPES = [
 ] as const
 
 interface FormState {
+  serialNo: string
   title: string
   description: string
   totalPrice: string
@@ -46,14 +50,20 @@ interface FormState {
   legalStatus: string
   nearbyLandmarks: string
   features: string[]
+  latitude: string
+  longitude: string
+  marketingPlan: MarketingPlan
 }
 
 const INITIAL: FormState = {
+  serialNo: '',
   title: '', description: '', totalPrice: '', pricePerCent: '',
   areaInCents: '', city: '', address: '', pinCode: '',
   propertyType: 'open_land', bedrooms: '', bathrooms: '',
   roadAccess: false, isFeatured: false, isVerified: false, legalStatus: '',
   nearbyLandmarks: '', features: [],
+  latitude: '', longitude: '',
+  marketingPlan: 'Free',
 }
 
 interface SectionDef {
@@ -69,6 +79,7 @@ const SECTIONS: SectionDef[] = [
   { id: 'pricing',  label: 'Pricing & Area', icon: IndianRupee,  isComplete: (f) => f.totalPrice !== '' && f.areaInCents !== '' },
   { id: 'location', label: 'Location',       icon: MapPin,       isComplete: (f) => f.city.length > 0 },
   { id: 'features', label: 'Features',       icon: Sparkles,     isComplete: (f) => f.features.length > 0, isOptional: true },
+  { id: 'marketing', label: 'Marketing',     icon: Video,        isComplete: (f) => f.marketingPlan === 'VideoPromotion' || f.marketingPlan === 'Free', isOptional: true },
   { id: 'images',   label: 'Images',         icon: ImageIcon,    isComplete: (_f) => false, isOptional: true },
   { id: 'documents', label: 'Documents',     icon: FolderOpen,   isComplete: (_f) => false, isOptional: true },
   { id: 'options',  label: 'Options',        icon: SettingsIcon, isComplete: (_f) => true,  isOptional: true },
@@ -80,6 +91,7 @@ const FIELD_SECTION: Partial<Record<keyof FormState, string>> = {
   areaInCents: 'pricing', totalPrice: 'pricing', pricePerCent: 'pricing',
   city: 'location', address: 'location', pinCode: 'location',
   nearbyLandmarks: 'location', bedrooms: 'location', bathrooms: 'location',
+  latitude: 'location', longitude: 'location',
 }
 
 function formatLakhs(amountStr: string) {
@@ -129,6 +141,28 @@ function validate(form: FormState): Errors {
     e.totalPrice = 'Price seems too low — verify the amount'
   }
 
+  // Price per cent — optional, but if set it must agree with total / area.
+  // We allow a 1% slop because admins often round (eg. 7 cents at
+  // ₹10.5L/cent = ₹73.5L total, not the exact ₹73,500,000.).
+  const perCent = Number(form.pricePerCent)
+  if (form.pricePerCent && (isNaN(perCent) || perCent <= 0)) {
+    e.pricePerCent = 'Enter a valid price per cent'
+  } else if (form.pricePerCent && !e.totalPrice && !e.areaInCents && area > 0) {
+    const expectedTotal = perCent * area
+    const drift = Math.abs(expectedTotal - price) / Math.max(expectedTotal, price)
+    if (drift > 0.01) {
+      // Format the expected total in lakhs/crores so the admin sees the
+      // exact number we'd accept and can pick which field to fix.
+      const fmt = (n: number) =>
+        n >= 10000000 ? `₹${(n / 10000000).toFixed(2)} Cr` :
+        n >= 100000   ? `₹${(n / 100000).toFixed(2)} L`   :
+                        `₹${Math.round(n).toLocaleString('en-IN')}`
+      e.pricePerCent =
+        `Doesn't match — ${area} cents × ${fmt(perCent)} = ${fmt(expectedTotal)}, ` +
+        `but total is ${fmt(price)}. Check one of the three fields.`
+    }
+  }
+
   // City
   if (!form.city) {
     e.city = 'Please select a city'
@@ -137,6 +171,20 @@ function validate(form: FormState): Errors {
   // PIN code (optional but if provided must be valid)
   if (form.pinCode && !/^\d{6}$/.test(form.pinCode.replace(/\s/g, ''))) {
     e.pinCode = 'PIN code must be 6 digits'
+  }
+
+  // Coordinates — optional, but if one is set both must be valid
+  const latRaw = form.latitude.trim()
+  const lngRaw = form.longitude.trim()
+  if (latRaw || lngRaw) {
+    const lat = Number(latRaw)
+    const lng = Number(lngRaw)
+    if (!latRaw || isNaN(lat) || lat < -90 || lat > 90) {
+      e.latitude = 'Latitude must be between -90 and 90'
+    }
+    if (!lngRaw || isNaN(lng) || lng < -180 || lng > 180) {
+      e.longitude = 'Longitude must be between -180 and 180'
+    }
   }
 
   // Bedrooms/Bathrooms (only if Land + Building)
@@ -157,9 +205,14 @@ export default function AddPropertyPage() {
   const isEditMode = Boolean(id)
   const [form, setForm] = useState<FormState>(INITIAL)
   const [documents, setDocuments] = useState<PropertyDocument[]>([])
+  // New images the admin has just picked — `file` is the pending upload,
+  // `url` is the blob preview. Already-saved images on an edited property
+  // would be loaded separately (TODO when edit prefill is wired to the API).
   const [images, setImages] = useState<{ id: string; url: string; file: File }[]>([])
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
+  const [uploadProgress, setUploadProgress] = useState<{ done: number; total: number } | null>(null)
   const [activeSection, setActiveSection] = useState<string>('basic')
   const [showPreview, setShowPreview] = useState(false)
   const [errors, setErrors] = useState<Errors>({})
@@ -168,28 +221,46 @@ export default function AddPropertyPage() {
   const navigate = useNavigate()
   const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({})
 
-  // Edit mode prefill
+  // Edit-mode prefill — fetch the real property by id and hydrate the
+  // form. (Previously this was hardcoded mock data, which is why every
+  // edit screen looked identical regardless of which listing you opened.)
   useEffect(() => {
     if (!isEditMode || !id) return
-    setForm({
-      title: `15 Cents Prime Land - Property ${id}`,
-      description: 'Prime location near main road with clear documents and full road access. Ideal for residential or commercial development. The plot has clear EC, Patta, and Chitta documents available for immediate registration.',
-      totalPrice: '2250000',
-      pricePerCent: '150000',
-      areaInCents: '15',
-      city: 'Nagercoil',
-      address: 'Kottar, Near NH 44',
-      pinCode: '629001',
-      propertyType: 'open_land',
-      bedrooms: '',
-      bathrooms: '',
-      roadAccess: true,
-      isFeatured: true,
-      isVerified: true,
-      legalStatus: 'Clear — EC, Patta, Chitta available',
-      nearbyLandmarks: 'NH 44 (200m), Nagercoil Railway Station (2km)',
-      features: ['Road Access', 'Clear Title', 'Near Market'],
-    })
+    let cancelled = false
+    propertiesApi.getById(Number(id))
+      .then((p) => {
+        if (cancelled) return
+        setForm({
+          serialNo: p.serialNo ?? '',
+          title: p.title ?? '',
+          description: p.description ?? '',
+          totalPrice: p.totalPrice?.toString() ?? '',
+          pricePerCent: p.pricePerCent?.toString() ?? '',
+          areaInCents: p.areaInCents?.toString() ?? '',
+          city: p.city ?? '',
+          address: p.address ?? '',
+          pinCode: p.pinCode ?? '',
+          propertyType: p.propertyType ?? 'open_land',
+          bedrooms: p.bedrooms?.toString() ?? '',
+          bathrooms: p.bathrooms?.toString() ?? '',
+          roadAccess: !!p.roadAccess,
+          isFeatured: !!p.isFeatured,
+          isVerified: !!p.isVerified,
+          legalStatus: p.legalStatus ?? '',
+          // nearbyLandmarks is string[] on the API, joined for the
+          // single-line textarea-style input the form uses.
+          nearbyLandmarks: (p.nearbyLandmarks ?? []).join(', '),
+          features: p.features ?? [],
+          latitude: p.latitude?.toString() ?? '',
+          longitude: p.longitude?.toString() ?? '',
+          marketingPlan: p.marketingPlan ?? 'Free',
+        })
+      })
+      .catch((err) => {
+        console.error('Failed to load property for edit', err)
+        setSaveError(`Couldn't load property #${id}. It may have been deleted.`)
+      })
+    return () => { cancelled = true }
   }, [isEditMode, id])
 
   const set = <K extends keyof FormState>(field: K, value: FormState[K]) => {
@@ -282,10 +353,97 @@ export default function AddPropertyPage() {
     }
 
     setSaving(true)
-    await new Promise((r) => setTimeout(r, 1000))
-    setSaving(false)
-    setSaved(true)
-    setTimeout(() => navigate('/admin/properties'), 1500)
+    setSaveError(null)
+
+    // 1) Upload each pending image. Sequential so a flaky line doesn't
+    //    spawn ten concurrent multipart requests.
+    let imageUrls: string[] = []
+    if (images.length > 0) {
+      setUploadProgress({ done: 0, total: images.length })
+      try {
+        for (let i = 0; i < images.length; i++) {
+          const { url } = await uploadsApi.propertyImage(images[i].file)
+          imageUrls.push(url)
+          setUploadProgress({ done: i + 1, total: images.length })
+        }
+      } catch (err) {
+        setUploadProgress(null)
+        setSaving(false)
+        setSaveError('Image upload failed. Please retry.')
+        return
+      }
+      setUploadProgress(null)
+    }
+
+    // 2) Persist — PUT in edit mode, POST when creating a new listing.
+    //    Both endpoints accept the same field shape; the backend treats
+    //    a null/missing field as "leave unchanged" on update.
+    try {
+      const nearbyLandmarksArr = form.nearbyLandmarks
+        .split(',')
+        .map((s) => s.trim())
+        .filter((s) => s.length > 0)
+      if (isEditMode && id) {
+        await propertiesApi.update(Number(id), {
+          serialNo: form.serialNo.trim() || null,
+          title: form.title,
+          description: form.description,
+          totalPrice: Number(form.totalPrice) || 0,
+          pricePerCent: form.pricePerCent ? Number(form.pricePerCent) : undefined,
+          areaInCents: Number(form.areaInCents) || 0,
+          address: form.address,
+          city: form.city,
+          pinCode: form.pinCode,
+          propertyType: form.propertyType,
+          // For edit, only overwrite images when the admin actually
+          // uploaded new ones — otherwise we'd wipe the existing gallery.
+          ...(imageUrls.length > 0 ? { images: imageUrls } : {}),
+          features: form.features,
+          nearbyLandmarks: nearbyLandmarksArr,
+          legalStatus: form.legalStatus || undefined,
+          roadAccess: form.roadAccess,
+          isFeatured: form.isFeatured,
+          isVerified: form.isVerified,
+          marketingPlan: form.marketingPlan,
+          latitude: form.latitude ? Number(form.latitude) : undefined,
+          longitude: form.longitude ? Number(form.longitude) : undefined,
+        } as Partial<Property>)
+      } else {
+        // AddPropertyPage is admin-only; the form doesn't capture a separate
+        // submitter, so we mark the submission as an internal admin entry.
+        const payload: PropertySubmission = {
+          serialNo: form.serialNo.trim() || undefined,
+          title: form.title,
+          description: form.description,
+          totalPrice: Number(form.totalPrice) || 0,
+          pricePerCent: form.pricePerCent ? Number(form.pricePerCent) : undefined,
+          areaInCents: Number(form.areaInCents) || 0,
+          address: form.address,
+          city: form.city,
+          district: 'Kanyakumari',
+          state: 'Tamil Nadu',
+          pinCode: form.pinCode,
+          propertyType: form.propertyType,
+          status: 'for_sale',
+          features: form.features,
+          images: imageUrls,
+          legalStatus: form.legalStatus || undefined,
+          roadAccess: form.roadAccess,
+          marketingPlan: form.marketingPlan,
+          latitude: form.latitude ? Number(form.latitude) : undefined,
+          longitude: form.longitude ? Number(form.longitude) : undefined,
+          submitterName: 'Admin entry',
+          submitterPhone: '',
+        }
+        await propertiesApi.submit(payload)
+      }
+      setSaving(false)
+      setSaved(true)
+      setTimeout(() => navigate('/admin/properties'), 1500)
+    } catch (err) {
+      setSaving(false)
+      setSaveError('Failed to save the property. Please check the fields and retry.')
+    }
   }
 
   // Whether to show an error for a given field
@@ -462,6 +620,14 @@ export default function AddPropertyPage() {
             sectionRef={(el) => (sectionRefs.current.basic = el)}
             id="basic">
 
+            <Field label="Serial No"
+              hint="Optional reference code for tracking — e.g. JFL-2026-001">
+              <input type="text" value={form.serialNo}
+                onChange={(e) => set('serialNo', e.target.value)}
+                placeholder="e.g. JFL-2026-001"
+                className="input-field" maxLength={50} />
+            </Field>
+
             <Field label="Property Title" required
               hint="A clear, specific title performs best (include location and area)"
               error={errorFor('title')}>
@@ -522,7 +688,11 @@ export default function AddPropertyPage() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <Field label="Area (in Cents)" required error={errorFor('areaInCents')}>
                 <div className="relative">
-                  <input type="number" min="1" value={form.areaInCents}
+                  {/* step="any" — admin can enter 1.8 / 7.25 / etc. The
+                      default step of 1 was rejecting any non-integer value
+                      at browser-validity time even though the field is a
+                      decimal in the API. */}
+                  <input type="number" min="0.01" step="any" value={form.areaInCents}
                     onChange={(e) => set('areaInCents', e.target.value)}
                     onBlur={() => markTouched('areaInCents')}
                     placeholder="15"
@@ -636,6 +806,29 @@ export default function AddPropertyPage() {
               </div>
             </div>
 
+            {/* Google Maps location picker */}
+            <Field
+              label="Map Location"
+              hint="Optional — pin the plot on the map so buyers can see exactly where it is"
+              error={errorFor('latitude') || errorFor('longitude')}
+            >
+              <LocationPicker
+                latitude={form.latitude}
+                longitude={form.longitude}
+                onChange={(lat, lng) => {
+                  setForm((f) => ({ ...f, latitude: lat, longitude: lng }))
+                  // Clear lat/lng errors as user picks
+                  setErrors((prev) => {
+                    if (!prev.latitude && !prev.longitude) return prev
+                    const next = { ...prev }
+                    delete next.latitude
+                    delete next.longitude
+                    return next
+                  })
+                }}
+              />
+            </Field>
+
             {form.propertyType === 'land_with_building' && (
               <div className="mt-4 p-4 rounded-xl border" style={{ backgroundColor: '#FAFAF8', borderColor: '#EAEAE5' }}>
                 <p className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-3">Building Details</p>
@@ -680,6 +873,21 @@ export default function AddPropertyPage() {
                 )
               })}
             </div>
+          </Section>
+
+          {/* Marketing plan */}
+          <Section
+            title="Marketing Plan"
+            desc="Free listing vs Video Promotion (2% brokerage on sale)"
+            icon={Video}
+            sectionRef={(el) => (sectionRefs.current.marketing = el)}
+            id="marketing"
+            badge={form.marketingPlan === 'VideoPromotion' ? 'Video · 2%' : 'Free'}>
+            <MarketingPlanPicker
+              value={form.marketingPlan}
+              onChange={(plan) => set('marketingPlan', plan)}
+              totalPriceStr={form.totalPrice}
+            />
           </Section>
 
           {/* Images */}
@@ -827,7 +1035,9 @@ export default function AddPropertyPage() {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                   </svg>
-                  Saving…
+                  {uploadProgress
+                    ? `Uploading ${uploadProgress.done}/${uploadProgress.total}…`
+                    : 'Saving…'}
                 </>
               ) : (
                 <>
@@ -836,6 +1046,11 @@ export default function AddPropertyPage() {
                 </>
               )}
             </button>
+            {saveError && (
+              <p className="ml-3 text-xs flex items-center gap-1" style={{ color: '#B91C1C' }}>
+                <AlertCircle className="w-3.5 h-3.5" /> {saveError}
+              </p>
+            )}
           </div>
         </div>
       </div>
