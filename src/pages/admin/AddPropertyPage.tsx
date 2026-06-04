@@ -688,7 +688,11 @@ export default function AddPropertyPage() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <Field label="Area (in Cents)" required error={errorFor('areaInCents')}>
                 <div className="relative">
-                  <input type="number" min="1" value={form.areaInCents}
+                  {/* step="any" — admin can enter 1.8 / 7.25 / etc. The
+                      default step of 1 was rejecting any non-integer value
+                      at browser-validity time even though the field is a
+                      decimal in the API. */}
+                  <input type="number" min="0.01" step="any" value={form.areaInCents}
                     onChange={(e) => set('areaInCents', e.target.value)}
                     onBlur={() => markTouched('areaInCents')}
                     placeholder="15"

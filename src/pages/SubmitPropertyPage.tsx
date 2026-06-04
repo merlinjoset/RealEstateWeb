@@ -444,9 +444,12 @@ export default function SubmitPropertyPage() {
                   </p>
                 )}
               </Field>
-              <Field label="Area (in Cents) *" hint="1 cent ≈ 435.6 sq ft">
+              <Field label="Area (in Cents) *" hint="1 cent ≈ 435.6 sq ft · decimals OK (e.g. 1.8, 7.25)">
                 <div className="relative">
-                  <input required type="number" min="0.5" step="0.5"
+                  {/* step="any" lets the browser accept any decimal precision
+                      (1.8, 7.25, 3.125, …). The previous step="0.5" rejected
+                      everything that wasn't a multiple of 0.5 cents. */}
+                  <input required type="number" min="0.01" step="any"
                     value={form.areaInCents}
                     onChange={(e) => set('areaInCents', e.target.value)}
                     className="input-field pr-14" placeholder="15" />
