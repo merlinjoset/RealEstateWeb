@@ -24,6 +24,7 @@ import ProfilePage from './pages/ProfilePage'
 import FavoritesPage from './pages/FavoritesPage'
 import MyPropertiesPage from './pages/MyPropertiesPage'
 import NotFoundPage from './pages/NotFoundPage'
+import { LegacyPropertyRedirect, LegacyLocationRedirect } from './components/common/LegacyRedirects'
 import RequireAdmin from './components/auth/RequireAdmin'
 import RequireStaff from './components/auth/RequireStaff'
 import AdminLayout from './pages/admin/AdminLayout'
@@ -180,6 +181,19 @@ export default function App() {
               <Route path="sms-templates" element={<RequireAdmin><AdminSmsTemplatesPage /></RequireAdmin>} />
               <Route path="*" element={<NotFoundPage />} />
             </Route>
+
+            {/* ── Legacy WordPress (Estatik) URL redirects ──
+                Google still has the old URL structure indexed from before the
+                React rebuild. Forward each pattern to its modern equivalent so
+                search visitors land on real content instead of a soft-404, and
+                Google consolidates the old URLs onto the new ones. IDs were
+                preserved in the DB migration. */}
+            <Route path="/property/:id" element={<LegacyPropertyRedirect />} />
+            <Route path="/property/:id/*" element={<LegacyPropertyRedirect />} />
+            <Route path="/location/:slug" element={<LegacyLocationRedirect />} />
+            <Route path="/location/:slug/*" element={<LegacyLocationRedirect />} />
+            <Route path="/property-city/:slug" element={<LegacyLocationRedirect />} />
+            <Route path="/property-city/:slug/*" element={<LegacyLocationRedirect />} />
 
             {/* Catch-all 404 — must be last */}
             <Route
