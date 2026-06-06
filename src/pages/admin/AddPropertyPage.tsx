@@ -3,14 +3,14 @@ import { useNavigate, useParams } from 'react-router-dom'
 import {
   Save, X, Upload, FolderOpen, Info, IndianRupee, MapPin, Sparkles,
   Image as ImageIcon, Settings as SettingsIcon, Check, Star, GripVertical,
-  Trash2, Eye, AlertCircle, ArrowLeft, Video,
+  Trash2, Eye, AlertCircle, ArrowLeft, Video, User,
   Home as HomeIcon, Trees, Wheat, Building2, Map as MapPinIcon,
 } from 'lucide-react'
 import { PropertyDocumentsEditor } from '../../components/properties/PropertyDocuments'
 import LocationPicker from '../../components/properties/LocationPicker'
 import MarketingPlanPicker from '../../components/properties/MarketingPlanPicker'
-import { propertiesApi, uploadsApi, type PropertySubmission } from '../../services/api'
-import type { MarketingPlan, PropertyDocument, Property } from '../../types'
+import { propertiesApi, uploadsApi, type PropertySubmission, type PropertyUpdate } from '../../services/api'
+import type { MarketingPlan, PropertyDocument } from '../../types'
 
 const CITIES = [
   'Nagercoil', 'Marthandam', 'Thuckalay', 'Kanyakumari', 'Colachel',
@@ -53,6 +53,10 @@ interface FormState {
   latitude: string
   longitude: string
   marketingPlan: MarketingPlan
+  // Owner / seller contact for this listing (editable in edit mode).
+  submitterName: string
+  submitterPhone: string
+  submitterEmail: string
 }
 
 const INITIAL: FormState = {
@@ -64,6 +68,7 @@ const INITIAL: FormState = {
   nearbyLandmarks: '', features: [],
   latitude: '', longitude: '',
   marketingPlan: 'Free',
+  submitterName: '', submitterPhone: '', submitterEmail: '',
 }
 
 interface SectionDef {
@@ -254,6 +259,10 @@ export default function AddPropertyPage() {
           latitude: p.latitude?.toString() ?? '',
           longitude: p.longitude?.toString() ?? '',
           marketingPlan: p.marketingPlan ?? 'Free',
+          // Owner/seller contact — surfaced via the DTO's SubmittedBy* fields.
+          submitterName: p.submittedByName ?? '',
+          submitterPhone: p.submittedByPhone ?? '',
+          submitterEmail: p.submittedByEmail ?? '',
         })
       })
       .catch((err) => {
@@ -407,7 +416,12 @@ export default function AddPropertyPage() {
           marketingPlan: form.marketingPlan,
           latitude: form.latitude ? Number(form.latitude) : undefined,
           longitude: form.longitude ? Number(form.longitude) : undefined,
-        } as Partial<Property>)
+          // Owner / seller contact — send the (trimmed) values so admins can
+          // correct them; "" clears a field on the backend.
+          submitterName: form.submitterName.trim(),
+          submitterPhone: form.submitterPhone.trim(),
+          submitterEmail: form.submitterEmail.trim(),
+        } as PropertyUpdate)
       } else {
         // AddPropertyPage is admin-only; the form doesn't capture a separate
         // submitter, so we mark the submission as an internal admin entry.
@@ -985,6 +999,36 @@ export default function AddPropertyPage() {
               icon={MapPin}
               accent="#293237" />
           </Section>
+
+          {/* Owner / Seller Contact — edit mode only. New listings added here
+              are internal admin entries, so the submitter contact is only
+              meaningful (and correctable) for properties that already exist. */}
+          {isEditMode && (
+            <Section title="Owner / Seller Contact"
+              desc="Who owns this listing — shown to buyers on the property page and to admins in pending approvals"
+              icon={User}
+              sectionRef={(el) => (sectionRefs.current.owner = el)}
+              id="owner">
+              <Field label="Owner Name" hint="The person selling this property">
+                <input type="text" value={form.submitterName}
+                  onChange={(e) => set('submitterName', e.target.value)}
+                  placeholder="e.g. Satheesh"
+                  className="input-field" />
+              </Field>
+              <Field label="Owner Phone" hint="Buyers can call this number directly">
+                <input type="tel" inputMode="tel" value={form.submitterPhone}
+                  onChange={(e) => set('submitterPhone', e.target.value)}
+                  placeholder="e.g. 7902542889"
+                  className="input-field" />
+              </Field>
+              <Field label="Owner Email" hint="Used for buyer enquiries and confirmation emails">
+                <input type="email" inputMode="email" value={form.submitterEmail}
+                  onChange={(e) => set('submitterEmail', e.target.value)}
+                  placeholder="e.g. owner@example.com"
+                  className="input-field" />
+              </Field>
+            </Section>
+          )}
         </form>
       </div>
 

@@ -112,6 +112,18 @@ export interface PropertySubmission {
 }
 
 /**
+ * Shape accepted by PUT /properties/{id}. It's the regular property fields plus
+ * the owner/seller contact, which the backend stores on the Submitter* columns
+ * (the read DTO exposes them as submittedBy*). Sending null/undefined leaves a
+ * field unchanged; sending "" clears it.
+ */
+export type PropertyUpdate = Partial<Property> & {
+  submitterName?: string | null
+  submitterPhone?: string | null
+  submitterEmail?: string | null
+}
+
+/**
  * Backend returns enum strings in PascalCase ("OpenLand", "ForSale") but the
  * frontend's PropertyType / ListingStatus unions are snake_case. Normalise
  * once at the API boundary so every consumer below sees a consistent shape.
@@ -171,7 +183,7 @@ export const propertiesApi = {
   create: (data: Partial<Property>) =>
     api.post<Property>('/properties', data).then((r) => r.data),
 
-  update: (id: number, data: Partial<Property>) =>
+  update: (id: number, data: PropertyUpdate) =>
     api.put<Property>(`/properties/${id}`, data).then((r) => r.data),
 
   delete: (id: number) =>
