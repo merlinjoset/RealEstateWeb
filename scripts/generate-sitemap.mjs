@@ -15,7 +15,13 @@ import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
-const OUT = resolve(__dirname, '../public/sitemap.xml')
+// Canonical filename. NOTE: an upstream rule (Cloudflare, leftover from the
+// old WordPress site) intercepts the literal paths /sitemap.xml and
+// /sitemap-properties.xml and returns 500, shadowing the static file. Until
+// that rule is removed we ALSO emit the identical sitemap under an
+// un-intercepted name and point robots.txt + Search Console at that one.
+const OUT_CANONICAL = resolve(__dirname, '../public/sitemap.xml')
+const OUT_WORKING = resolve(__dirname, '../public/sitemap_index.xml')
 
 const SITE = 'https://joseforland.com'
 
@@ -99,8 +105,12 @@ async function main() {
     entries.map(urlEntry).join('\n') +
     `\n</urlset>\n`
 
-  writeFileSync(OUT, xml, 'utf8')
-  console.log(`[sitemap] wrote ${entries.length} URLs (${propertyCount} properties) → public/sitemap.xml`)
+  writeFileSync(OUT_CANONICAL, xml, 'utf8')
+  writeFileSync(OUT_WORKING, xml, 'utf8')
+  console.log(
+    `[sitemap] wrote ${entries.length} URLs (${propertyCount} properties) → ` +
+    `public/sitemap.xml + public/sitemap_index.xml`
+  )
 }
 
 main().catch((err) => {
