@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
-  Check, X, MapPin, Ruler, User, Calendar, Phone, Video, AlertCircle,
+  Check, X, MapPin, Ruler, User, Calendar, Phone, Mail, Video, AlertCircle,
   Loader2, Inbox, UserPlus, UserCheck, Sparkles,
 } from 'lucide-react'
 import { propertiesApi, usersApi, type AdminUser } from '../../services/api'
@@ -444,6 +444,17 @@ export default function PendingApprovalsPage() {
                   onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255,90,95,0.08)')}
                 >
                   <Phone className="w-3.5 h-3.5" /> {selected.submittedByPhone}
+                </a>
+              )}
+              {selected.submittedByEmail && (
+                <a
+                  href={`mailto:${selected.submittedByEmail}`}
+                  className="flex items-center gap-2 w-full py-2 text-sm font-medium rounded-lg transition-colors justify-center break-all"
+                  style={{ backgroundColor: 'rgba(255,90,95,0.08)', color: '#FF5A5F' }}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255,90,95,0.15)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255,90,95,0.08)')}
+                >
+                  <Mail className="w-3.5 h-3.5 shrink-0" /> {selected.submittedByEmail}
                 </a>
               )}
               {selected.features && selected.features.length > 0 && (

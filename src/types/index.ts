@@ -79,6 +79,7 @@ export interface Property {
   /** Display name of the seller (joined from SubmittedByUser or anon submitter). */
   submittedByName?: string | null
   submittedByPhone?: string | null
+  submittedByEmail?: string | null
 }
 
 export interface Agent {

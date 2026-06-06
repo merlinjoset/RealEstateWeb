@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import {
   MapPin, Ruler, Phone, MessageCircle, Heart, ChevronLeft,
   CheckCircle, Home, FileText, Calendar, FolderOpen, Loader2, AlertCircle,
+  Mail, User,
 } from 'lucide-react'
 import SEO from '../components/common/SEO'
 import PropertyGallery from '../components/properties/PropertyGallery'
@@ -390,6 +391,46 @@ export default function PropertyDetailPage() {
                   Alt: +91 99448 85542
                 </a>
               </div>
+
+              {(property.submittedByPhone || property.submittedByEmail) && (
+                <div className="mb-5 rounded-xl border border-gray-100 p-4" style={{ backgroundColor: '#fafafa' }}>
+                  <div className="flex items-center gap-2 mb-3">
+                    <User className="w-4 h-4 text-gray-400" />
+                    <div>
+                      <div className="text-[11px] uppercase tracking-wide text-gray-400">Listed by owner</div>
+                      <div className="text-sm font-semibold text-gray-900">
+                        {property.submittedByName ?? 'Property owner'}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    {property.submittedByPhone && (
+                      <a
+                        href={`tel:${property.submittedByPhone.replace(/\s/g, '')}`}
+                        className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-lg border-2 transition-colors"
+                        style={{ borderColor: '#FF5A5F', color: '#FF5A5F' }}
+                        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(255,90,95,0.06)' }}
+                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent' }}
+                      >
+                        <Phone className="w-4 h-4" />
+                        Call Owner: {property.submittedByPhone}
+                      </a>
+                    )}
+                    {property.submittedByEmail && (
+                      <a
+                        href={`mailto:${property.submittedByEmail}?subject=${encodeURIComponent(`Inquiry: ${property.title}`)}`}
+                        className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-lg border-2 transition-colors break-all"
+                        style={{ borderColor: '#6A9739', color: '#6A9739' }}
+                        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(106,151,57,0.06)' }}
+                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent' }}
+                      >
+                        <Mail className="w-4 h-4 shrink-0" />
+                        Email Owner
+                      </a>
+                    )}
+                  </div>
+                </div>
+              )}
 
               <div className="rounded-xl p-4 text-center border" style={{ backgroundColor: 'rgba(106,151,57,0.08)', borderColor: 'rgba(106,151,57,0.2)' }}>
                 <p className="font-semibold text-sm mb-1" style={{ color: '#547a2d' }}>
