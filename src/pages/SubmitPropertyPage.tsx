@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
 import {
   Save, CheckCircle2, Phone, Mail, User, MapPin, IndianRupee,
@@ -12,6 +12,7 @@ import LocationPicker from '../components/properties/LocationPicker'
 import MarketingPlanPicker from '../components/properties/MarketingPlanPicker'
 import { propertiesApi, uploadsApi, type PropertySubmission } from '../services/api'
 import { isValidEmail, EMAIL_PATTERN } from '../utils/email'
+import { useAuth } from '../context/AuthContext'
 import type { MarketingPlan } from '../types'
 
 const CITIES = [
@@ -94,8 +95,36 @@ interface PendingImage {
 }
 
 export default function SubmitPropertyPage() {
+  const [searchParams] = useSearchParams()
+  const navigate = useNavigate()
+  const { isAuthenticated, user } = useAuth()
+  // ?type=rental switches the form into rental mode: the listing is saved as
+  // for_rent, marketing is forced Free, and the owner must be signed in.
+  const isRental = searchParams.get('type') === 'rental'
+
   const [form, setForm] = useState<FormState>(INITIAL)
   const [submittedId, setSubmittedId] = useState<number | null>(null)
+
+  // Rental owners must be logged in. Bounce anonymous visitors to /login and
+  // return them to this form afterwards.
+  useEffect(() => {
+    if (isRental && !isAuthenticated) {
+      navigate('/login', { replace: true, state: { from: '/sell?type=rental' } })
+    }
+  }, [isRental, isAuthenticated, navigate])
+
+  // Prefill the owner's contact from their account for rental submissions.
+  useEffect(() => {
+    if (isRental && user) {
+      setForm((f) => ({
+        ...f,
+        submitterName: f.submitterName || [user.firstName, user.lastName].filter(Boolean).join(' '),
+        submitterEmail: f.submitterEmail || user.email || '',
+        submitterPhone: f.submitterPhone || (user.phone ?? '').replace(/\D/g, '').slice(-10),
+      }))
+    }
+  }, [isRental, user])
+
   const [images, setImages] = useState<PendingImage[]>([])
   const [uploadError, setUploadError] = useState<string | null>(null)
   // Track uploads-in-flight at submit time so the button can show progress.
@@ -230,12 +259,13 @@ export default function SubmitPropertyPage() {
       state: form.state,
       pinCode: form.pinCode,
       propertyType: form.propertyType,
-      status: 'for_sale',
+      status: isRental ? 'for_rent' : 'for_sale',
       features: form.features,
       images: imageUrls,
       legalStatus: form.legalStatus || undefined,
       roadAccess: form.roadAccess,
-      marketingPlan: form.marketingPlan,
+      // Rentals are always free listings; the Video Promotion tier is sale-only.
+      marketingPlan: isRental ? 'Free' : form.marketingPlan,
       latitude: form.latitude ? Number(form.latitude) : undefined,
       longitude: form.longitude ? Number(form.longitude) : undefined,
       submitterName: form.submitterName.trim(),
@@ -313,10 +343,12 @@ export default function SubmitPropertyPage() {
   return (
     <main className="min-h-screen pb-16" style={{ backgroundColor: '#F8F6F3' }}>
       <PageHeader
-        eyebrow="Sell with us"
-        title="Submit Your Property"
-        highlight="Property"
-        description="List your land for sale on Jose For Land. Once you submit, our team personally reviews and verifies the details — usually within 24 hours. Free of cost, zero brokerage."
+        eyebrow={isRental ? 'List a rental' : 'Sell with us'}
+        title={isRental ? 'List Your Rental Property' : 'Submit Your Property'}
+        highlight={isRental ? 'Rental' : 'Property'}
+        description={isRental
+          ? 'List your house, plot or commercial space for rent on Jose For Land. Free listing — our team reviews the details (usually within 24 hours), then it goes live for renters to browse without signing in.'
+          : 'List your land for sale on Jose For Land. Once you submit, our team personally reviews and verifies the details — usually within 24 hours. Free of cost, zero brokerage.'}
       />
 
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-2">
@@ -428,15 +460,15 @@ export default function SubmitPropertyPage() {
           </Section>
 
           {/* === Pricing & area === */}
-          <Section icon={IndianRupee} title="Pricing & Area" desc="Indian-style: price in rupees, area in cents">
+          <Section icon={IndianRupee} title={isRental ? 'Rent & Area' : 'Pricing & Area'} desc={isRental ? 'Monthly rent in rupees, area in cents' : 'Indian-style: price in rupees, area in cents'}>
             <Row>
-              <Field label="Total Price (₹) *">
+              <Field label={isRental ? 'Monthly Rent (₹) *' : 'Total Price (₹) *'}>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium">₹</span>
-                  <input required type="number" min="10000"
+                  <input required type="number" min={isRental ? '1000' : '10000'}
                     value={form.totalPrice}
                     onChange={(e) => set('totalPrice', e.target.value)}
-                    className="input-field pl-7" placeholder="2250000" />
+                    className="input-field pl-7" placeholder={isRental ? '15000' : '2250000'} />
                 </div>
                 {form.totalPrice && (
                   <p className="text-xs mt-1.5 font-semibold" style={{ color: '#6A9739' }}>
@@ -457,20 +489,22 @@ export default function SubmitPropertyPage() {
                 </div>
               </Field>
             </Row>
-            <Field label="Price per Cent (₹) — optional"
-              hint={priceMismatchError ?? 'We cross-check this against the total price and area to catch typos.'}>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium">₹</span>
-                <input
-                  id="price-per-cent"
-                  type="number" min="1"
-                  value={form.pricePerCent}
-                  onChange={(e) => set('pricePerCent', e.target.value)}
-                  placeholder="150000"
-                  className="input-field pl-7"
-                  style={priceMismatchError ? { borderColor: '#B91C1C' } : undefined} />
-              </div>
-            </Field>
+            {!isRental && (
+              <Field label="Price per Cent (₹) — optional"
+                hint={priceMismatchError ?? 'We cross-check this against the total price and area to catch typos.'}>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium">₹</span>
+                  <input
+                    id="price-per-cent"
+                    type="number" min="1"
+                    value={form.pricePerCent}
+                    onChange={(e) => set('pricePerCent', e.target.value)}
+                    placeholder="150000"
+                    className="input-field pl-7"
+                    style={priceMismatchError ? { borderColor: '#B91C1C' } : undefined} />
+                </div>
+              </Field>
+            )}
           </Section>
 
           {/* === Location === */}
@@ -595,30 +629,32 @@ export default function SubmitPropertyPage() {
             )}
           </Section>
 
-          {/* === Marketing plan === */}
-          <Section
-            icon={Video}
-            title="Marketing Plan"
-            desc="Choose how you'd like your property promoted"
-          >
-            <MarketingPlanPicker
-              value={form.marketingPlan}
-              onChange={(plan) => set('marketingPlan', plan)}
-              totalPriceStr={form.totalPrice}
-            />
-            {form.marketingPlan === 'VideoPromotion' && (
-              <div className="mt-3 rounded-xl p-3 text-xs flex items-start gap-2.5"
-                style={{ backgroundColor: 'rgba(255,90,95,0.06)', border: '1px solid rgba(255,90,95,0.2)', color: '#7F1D1D' }}>
-                <Sparkles className="w-3.5 h-3.5 shrink-0 mt-0.5" style={{ color: '#FF5A5F' }} />
-                <span>
-                  <strong>Sells faster — often sooner than expected.</strong> You get full
-                  <strong> end-to-end support</strong> — we shortlist buyers, run site visits, handle paperwork and
-                  registration on your behalf. <strong>2% brokerage</strong> only applies on a successful sale,
-                  so <em>you pay nothing upfront</em>.
-                </span>
-              </div>
-            )}
-          </Section>
+          {/* === Marketing plan (sale only — rentals are always free) === */}
+          {!isRental && (
+            <Section
+              icon={Video}
+              title="Marketing Plan"
+              desc="Choose how you'd like your property promoted"
+            >
+              <MarketingPlanPicker
+                value={form.marketingPlan}
+                onChange={(plan) => set('marketingPlan', plan)}
+                totalPriceStr={form.totalPrice}
+              />
+              {form.marketingPlan === 'VideoPromotion' && (
+                <div className="mt-3 rounded-xl p-3 text-xs flex items-start gap-2.5"
+                  style={{ backgroundColor: 'rgba(255,90,95,0.06)', border: '1px solid rgba(255,90,95,0.2)', color: '#7F1D1D' }}>
+                  <Sparkles className="w-3.5 h-3.5 shrink-0 mt-0.5" style={{ color: '#FF5A5F' }} />
+                  <span>
+                    <strong>Sells faster — often sooner than expected.</strong> You get full
+                    <strong> end-to-end support</strong> — we shortlist buyers, run site visits, handle paperwork and
+                    registration on your behalf. <strong>2% brokerage</strong> only applies on a successful sale,
+                    so <em>you pay nothing upfront</em>.
+                  </span>
+                </div>
+              )}
+            </Section>
+          )}
 
           {/* === Trust strip === */}
           <div className="rounded-xl p-5 flex items-start gap-3"
@@ -627,9 +663,11 @@ export default function SubmitPropertyPage() {
             <div className="text-xs leading-relaxed" style={{ color: '#374151' }}>
               <strong style={{ color: '#111111' }}>What happens next:</strong> Our team will call you within 24 hours
               to verify the details, schedule a free site visit, and prepare professional photographs.
-              {form.marketingPlan === 'Free'
-                ? <> Listing fees are <strong>₹0 — zero brokerage</strong>. We earn only when your property sells.</>
-                : <> You picked the <strong>Video Promotion</strong> plan — we'll coordinate the shoot and only charge the 2% fee on a successful sale.</>}
+              {isRental
+                ? <> Your rental listing is <strong>free</strong> — once approved it appears on the Rental Properties page for renters to browse without signing in.</>
+                : form.marketingPlan === 'Free'
+                  ? <> Listing fees are <strong>₹0 — zero brokerage</strong>. We earn only when your property sells.</>
+                  : <> You picked the <strong>Video Promotion</strong> plan — we'll coordinate the shoot and only charge the 2% fee on a successful sale.</>}
             </div>
           </div>
 

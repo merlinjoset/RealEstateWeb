@@ -1,21 +1,46 @@
 import { useState, useEffect, useRef } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Search, SlidersHorizontal, X, Grid3X3, List, ChevronLeft, ChevronRight, Map as MapIcon, Loader2, AlertCircle } from 'lucide-react'
+import { Search, SlidersHorizontal, X, Grid3X3, List, ChevronLeft, ChevronRight, Map as MapIcon, Loader2, AlertCircle, Home, KeyRound } from 'lucide-react'
 import SEO from '../components/common/SEO'
 import PropertyCard from '../components/properties/PropertyCard'
 import { propertiesApi } from '../services/api'
+import { useAuth } from '../context/AuthContext'
 
 const CITIES = ['Nagercoil', 'Marthandam', 'Thuckalay', 'Kanyakumari', 'Colachel', 'Kaliyakkavilai']
-const PRICE_RANGES = [
+const SALE_PRICE_RANGES = [
   { label: 'All Prices', min: 0, max: 0 },
   { label: 'Below ₹15L', min: 0, max: 1500000 },
   { label: '₹15L – ₹25L', min: 1500000, max: 2500000 },
   { label: '₹25L – ₹50L', min: 2500000, max: 5000000 },
   { label: 'Above ₹50L', min: 5000000, max: 0 },
 ]
+// Rentals are priced per month, so the bands are far smaller than sale prices.
+const RENT_PRICE_RANGES = [
+  { label: 'All Rents', min: 0, max: 0 },
+  { label: 'Below ₹10k/mo', min: 0, max: 10000 },
+  { label: '₹10k – ₹20k/mo', min: 10000, max: 20000 },
+  { label: '₹20k – ₹40k/mo', min: 20000, max: 40000 },
+  { label: 'Above ₹40k/mo', min: 40000, max: 0 },
+]
 
-export default function PropertiesPage() {
+interface PropertiesPageProps {
+  /** When true, the page lists only rental (for_rent) listings, is fully
+   *  public (no login wall), and shows a login-gated "List your rental" CTA. */
+  rentalMode?: boolean
+}
+
+export default function PropertiesPage({ rentalMode = false }: PropertiesPageProps) {
+  const navigate = useNavigate()
+  const { isAuthenticated } = useAuth()
+  const PRICE_RANGES = rentalMode ? RENT_PRICE_RANGES : SALE_PRICE_RANGES
+
+  // Rental owners must be signed in to list a rental. Anonymous visitors are
+  // sent to login first and bounced back to the rental submission form.
+  const handleListRental = () => {
+    if (isAuthenticated) navigate('/sell?type=rental')
+    else navigate('/login', { state: { from: '/sell?type=rental' } })
+  }
   // Listing state lives in the URL so it survives navigation — the
   // "Back to listings" button on a detail page walks one step back in
   // browser history and lands on the same page+filters the user was
@@ -60,11 +85,12 @@ export default function PropertiesPage() {
 
   const pr = PRICE_RANGES[priceRange]
   const query = useQuery({
-    queryKey: ['properties', { search, selectedCity, priceRange, propertyType, sortBy, page }],
+    queryKey: ['properties', { rentalMode, search, selectedCity, priceRange, propertyType, sortBy, page }],
     queryFn: () => propertiesApi.getAll({
       search: search.trim() || undefined,
       city: selectedCity || undefined,
       propertyType: (propertyType as 'open_land' | undefined) || undefined,
+      status: rentalMode ? 'for_rent' : undefined,
       minPrice: pr.min || undefined,
       maxPrice: pr.max || undefined,
       sortBy: sortBy as 'price_asc' | 'price_desc' | 'newest' | 'oldest' | 'area_asc' | 'area_desc',
@@ -114,15 +140,23 @@ export default function PropertiesPage() {
   // page. We don't include search/price/area in the canonical because
   // those create infinite combinations and aren't useful as landing
   // pages — only the city slug is treated as an SEO axis.
-  const seoTitle = selectedCity
-    ? `Land for Sale in ${selectedCity}, Kanyakumari`
-    : 'Kanyakumari Properties — Land for Sale'
-  const seoDescription = selectedCity
-    ? `Verified land properties for sale in ${selectedCity}, Kanyakumari district — open plots, residential, agricultural and commercial. Direct seller phone numbers, zero brokerage for buyers, free doorstep consultation.`
-    : 'Land for sale across Kanyakumari district — Nagercoil, Marthandam, Thuckalay, Colachel, Kaliyakkavilai and more. Verified plots with direct seller contact, ₹0 brokerage for buyers, free site visits.'
-  const seoPath = selectedCity
-    ? `/properties?city=${encodeURIComponent(selectedCity)}`
-    : '/properties'
+  const seoTitle = rentalMode
+    ? (selectedCity
+        ? `Properties for Rent in ${selectedCity}, Kanyakumari`
+        : 'Rental Properties in Kanyakumari — Houses & Land for Rent')
+    : (selectedCity
+        ? `Land for Sale in ${selectedCity}, Kanyakumari`
+        : 'Kanyakumari Properties — Land for Sale')
+  const seoDescription = rentalMode
+    ? (selectedCity
+        ? `Rental properties in ${selectedCity}, Kanyakumari — houses, plots and commercial space for rent. Free to browse, no login needed, direct owner contact.`
+        : 'Rental properties across Kanyakumari district — houses, land and commercial space for rent in Nagercoil, Marthandam, Thuckalay, Colachel and more. Free listings, browse without signing in.')
+    : (selectedCity
+        ? `Verified land properties for sale in ${selectedCity}, Kanyakumari district — open plots, residential, agricultural and commercial. Direct seller phone numbers, zero brokerage for buyers, free doorstep consultation.`
+        : 'Land for sale across Kanyakumari district — Nagercoil, Marthandam, Thuckalay, Colachel, Kaliyakkavilai and more. Verified plots with direct seller contact, ₹0 brokerage for buyers, free site visits.')
+  const seoPath = rentalMode
+    ? (selectedCity ? `/rentals?city=${encodeURIComponent(selectedCity)}` : '/rentals')
+    : (selectedCity ? `/properties?city=${encodeURIComponent(selectedCity)}` : '/properties')
   // BreadcrumbList helps Google render a richer SERP and reinforces the
   // hierarchy "Home → Properties → {city}".
   const breadcrumbJsonLd = {
@@ -130,10 +164,12 @@ export default function PropertiesPage() {
     '@type': 'BreadcrumbList',
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://joseforland.com/' },
-      { '@type': 'ListItem', position: 2, name: 'Properties', item: 'https://joseforland.com/properties' },
+      { '@type': 'ListItem', position: 2,
+        name: rentalMode ? 'Rental Properties' : 'Properties',
+        item: `https://joseforland.com${rentalMode ? '/rentals' : '/properties'}` },
       ...(selectedCity
         ? [{ '@type': 'ListItem', position: 3, name: selectedCity,
-             item: `https://joseforland.com/properties?city=${encodeURIComponent(selectedCity)}` }]
+             item: `https://joseforland.com${rentalMode ? '/rentals' : '/properties'}?city=${encodeURIComponent(selectedCity)}` }]
         : []),
     ],
   }
@@ -153,6 +189,32 @@ export default function PropertiesPage() {
       <h1 className="sr-only">
         {seoTitle}
       </h1>
+
+      {/* Rental hero — only on /rentals. Explains the free, no-login browsing
+          and offers a login-gated "List your rental" entry point for owners. */}
+      {rentalMode && (
+        <div style={{ background: 'linear-gradient(135deg, #6A9739 0%, #547a2d 100%)' }} className="text-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider bg-white/15 rounded-full px-3 py-1 mb-2">
+                <KeyRound className="w-3.5 h-3.5" /> Rentals · Free to browse
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-bold leading-tight">Rental Properties in Kanyakumari</h2>
+              <p className="text-sm text-white/85 mt-1 max-w-xl">
+                Houses, plots and commercial space for rent — browse freely, no sign-in needed. Contact owners directly.
+              </p>
+            </div>
+            <button
+              onClick={handleListRental}
+              className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-bold bg-white shrink-0 transition-transform hover:scale-[1.03]"
+              style={{ color: '#547a2d' }}
+            >
+              <Home className="w-4 h-4" /> List your rental
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="bg-white border-b border-gray-200 sticky top-16 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
           <div className="flex items-center gap-3">
@@ -286,7 +348,7 @@ export default function PropertiesPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="flex items-center justify-between mb-4">
           <p className="text-sm text-gray-500 inline-flex items-center gap-2">
-            <span className="font-semibold text-gray-900">{totalCount.toLocaleString('en-IN')}</span> properties found
+            <span className="font-semibold text-gray-900">{totalCount.toLocaleString('en-IN')}</span> {rentalMode ? 'rentals' : 'properties'} found
             {query.isFetching && <Loader2 className="w-3.5 h-3.5 animate-spin text-gray-400" />}
           </p>
         </div>

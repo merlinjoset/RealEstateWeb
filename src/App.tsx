@@ -85,6 +85,14 @@ export default function App() {
               }
             />
             <Route
+              path="/rentals"
+              element={
+                <PublicLayout>
+                  <PropertiesPage rentalMode />
+                </PublicLayout>
+              }
+            />
+            <Route
               path="/properties/:id"
               element={
                 <PublicLayout>

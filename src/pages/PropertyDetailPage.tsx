@@ -349,8 +349,11 @@ export default function PropertyDetailPage() {
               <div className="mb-4 pb-4 border-b border-gray-100">
                 <div className="text-3xl font-bold mb-1" style={{ color: '#FF5A5F' }}>
                   {formatLakhs(property.totalPrice)}
+                  {property.status === 'for_rent' && (
+                    <span className="text-base font-medium text-gray-500"> / month</span>
+                  )}
                 </div>
-                {property.pricePerCent && (
+                {property.status !== 'for_rent' && property.pricePerCent && (
                   <div className="text-sm text-gray-500">
                     {formatLakhs(property.pricePerCent)} per cent
                   </div>

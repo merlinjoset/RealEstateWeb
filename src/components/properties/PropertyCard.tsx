@@ -99,6 +99,11 @@ export default function PropertyCard({ property }: Props) {
             <span className="text-xs font-semibold px-2.5 py-1 rounded-full text-white" style={{ backgroundColor: '#293237' }}>
               {TYPE_LABELS[property.propertyType]}
             </span>
+            {property.status === 'for_rent' && (
+              <span className="text-xs font-semibold px-2.5 py-1 rounded-full text-white" style={{ backgroundColor: '#6A9739' }}>
+                For Rent
+              </span>
+            )}
             {property.isFeatured && (
               <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-yellow-500 text-white">
                 Featured
@@ -161,8 +166,11 @@ export default function PropertyCard({ property }: Props) {
           <div>
             <div className="text-xl font-bold" style={{ color: '#FF5A5F' }}>
               {formatLakhs(property.totalPrice)}
+              {property.status === 'for_rent' && (
+                <span className="text-sm font-medium text-gray-500"> / month</span>
+              )}
             </div>
-            {property.pricePerCent && (
+            {property.status !== 'for_rent' && property.pricePerCent && (
               <div className="text-xs text-gray-500">
                 {formatLakhs(property.pricePerCent)}/cent
               </div>
