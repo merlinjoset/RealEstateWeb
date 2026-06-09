@@ -47,6 +47,7 @@ interface FormState {
   totalPrice: string
   pricePerCent: string
   areaInCents: string
+  areaInSqFt: string
   city: string
   address: string
   pinCode: string
@@ -69,7 +70,7 @@ const INITIAL: FormState = {
   submitterName: '', submitterPhone: '', submitterEmail: '',
   serialNo: '',
   title: '', description: '', propertyType: 'open_land',
-  totalPrice: '', pricePerCent: '', areaInCents: '', city: '', address: '', pinCode: '',
+  totalPrice: '', pricePerCent: '', areaInCents: '', areaInSqFt: '', city: '', address: '', pinCode: '',
   legalStatus: '', roadAccess: false, features: [],
   latitude: '', longitude: '',
   marketingPlan: 'Free',
@@ -252,7 +253,13 @@ export default function SubmitPropertyPage() {
       description: form.description,
       totalPrice: Number(form.totalPrice),
       pricePerCent: form.pricePerCent ? Number(form.pricePerCent) : undefined,
-      areaInCents: Number(form.areaInCents),
+      // Rentals are entered in sq ft. The backend still requires areaInCents
+      // (>= 0.01), so derive it from sq ft (1 cent ≈ 435.6 sq ft) and send the
+      // sq ft value through too for display.
+      areaInCents: isRental
+        ? Math.max(0.01, Number((Number(form.areaInSqFt) / 435.6).toFixed(2)))
+        : Number(form.areaInCents),
+      areaInSqFt: isRental ? (Number(form.areaInSqFt) || undefined) : undefined,
       address: form.address,
       city: form.city,
       district: form.district,
@@ -476,18 +483,30 @@ export default function SubmitPropertyPage() {
                   </p>
                 )}
               </Field>
-              <Field label="Area (in Cents) *" hint="1 cent ≈ 435.6 sq ft · decimals OK (e.g. 1.8, 7.25)">
-                <div className="relative">
-                  {/* step="any" lets the browser accept any decimal precision
-                      (1.8, 7.25, 3.125, …). The previous step="0.5" rejected
-                      everything that wasn't a multiple of 0.5 cents. */}
-                  <input required type="number" min="0.01" step="any"
-                    value={form.areaInCents}
-                    onChange={(e) => set('areaInCents', e.target.value)}
-                    className="input-field pr-14" placeholder="15" />
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 font-medium">cents</span>
-                </div>
-              </Field>
+              {isRental ? (
+                <Field label="Total Area (sq ft) *" hint="Built-up / plot area in square feet">
+                  <div className="relative">
+                    <input required type="number" min="1" step="any"
+                      value={form.areaInSqFt}
+                      onChange={(e) => set('areaInSqFt', e.target.value)}
+                      className="input-field pr-16" placeholder="1200" />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 font-medium">sq ft</span>
+                  </div>
+                </Field>
+              ) : (
+                <Field label="Area (in Cents) *" hint="1 cent ≈ 435.6 sq ft · decimals OK (e.g. 1.8, 7.25)">
+                  <div className="relative">
+                    {/* step="any" lets the browser accept any decimal precision
+                        (1.8, 7.25, 3.125, …). The previous step="0.5" rejected
+                        everything that wasn't a multiple of 0.5 cents. */}
+                    <input required type="number" min="0.01" step="any"
+                      value={form.areaInCents}
+                      onChange={(e) => set('areaInCents', e.target.value)}
+                      className="input-field pr-14" placeholder="15" />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 font-medium">cents</span>
+                  </div>
+                </Field>
+              )}
             </Row>
             {!isRental && (
               <Field label="Price per Cent (₹) — optional"

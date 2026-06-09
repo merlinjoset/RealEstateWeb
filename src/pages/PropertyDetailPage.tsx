@@ -235,17 +235,30 @@ export default function PropertyDetailPage() {
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 py-4 border-y border-gray-100">
-                <div className="text-center">
-                  <div className="text-2xl font-bold" style={{ color: '#6A9739' }}>{property.areaInCents}</div>
-                  <div className="text-xs text-gray-500 flex items-center justify-center gap-1 mt-0.5">
-                    <Ruler className="w-3 h-3" /> Cents
-                  </div>
-                </div>
-                {property.areaInSqFt && (
+                {property.status === 'for_rent' ? (
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-gray-700">{property.areaInSqFt.toLocaleString()}</div>
-                    <div className="text-xs text-gray-500 mt-0.5">Sq. Ft.</div>
+                    <div className="text-2xl font-bold" style={{ color: '#6A9739' }}>
+                      {(property.areaInSqFt ?? 0).toLocaleString()}
+                    </div>
+                    <div className="text-xs text-gray-500 flex items-center justify-center gap-1 mt-0.5">
+                      <Ruler className="w-3 h-3" /> Sq. Ft.
+                    </div>
                   </div>
+                ) : (
+                  <>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold" style={{ color: '#6A9739' }}>{property.areaInCents}</div>
+                      <div className="text-xs text-gray-500 flex items-center justify-center gap-1 mt-0.5">
+                        <Ruler className="w-3 h-3" /> Cents
+                      </div>
+                    </div>
+                    {property.areaInSqFt && (
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-gray-700">{property.areaInSqFt.toLocaleString()}</div>
+                        <div className="text-xs text-gray-500 mt-0.5">Sq. Ft.</div>
+                      </div>
+                    )}
+                  </>
                 )}
                 {property.bedrooms && (
                   <div className="text-center">

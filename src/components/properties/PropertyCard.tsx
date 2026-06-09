@@ -179,7 +179,9 @@ export default function PropertyCard({ property }: Props) {
           <div className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium"
             style={{ backgroundColor: 'rgba(106,151,57,0.1)', color: '#6A9739' }}>
             <Ruler className="w-3.5 h-3.5" />
-            {property.areaInCents} cents
+            {property.status === 'for_rent' && property.areaInSqFt
+              ? `${property.areaInSqFt.toLocaleString('en-IN')} sq ft`
+              : `${property.areaInCents} cents`}
           </div>
         </div>
 

@@ -94,6 +94,8 @@ export interface PropertySubmission {
   state: string
   pinCode: string
   areaInCents: number
+  /** Optional total built/plot area in square feet (used for rentals). */
+  areaInSqFt?: number
   propertyType: string
   status: string
   features: string[]
