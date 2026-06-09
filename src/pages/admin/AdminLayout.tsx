@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import {
   LayoutDashboard, Home, Plus, ClipboardList, Users,
   MessageSquare, Settings, Menu, X, LogOut, Video, Send,
-  ChevronDown, User as UserIcon, ExternalLink, Briefcase, KeyRound,
+  ChevronDown, User as UserIcon, ExternalLink, Briefcase,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { propertiesApi, inquiriesApi } from '../../services/api'
@@ -35,7 +35,6 @@ const NAV_ITEMS: NavItem[] = [
   { to: '/admin/properties', label: 'All Properties', icon: Home, roles: ['Admin'] },
   { to: '/admin/video-listings', label: 'Video Listings', icon: Video, badgeKey: 'video', roles: ['Admin'] },
   { to: '/admin/add-property', label: 'Add Property', icon: Plus, roles: ['Admin'] },
-  { to: '/admin/add-property?type=rental', label: 'Add Rental', icon: KeyRound, roles: ['Admin'] },
   { to: '/admin/pending', label: 'Pending Approvals', icon: ClipboardList, badgeKey: 'pending', roles: ['Admin', 'Employee'] },
   { to: '/admin/testimonials', label: 'Testimonials', icon: Video, roles: ['Admin'] },
   { to: '/admin/inquiries', label: 'Inquiries', icon: MessageSquare, badgeKey: 'unread', roles: ['Admin', 'Employee'] },
