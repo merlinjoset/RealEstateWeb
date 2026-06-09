@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import {
   Save, X, Upload, FolderOpen, Info, IndianRupee, MapPin, Sparkles,
   Image as ImageIcon, Settings as SettingsIcon, Check, Star, GripVertical,
@@ -35,9 +35,12 @@ interface FormState {
   serialNo: string
   title: string
   description: string
+  /** 'for_sale' | 'for_rent' — drives the rental UI + payload. */
+  status: string
   totalPrice: string
   pricePerCent: string
   areaInCents: string
+  areaInSqFt: string
   city: string
   address: string
   pinCode: string
@@ -61,8 +64,8 @@ interface FormState {
 
 const INITIAL: FormState = {
   serialNo: '',
-  title: '', description: '', totalPrice: '', pricePerCent: '',
-  areaInCents: '', city: '', address: '', pinCode: '',
+  title: '', description: '', status: 'for_sale', totalPrice: '', pricePerCent: '',
+  areaInCents: '', areaInSqFt: '', city: '', address: '', pinCode: '',
   propertyType: 'open_land', bedrooms: '', bathrooms: '',
   roadAccess: false, isFeatured: false, isVerified: false, legalStatus: '',
   nearbyLandmarks: '', features: [],
@@ -81,7 +84,7 @@ interface SectionDef {
 
 const SECTIONS: SectionDef[] = [
   { id: 'basic',    label: 'Basic Info',     icon: Info,         isComplete: (f) => f.title.length > 0 && f.description.length > 0 },
-  { id: 'pricing',  label: 'Pricing & Area', icon: IndianRupee,  isComplete: (f) => f.totalPrice !== '' && f.areaInCents !== '' },
+  { id: 'pricing',  label: 'Pricing & Area', icon: IndianRupee,  isComplete: (f) => f.totalPrice !== '' && (f.status === 'for_rent' ? f.areaInSqFt !== '' : f.areaInCents !== '') },
   { id: 'location', label: 'Location',       icon: MapPin,       isComplete: (f) => f.city.length > 0 },
   { id: 'features', label: 'Features',       icon: Sparkles,     isComplete: (f) => f.features.length > 0, isOptional: true },
   { id: 'marketing', label: 'Marketing',     icon: Video,        isComplete: (f) => f.marketingPlan === 'VideoPromotion' || f.marketingPlan === 'Free', isOptional: true },
@@ -93,7 +96,7 @@ const SECTIONS: SectionDef[] = [
 // Maps each field to the section it lives in, so we can scroll to / highlight the right one
 const FIELD_SECTION: Partial<Record<keyof FormState, string>> = {
   title: 'basic', description: 'basic', propertyType: 'basic', legalStatus: 'basic',
-  areaInCents: 'pricing', totalPrice: 'pricing', pricePerCent: 'pricing',
+  areaInCents: 'pricing', areaInSqFt: 'pricing', totalPrice: 'pricing', pricePerCent: 'pricing',
   city: 'location', address: 'location', pinCode: 'location',
   nearbyLandmarks: 'location', bedrooms: 'location', bathrooms: 'location',
   latitude: 'location', longitude: 'location',
@@ -126,9 +129,18 @@ function validate(form: FormState): Errors {
     e.description = 'Add a bit more detail (minimum 30 characters)'
   }
 
-  // Area
+  const isRental = form.status === 'for_rent'
+
+  // Area — rentals are measured in sq ft, sale listings in cents.
   const area = Number(form.areaInCents)
-  if (!form.areaInCents) {
+  if (isRental) {
+    const sqft = Number(form.areaInSqFt)
+    if (!form.areaInSqFt) {
+      e.areaInSqFt = 'Area is required'
+    } else if (isNaN(sqft) || sqft <= 0) {
+      e.areaInSqFt = 'Enter a valid area in sq ft'
+    }
+  } else if (!form.areaInCents) {
     e.areaInCents = 'Area is required'
   } else if (isNaN(area) || area <= 0) {
     e.areaInCents = 'Enter a valid area in cents'
@@ -136,13 +148,13 @@ function validate(form: FormState): Errors {
     e.areaInCents = 'Area looks too large — please verify'
   }
 
-  // Total Price
+  // Total Price / Monthly Rent
   const price = Number(form.totalPrice)
   if (!form.totalPrice) {
-    e.totalPrice = 'Total price is required'
+    e.totalPrice = isRental ? 'Monthly rent is required' : 'Total price is required'
   } else if (isNaN(price) || price <= 0) {
-    e.totalPrice = 'Enter a valid price'
-  } else if (price < 10000) {
+    e.totalPrice = isRental ? 'Enter a valid monthly rent' : 'Enter a valid price'
+  } else if (!isRental && price < 10000) {
     e.totalPrice = 'Price seems too low — verify the amount'
   }
 
@@ -207,8 +219,29 @@ function validate(form: FormState): Errors {
 
 export default function AddPropertyPage() {
   const { id } = useParams<{ id?: string }>()
+  const [searchParams] = useSearchParams()
   const isEditMode = Boolean(id)
-  const [form, setForm] = useState<FormState>(INITIAL)
+  // New listings can be opened straight into rental mode via
+  // /admin/add-property?type=rental (the "Add Rental" sidebar link).
+  const [form, setForm] = useState<FormState>(() =>
+    !isEditMode && searchParams.get('type') === 'rental'
+      ? { ...INITIAL, status: 'for_rent' }
+      : INITIAL
+  )
+  const isRental = form.status === 'for_rent'
+
+  // Keep the listing type in sync with the ?type= query param so the
+  // "Add Property" / "Add Rental" sidebar links switch modes even when the
+  // form is already mounted. Only the URL drives this — the in-form toggle
+  // uses set('status', …) without touching the URL, so it isn't overridden.
+  const typeParam = searchParams.get('type')
+  useEffect(() => {
+    if (isEditMode) return
+    setForm((f) => {
+      const next = typeParam === 'rental' ? 'for_rent' : 'for_sale'
+      return f.status === next ? f : { ...f, status: next }
+    })
+  }, [typeParam, isEditMode])
   const [documents, setDocuments] = useState<PropertyDocument[]>([])
   // New images the admin has just picked — `file` is the pending upload,
   // `url` is the blob preview. Already-saved images on an edited property
@@ -239,9 +272,11 @@ export default function AddPropertyPage() {
           serialNo: p.serialNo ?? '',
           title: p.title ?? '',
           description: p.description ?? '',
+          status: p.status ?? 'for_sale',
           totalPrice: p.totalPrice?.toString() ?? '',
           pricePerCent: p.pricePerCent?.toString() ?? '',
           areaInCents: p.areaInCents?.toString() ?? '',
+          areaInSqFt: p.areaInSqFt?.toString() ?? '',
           city: p.city ?? '',
           address: p.address ?? '',
           pinCode: p.pinCode ?? '',
@@ -397,9 +432,13 @@ export default function AddPropertyPage() {
           serialNo: form.serialNo.trim() || null,
           title: form.title,
           description: form.description,
+          status: form.status as PropertyUpdate['status'],
           totalPrice: Number(form.totalPrice) || 0,
-          pricePerCent: form.pricePerCent ? Number(form.pricePerCent) : undefined,
-          areaInCents: Number(form.areaInCents) || 0,
+          pricePerCent: isRental ? undefined : (form.pricePerCent ? Number(form.pricePerCent) : undefined),
+          areaInCents: isRental
+            ? Math.max(0.01, Number((Number(form.areaInSqFt) / 435.6).toFixed(2)))
+            : Number(form.areaInCents) || 0,
+          areaInSqFt: isRental ? (Number(form.areaInSqFt) || undefined) : undefined,
           address: form.address,
           city: form.city,
           pinCode: form.pinCode,
@@ -413,7 +452,7 @@ export default function AddPropertyPage() {
           roadAccess: form.roadAccess,
           isFeatured: form.isFeatured,
           isVerified: form.isVerified,
-          marketingPlan: form.marketingPlan,
+          marketingPlan: isRental ? 'Free' : form.marketingPlan,
           latitude: form.latitude ? Number(form.latitude) : undefined,
           longitude: form.longitude ? Number(form.longitude) : undefined,
           // Owner / seller contact — send the (trimmed) values so admins can
@@ -431,20 +470,23 @@ export default function AddPropertyPage() {
           title: form.title,
           description: form.description,
           totalPrice: Number(form.totalPrice) || 0,
-          pricePerCent: form.pricePerCent ? Number(form.pricePerCent) : undefined,
-          areaInCents: Number(form.areaInCents) || 0,
+          pricePerCent: isRental ? undefined : (form.pricePerCent ? Number(form.pricePerCent) : undefined),
+          areaInCents: isRental
+            ? Math.max(0.01, Number((Number(form.areaInSqFt) / 435.6).toFixed(2)))
+            : Number(form.areaInCents) || 0,
+          areaInSqFt: isRental ? (Number(form.areaInSqFt) || undefined) : undefined,
           address: form.address,
           city: form.city,
           district: 'Kanyakumari',
           state: 'Tamil Nadu',
           pinCode: form.pinCode,
           propertyType: form.propertyType,
-          status: 'for_sale',
+          status: form.status,
           features: form.features,
           images: imageUrls,
           legalStatus: form.legalStatus || undefined,
           roadAccess: form.roadAccess,
-          marketingPlan: form.marketingPlan,
+          marketingPlan: isRental ? 'Free' : form.marketingPlan,
           latitude: form.latitude ? Number(form.latitude) : undefined,
           longitude: form.longitude ? Number(form.longitude) : undefined,
           submitterName: form.submitterName.trim() || 'Admin entry',
@@ -511,10 +553,10 @@ export default function AddPropertyPage() {
           </button>
           <div className="min-w-0">
             <h2 className="text-xl font-bold text-gray-900 truncate">
-              {isEditMode ? `Edit Property #${id}` : 'Add New Property'}
+              {isEditMode ? `Edit ${isRental ? 'Rental ' : ''}Property #${id}` : (isRental ? 'Add New Rental' : 'Add New Property')}
             </h2>
             <p className="text-xs text-gray-500 mt-0.5">
-              {isEditMode ? 'Update the property details below' : 'Fill in the details to list a new land property'}
+              {isEditMode ? 'Update the property details below' : (isRental ? 'Fill in the details to list a rental property' : 'Fill in the details to list a new land property')}
             </p>
           </div>
         </div>
@@ -636,6 +678,27 @@ export default function AddPropertyPage() {
             sectionRef={(el) => (sectionRefs.current.basic = el)}
             id="basic">
 
+            <Field label="Listing Type" hint="Sale listings are gated to signed-in buyers; rentals are free & public">
+              <div className="grid grid-cols-2 gap-2 max-w-sm">
+                {([
+                  { value: 'for_sale', label: 'For Sale' },
+                  { value: 'for_rent', label: 'For Rent' },
+                ] as const).map((opt) => {
+                  const active = form.status === opt.value
+                  return (
+                    <button key={opt.value} type="button"
+                      onClick={() => set('status', opt.value)}
+                      className="px-3 py-2.5 rounded-xl border-2 text-sm font-semibold transition-all"
+                      style={active
+                        ? { backgroundColor: '#6A9739', borderColor: '#6A9739', color: 'white' }
+                        : { backgroundColor: 'white', borderColor: '#e5e7eb', color: '#4B5563' }}>
+                      {opt.label}
+                    </button>
+                  )
+                })}
+              </div>
+            </Field>
+
             <Field label="Serial No"
               hint="Optional reference code for tracking — e.g. JFL-2026-001">
               <input type="text" value={form.serialNo}
@@ -695,65 +758,84 @@ export default function AddPropertyPage() {
           </Section>
 
           {/* Pricing & Area */}
-          <Section title="Pricing & Area"
-            desc="Total price and plot size — auto-calculates per-cent rate"
+          <Section title={isRental ? 'Rent & Area' : 'Pricing & Area'}
+            desc={isRental ? 'Monthly rent and total area in square feet' : 'Total price and plot size — auto-calculates per-cent rate'}
             icon={IndianRupee}
             sectionRef={(el) => (sectionRefs.current.pricing = el)}
             id="pricing">
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <Field label="Area (in Cents)" required error={errorFor('areaInCents')}>
-                <div className="relative">
-                  {/* step="any" — admin can enter 1.8 / 7.25 / etc. The
-                      default step of 1 was rejecting any non-integer value
-                      at browser-validity time even though the field is a
-                      decimal in the API. */}
-                  <input type="number" min="0.01" step="any" value={form.areaInCents}
-                    onChange={(e) => set('areaInCents', e.target.value)}
-                    onBlur={() => markTouched('areaInCents')}
-                    placeholder="15"
-                    className="input-field pr-14"
-                    style={errorFor('areaInCents') ? { borderColor: '#DC2626' } : undefined} />
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 font-medium">cents</span>
-                </div>
-              </Field>
+            <div className={`grid grid-cols-1 gap-4 ${isRental ? 'sm:grid-cols-2' : 'sm:grid-cols-3'}`}>
+              {isRental ? (
+                <Field label="Total Area (sq ft)" required error={errorFor('areaInSqFt')}>
+                  <div className="relative">
+                    <input type="number" min="1" step="any" value={form.areaInSqFt}
+                      onChange={(e) => set('areaInSqFt', e.target.value)}
+                      onBlur={() => markTouched('areaInSqFt')}
+                      placeholder="1200"
+                      className="input-field pr-16"
+                      style={errorFor('areaInSqFt') ? { borderColor: '#DC2626' } : undefined} />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 font-medium">sq ft</span>
+                  </div>
+                </Field>
+              ) : (
+                <Field label="Area (in Cents)" required error={errorFor('areaInCents')}>
+                  <div className="relative">
+                    {/* step="any" — admin can enter 1.8 / 7.25 / etc. The
+                        default step of 1 was rejecting any non-integer value
+                        at browser-validity time even though the field is a
+                        decimal in the API. */}
+                    <input type="number" min="0.01" step="any" value={form.areaInCents}
+                      onChange={(e) => set('areaInCents', e.target.value)}
+                      onBlur={() => markTouched('areaInCents')}
+                      placeholder="15"
+                      className="input-field pr-14"
+                      style={errorFor('areaInCents') ? { borderColor: '#DC2626' } : undefined} />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 font-medium">cents</span>
+                  </div>
+                </Field>
+              )}
 
-              <Field label="Total Price" required error={errorFor('totalPrice')}>
+              <Field label={isRental ? 'Monthly Rent' : 'Total Price'} required error={errorFor('totalPrice')}>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium">₹</span>
                   <input type="number" min="0" value={form.totalPrice}
                     onChange={(e) => set('totalPrice', e.target.value)}
                     onBlur={() => markTouched('totalPrice')}
-                    placeholder="2250000"
+                    placeholder={isRental ? '15000' : '2250000'}
                     className="input-field pl-7"
                     style={errorFor('totalPrice') ? { borderColor: '#DC2626' } : undefined} />
+                  {isRental && (
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 font-medium">/ month</span>
+                  )}
                 </div>
                 {form.totalPrice && !errorFor('totalPrice') && (
                   <p className="text-xs mt-1.5 font-semibold" style={{ color: '#6A9739' }}>
-                    {formatLakhs(form.totalPrice)}
+                    {formatLakhs(form.totalPrice)}{isRental ? ' / month' : ''}
                   </p>
                 )}
               </Field>
 
-              <Field label="Price per Cent" hint="Auto-calculated">
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium">₹</span>
-                  <input type="number" min="0" value={form.pricePerCent}
-                    onChange={(e) => set('pricePerCent', e.target.value)}
-                    placeholder="150000"
-                    className="input-field pl-7"
-                    style={{ backgroundColor: '#FAFAF8' }} />
-                </div>
-                {form.pricePerCent && (
-                  <p className="text-xs mt-1.5 text-gray-500">
-                    {formatLakhs(form.pricePerCent)}/cent
-                  </p>
-                )}
-              </Field>
+              {!isRental && (
+                <Field label="Price per Cent" hint="Auto-calculated">
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium">₹</span>
+                    <input type="number" min="0" value={form.pricePerCent}
+                      onChange={(e) => set('pricePerCent', e.target.value)}
+                      placeholder="150000"
+                      className="input-field pl-7"
+                      style={{ backgroundColor: '#FAFAF8' }} />
+                  </div>
+                  {form.pricePerCent && (
+                    <p className="text-xs mt-1.5 text-gray-500">
+                      {formatLakhs(form.pricePerCent)}/cent
+                    </p>
+                  )}
+                </Field>
+              )}
             </div>
 
             {/* Pricing summary card */}
-            {form.totalPrice && form.areaInCents && (
+            {form.totalPrice && (isRental ? form.areaInSqFt : form.areaInCents) && (
               <div className="mt-2 p-4 rounded-xl border flex items-center gap-4"
                 style={{ backgroundColor: 'rgba(255,90,95,0.04)', borderColor: 'rgba(255,90,95,0.15)' }}>
                 <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
@@ -761,13 +843,17 @@ export default function AddPropertyPage() {
                   <IndianRupee className="w-5 h-5" />
                 </div>
                 <div className="flex-1">
-                  <div className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Listing Price</div>
+                  <div className="text-xs text-gray-500 uppercase tracking-wider font-semibold">
+                    {isRental ? 'Monthly Rent' : 'Listing Price'}
+                  </div>
                   <div className="flex items-baseline gap-2 mt-0.5">
                     <span className="text-2xl font-bold tracking-tight" style={{ color: '#111111' }}>
-                      {formatLakhs(form.totalPrice)}
+                      {formatLakhs(form.totalPrice)}{isRental ? ' / month' : ''}
                     </span>
                     <span className="text-sm text-gray-500">
-                      for {form.areaInCents} cents · {formatLakhs(form.pricePerCent)}/cent
+                      {isRental
+                        ? `for ${form.areaInSqFt} sq ft`
+                        : `for ${form.areaInCents} cents · ${formatLakhs(form.pricePerCent)}/cent`}
                     </span>
                   </div>
                 </div>
@@ -891,20 +977,22 @@ export default function AddPropertyPage() {
             </div>
           </Section>
 
-          {/* Marketing plan */}
-          <Section
-            title="Marketing Plan"
-            desc="Free listing vs Video Promotion (2% brokerage on sale)"
-            icon={Video}
-            sectionRef={(el) => (sectionRefs.current.marketing = el)}
-            id="marketing"
-            badge={form.marketingPlan === 'VideoPromotion' ? 'Video · 2%' : 'Free'}>
-            <MarketingPlanPicker
-              value={form.marketingPlan}
-              onChange={(plan) => set('marketingPlan', plan)}
-              totalPriceStr={form.totalPrice}
-            />
-          </Section>
+          {/* Marketing plan — sale only; rentals are always free listings. */}
+          {!isRental && (
+            <Section
+              title="Marketing Plan"
+              desc="Free listing vs Video Promotion (2% brokerage on sale)"
+              icon={Video}
+              sectionRef={(el) => (sectionRefs.current.marketing = el)}
+              id="marketing"
+              badge={form.marketingPlan === 'VideoPromotion' ? 'Video · 2%' : 'Free'}>
+              <MarketingPlanPicker
+                value={form.marketingPlan}
+                onChange={(plan) => set('marketingPlan', plan)}
+                totalPriceStr={form.totalPrice}
+              />
+            </Section>
+          )}
 
           {/* Images */}
           <Section title="Images"
@@ -1047,8 +1135,8 @@ export default function AddPropertyPage() {
                 {form.title || (isEditMode ? `Property #${id}` : 'New property')}
               </div>
               <div className="text-[11px] text-gray-500">
-                {form.totalPrice && form.areaInCents
-                  ? <>{formatLakhs(form.totalPrice)} · {form.areaInCents} cents{form.city ? ` · ${form.city}` : ''}</>
+                {form.totalPrice && (isRental ? form.areaInSqFt : form.areaInCents)
+                  ? <>{formatLakhs(form.totalPrice)}{isRental ? '/mo' : ''} · {isRental ? `${form.areaInSqFt} sq ft` : `${form.areaInCents} cents`}{form.city ? ` · ${form.city}` : ''}</>
                   : 'Pricing not set'}
               </div>
             </div>
@@ -1274,11 +1362,11 @@ function PreviewModal({ form, typeMeta, images, onClose }: {
 
             <div className="flex items-center justify-between mt-4 pb-3 border-b border-gray-100">
               <div className="text-xl font-bold" style={{ color: '#FF5A5F' }}>
-                {form.totalPrice ? formatLakhs(form.totalPrice) : '—'}
+                {form.totalPrice ? formatLakhs(form.totalPrice) : '—'}{form.status === 'for_rent' && form.totalPrice ? '/mo' : ''}
               </div>
               <div className="text-xs px-2 py-1 rounded-md font-medium"
                 style={{ backgroundColor: 'rgba(106,151,57,0.1)', color: '#6A9739' }}>
-                {form.areaInCents || '—'} cents
+                {form.status === 'for_rent' ? `${form.areaInSqFt || '—'} sq ft` : `${form.areaInCents || '—'} cents`}
               </div>
             </div>
 
