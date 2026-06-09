@@ -423,8 +423,9 @@ export default function AddPropertyPage() {
           submitterEmail: form.submitterEmail.trim(),
         } as PropertyUpdate)
       } else {
-        // AddPropertyPage is admin-only; the form doesn't capture a separate
-        // submitter, so we mark the submission as an internal admin entry.
+        // AddPropertyPage is admin-only. The Owner / Seller Contact section
+        // feeds these fields; when left blank we fall back to an internal
+        // "Admin entry" marker so the listing still has a submitter.
         const payload: PropertySubmission = {
           serialNo: form.serialNo.trim() || undefined,
           title: form.title,
@@ -446,8 +447,9 @@ export default function AddPropertyPage() {
           marketingPlan: form.marketingPlan,
           latitude: form.latitude ? Number(form.latitude) : undefined,
           longitude: form.longitude ? Number(form.longitude) : undefined,
-          submitterName: 'Admin entry',
-          submitterPhone: '',
+          submitterName: form.submitterName.trim() || 'Admin entry',
+          submitterPhone: form.submitterPhone.trim(),
+          submitterEmail: form.submitterEmail.trim() || undefined,
         }
         await propertiesApi.submit(payload)
       }
@@ -1000,10 +1002,10 @@ export default function AddPropertyPage() {
               accent="#293237" />
           </Section>
 
-          {/* Owner / Seller Contact — edit mode only. New listings added here
-              are internal admin entries, so the submitter contact is only
-              meaningful (and correctable) for properties that already exist. */}
-          {isEditMode && (
+          {/* Owner / Seller Contact — captured for both new and existing
+              listings. Optional: leave blank for internal admin entries
+              (the owner name then defaults to "Admin entry"). */}
+          {(
             <Section title="Owner / Seller Contact"
               desc="Who owns this listing — shown to buyers on the property page and to admins in pending approvals"
               icon={User}
