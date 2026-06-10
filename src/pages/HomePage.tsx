@@ -2,6 +2,7 @@ import SEO from '../components/common/SEO'
 import HeroSection from '../components/home/HeroSection'
 import StatsSection from '../components/home/StatsSection'
 import BuyerLineBanner from '../components/home/BuyerLineBanner'
+import RentalBanner from '../components/home/RentalBanner'
 import FeaturedProperties from '../components/home/FeaturedProperties'
 import LocationSection from '../components/home/LocationSection'
 import WhyChooseUs from '../components/home/WhyChooseUs'
@@ -19,6 +20,7 @@ export default function HomePage() {
       <StatsSection />
       <BuyerLineBanner />
       <FeaturedProperties />
+      <RentalBanner />
       <LocationSection />
       <WhyChooseUs />
       <VideoTestimonials />
