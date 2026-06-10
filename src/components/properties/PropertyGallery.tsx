@@ -51,7 +51,40 @@ export default function PropertyGallery({ images, title }: Props) {
 
   return (
     <>
-      <div className="grid grid-cols-4 grid-rows-2 gap-2 h-96 rounded-xl overflow-hidden">
+      {/* Mobile: one large uncropped image + a horizontal thumbnail strip.
+          object-contain (on a neutral backdrop) shows the whole photo so
+          portrait phone shots aren't cropped to a sliver. The 4-up mosaic
+          below is desktop-only — it was crushing on a phone. */}
+      <div className="sm:hidden">
+        <div
+          className="rounded-xl overflow-hidden bg-gray-100 cursor-pointer"
+          onClick={() => setLightbox(0)}
+        >
+          <img
+            src={displayImages[0]}
+            alt={`${title} - photo 1`}
+            onError={handleImgError}
+            className="w-full h-72 object-contain"
+          />
+        </div>
+        {displayImages.length > 1 && (
+          <div className="mt-2 flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+            {displayImages.map((src, i) => (
+              <img
+                key={i}
+                src={src}
+                alt={`${title} - thumbnail ${i + 1}`}
+                onError={handleImgError}
+                onClick={() => setLightbox(i)}
+                className="h-16 w-20 shrink-0 object-cover rounded-lg cursor-pointer border border-gray-200"
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Desktop / tablet: the 4-up mosaic. */}
+      <div className="hidden sm:grid grid-cols-4 grid-rows-2 gap-2 h-96 rounded-xl overflow-hidden">
         <div
           className="col-span-2 row-span-2 cursor-pointer"
           onClick={() => setLightbox(0)}
@@ -104,7 +137,7 @@ export default function PropertyGallery({ images, title }: Props) {
             src={displayImages[lightbox]}
             alt={`${title} - photo ${lightbox + 1}`}
             onError={handleImgError}
-            className="max-w-5xl max-h-[85vh] object-contain mx-16"
+            className="max-w-[88vw] sm:max-w-5xl max-h-[80vh] sm:max-h-[85vh] object-contain mx-4 sm:mx-16"
           />
 
           <button onClick={next} className="absolute right-4 text-white hover:text-gray-300 p-2">
