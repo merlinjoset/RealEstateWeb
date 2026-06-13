@@ -3,9 +3,11 @@ import { useLocation } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import { analyticsApi } from '../../services/api'
 
-// Both are optional — set them as Render env vars on the web service to switch
-// the respective integration on. With neither set, only the in-app beacon runs.
-const GA_ID = import.meta.env.VITE_GA_ID as string | undefined
+// GA4 Measurement ID. A GA tag id is a public client-side value (it ships in
+// every page anyway), so the live property id is the built-in default; set
+// VITE_GA_ID to override (e.g. a separate id for staging). Search Console
+// verification stays env-only — set VITE_GSC_VERIFICATION to switch it on.
+const GA_ID = (import.meta.env.VITE_GA_ID as string | undefined) || 'G-TJC0JK9BCQ'
 const GSC_VERIFICATION = import.meta.env.VITE_GSC_VERIFICATION as string | undefined
 
 declare global {
