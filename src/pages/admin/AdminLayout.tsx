@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import {
   LayoutDashboard, Home, Plus, ClipboardList, Users,
   MessageSquare, Settings, Menu, X, LogOut, Video, Send,
-  ChevronDown, User as UserIcon, ExternalLink, Briefcase,
+  ChevronDown, User as UserIcon, ExternalLink, Briefcase, BarChart3,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { propertiesApi, inquiriesApi } from '../../services/api'
@@ -39,6 +39,7 @@ const NAV_ITEMS: NavItem[] = [
   { to: '/admin/testimonials', label: 'Testimonials', icon: Video, roles: ['Admin'] },
   { to: '/admin/inquiries', label: 'Inquiries', icon: MessageSquare, badgeKey: 'unread', roles: ['Admin', 'Employee'] },
   { to: '/admin/users', label: 'Users', icon: Users, roles: ['Admin'] },
+  { to: '/admin/analytics', label: 'Traffic', icon: BarChart3, roles: ['Admin'] },
   { to: '/admin/sms-templates', label: 'SMS Templates', icon: Send, roles: ['Admin'] },
   { to: '/admin/settings', label: 'Settings', icon: Settings, roles: ['Admin'] },
 ]

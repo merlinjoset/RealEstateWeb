@@ -395,6 +395,31 @@ export const settingsApi = {
     api.put<SiteSettings>('/settings/site', data).then((r) => r.data),
 }
 
+/* -------------------- Traffic analytics (in-app dashboard) -------------------- */
+
+export interface AnalyticsDailyCount { date: string; count: number }
+export interface AnalyticsLabelCount { label: string; count: number }
+export interface AnalyticsSummary {
+  days: number
+  totalViews: number
+  uniqueVisitors: number
+  viewsToday: number
+  viewsPreviousPeriod: number
+  daily: AnalyticsDailyCount[]
+  topPages: AnalyticsLabelCount[]
+  topReferrers: AnalyticsLabelCount[]
+}
+
+export const analyticsApi = {
+  /** Fire-and-forget page-view beacon (public). Callers should .catch() noop. */
+  track: (data: { path: string; referrer?: string; visitorId?: string }) =>
+    api.post('/analytics/pageview', data).then((r) => r.data),
+
+  /** Admin: aggregated traffic summary for the Traffic dashboard. */
+  getSummary: (days = 30) =>
+    api.get<AnalyticsSummary>('/analytics/summary', { params: { days } }).then((r) => r.data),
+}
+
 export const contactApi = {
   /** Submits an inquiry (used by the contact form, property pages,
    *  and document-request modals). Hits /api/inquiries on the backend. */

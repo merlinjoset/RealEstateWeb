@@ -7,6 +7,7 @@ import Navbar from './components/layout/Navbar'
 import Footer from './components/layout/Footer'
 import FreeListingsBanner from './components/layout/FreeListingsBanner'
 import ScrollToTop from './components/common/ScrollToTop'
+import Analytics from './components/common/Analytics'
 
 import HomePage from './pages/HomePage'
 import PropertiesPage from './pages/PropertiesPage'
@@ -39,6 +40,7 @@ import AdminInquiriesPage from './pages/admin/AdminInquiriesPage'
 import AdminSettingsPage from './pages/admin/AdminSettingsPage'
 import AdminSmsTemplatesPage from './pages/admin/AdminSmsTemplatesPage'
 import AdminVideoListingsPage from './pages/admin/AdminVideoListingsPage'
+import AdminAnalyticsPage from './pages/admin/AdminAnalyticsPage'
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 1000 * 60 * 5 } },
@@ -62,6 +64,7 @@ export default function App() {
       <AuthProvider>
         <BrowserRouter>
           <ScrollToTop />
+          <Analytics />
           <Routes>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
@@ -180,6 +183,7 @@ export default function App() {
               <Route path="edit-property/:id" element={<RequireAdmin><AddPropertyPage /></RequireAdmin>} />
               <Route path="testimonials" element={<RequireAdmin><AdminTestimonialsPage /></RequireAdmin>} />
               <Route path="users" element={<RequireAdmin><AdminUsersPage /></RequireAdmin>} />
+              <Route path="analytics" element={<RequireAdmin><AdminAnalyticsPage /></RequireAdmin>} />
               {/* Inquiries page is shared — AdminInquiriesPage detects the
                   current role and fetches /inquiries (admin) or
                   /inquiries/mine (employee), hiding admin-only controls
