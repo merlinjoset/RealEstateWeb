@@ -146,14 +146,15 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Subtle credit — muted, smaller than the copyright row */}
-        <div className="mt-2 text-center text-[11px]" style={{ color: '#3a3a3a' }}>
+        {/* Subtle credit — light grey so it's legible on the dark footer,
+            but still smaller/quieter than the copyright row above. */}
+        <div className="mt-2 text-center text-[11px]" style={{ color: '#9ca3af' }}>
           Powered by{' '}
           <a
             href="http://merlinjose.tech"
             target="_blank"
             rel="noopener noreferrer"
-            className="hover:text-gray-400 transition-colors underline-offset-2 hover:underline"
+            className="font-medium text-white hover:text-[#8BC34A] transition-colors underline-offset-2 hover:underline"
           >
             Merlin Jose
           </a>
