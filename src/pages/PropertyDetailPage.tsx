@@ -360,17 +360,37 @@ export default function PropertyDetailPage() {
           <div className="space-y-4">
             <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 sticky top-36">
               <div className="mb-4 pb-4 border-b border-gray-100">
-                <div className="text-3xl font-bold mb-1" style={{ color: '#FF5A5F' }}>
-                  {formatLakhs(property.totalPrice)}
-                  {property.status === 'for_rent' && (
-                    <span className="text-base font-medium text-gray-500"> / month</span>
-                  )}
-                </div>
-                {property.status !== 'for_rent' && property.pricePerCent && (
-                  <div className="text-sm text-gray-500">
-                    {formatLakhs(property.pricePerCent)} per cent
-                  </div>
-                )}
+                {(() => {
+                  const hasDiscount = property.discountPrice != null
+                    && property.discountPrice > 0 && property.discountPrice < property.totalPrice
+                  const eff = hasDiscount ? property.discountPrice! : property.totalPrice
+                  const pct = hasDiscount
+                    ? Math.round((1 - property.discountPrice! / property.totalPrice) * 100) : 0
+                  const perMonth = property.status === 'for_rent'
+                  return (
+                    <>
+                      <div className="flex items-baseline gap-2 flex-wrap mb-1">
+                        <span className="text-3xl font-bold" style={{ color: '#FF5A5F' }}>
+                          {formatLakhs(eff)}
+                          {perMonth && <span className="text-base font-medium text-gray-500"> / month</span>}
+                        </span>
+                        {hasDiscount && (
+                          <span className="text-lg text-gray-400 line-through">{formatLakhs(property.totalPrice)}</span>
+                        )}
+                      </div>
+                      {hasDiscount ? (
+                        <div className="flex items-center gap-2 text-sm font-semibold">
+                          <span className="px-2 py-0.5 rounded-full text-white text-xs font-bold" style={{ backgroundColor: '#F59E0B' }}>
+                            {pct}% OFF
+                          </span>
+                          <span style={{ color: '#6A9739' }}>You save {formatLakhs(property.totalPrice - eff)}</span>
+                        </div>
+                      ) : property.status !== 'for_rent' && property.pricePerCent ? (
+                        <div className="text-sm text-gray-500">{formatLakhs(property.pricePerCent)} per cent</div>
+                      ) : null}
+                    </>
+                  )
+                })()}
               </div>
 
               <div className="space-y-3 mb-5">

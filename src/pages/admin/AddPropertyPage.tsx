@@ -39,6 +39,7 @@ interface FormState {
   status: string
   totalPrice: string
   pricePerCent: string
+  discountPrice: string
   areaInCents: string
   areaInSqFt: string
   city: string
@@ -65,6 +66,7 @@ interface FormState {
 const INITIAL: FormState = {
   serialNo: '',
   title: '', description: '', status: 'for_sale', totalPrice: '', pricePerCent: '',
+  discountPrice: '',
   areaInCents: '', areaInSqFt: '', city: '', address: '', pinCode: '',
   propertyType: 'open_land', bedrooms: '', bathrooms: '',
   roadAccess: false, isFeatured: false, isVerified: false, legalStatus: '',
@@ -96,7 +98,7 @@ const SECTIONS: SectionDef[] = [
 // Maps each field to the section it lives in, so we can scroll to / highlight the right one
 const FIELD_SECTION: Partial<Record<keyof FormState, string>> = {
   title: 'basic', description: 'basic', propertyType: 'basic', legalStatus: 'basic',
-  areaInCents: 'pricing', areaInSqFt: 'pricing', totalPrice: 'pricing', pricePerCent: 'pricing',
+  areaInCents: 'pricing', areaInSqFt: 'pricing', totalPrice: 'pricing', pricePerCent: 'pricing', discountPrice: 'pricing',
   city: 'location', address: 'location', pinCode: 'location',
   nearbyLandmarks: 'location', bedrooms: 'location', bathrooms: 'location',
   latitude: 'location', longitude: 'location',
@@ -156,6 +158,18 @@ function validate(form: FormState): Errors {
     e.totalPrice = isRental ? 'Enter a valid monthly rent' : 'Enter a valid price'
   } else if (!isRental && price < 10000) {
     e.totalPrice = 'Price seems too low — verify the amount'
+  }
+
+  // Discount price — optional; if set must be positive and below the total.
+  if (form.discountPrice) {
+    const disc = Number(form.discountPrice)
+    if (isNaN(disc) || disc <= 0) {
+      e.discountPrice = 'Enter a valid discount price'
+    } else if (price > 0 && disc >= price) {
+      e.discountPrice = isRental
+        ? 'Discounted rent must be below the monthly rent'
+        : 'Discount price must be below the total price'
+    }
   }
 
   // Price per cent — optional, but if set it must agree with total / area.
@@ -275,6 +289,7 @@ export default function AddPropertyPage() {
           status: p.status ?? 'for_sale',
           totalPrice: p.totalPrice?.toString() ?? '',
           pricePerCent: p.pricePerCent?.toString() ?? '',
+          discountPrice: p.discountPrice?.toString() ?? '',
           areaInCents: p.areaInCents?.toString() ?? '',
           areaInSqFt: p.areaInSqFt?.toString() ?? '',
           city: p.city ?? '',
@@ -435,6 +450,8 @@ export default function AddPropertyPage() {
           status: form.status as PropertyUpdate['status'],
           totalPrice: Number(form.totalPrice) || 0,
           pricePerCent: isRental ? undefined : (form.pricePerCent ? Number(form.pricePerCent) : undefined),
+          // 0 = clear; backend ignores values that aren't a real discount.
+          discountPrice: form.discountPrice ? Number(form.discountPrice) : 0,
           areaInCents: isRental
             ? Math.max(0.01, Number((Number(form.areaInSqFt) / 435.6).toFixed(2)))
             : Number(form.areaInCents) || 0,
@@ -471,6 +488,7 @@ export default function AddPropertyPage() {
           description: form.description,
           totalPrice: Number(form.totalPrice) || 0,
           pricePerCent: isRental ? undefined : (form.pricePerCent ? Number(form.pricePerCent) : undefined),
+          discountPrice: form.discountPrice ? Number(form.discountPrice) : 0,
           areaInCents: isRental
             ? Math.max(0.01, Number((Number(form.areaInSqFt) / 435.6).toFixed(2)))
             : Number(form.areaInCents) || 0,
@@ -833,6 +851,28 @@ export default function AddPropertyPage() {
                 </Field>
               )}
             </div>
+
+            {/* Discount / offer price — optional */}
+            <Field
+              label={isRental ? 'Discounted Rent (₹) — optional' : 'Discount Price (₹) — optional'}
+              hint="If set, shown as the offer price with the original struck through"
+              error={errorFor('discountPrice')}>
+              <div className="relative max-w-xs">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium">₹</span>
+                <input type="number" min="0" value={form.discountPrice}
+                  onChange={(e) => set('discountPrice', e.target.value)}
+                  onBlur={() => markTouched('discountPrice')}
+                  placeholder={isRental ? '12000' : '1800000'}
+                  className="input-field pl-7"
+                  style={errorFor('discountPrice') ? { borderColor: '#DC2626' } : undefined} />
+              </div>
+              {form.discountPrice && form.totalPrice && !errorFor('discountPrice')
+                && Number(form.discountPrice) > 0 && Number(form.discountPrice) < Number(form.totalPrice) && (
+                <p className="text-xs mt-1.5 font-semibold" style={{ color: '#FF5A5F' }}>
+                  {formatLakhs(form.discountPrice)}{isRental ? ' / month' : ''} · {Math.round((1 - Number(form.discountPrice) / Number(form.totalPrice)) * 100)}% off
+                </p>
+              )}
+            </Field>
 
             {/* Pricing summary card */}
             {form.totalPrice && (isRental ? form.areaInSqFt : form.areaInCents) && (

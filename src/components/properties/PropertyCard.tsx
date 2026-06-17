@@ -35,6 +35,14 @@ export default function PropertyCard({ property }: Props) {
     ? resolveMediaUrl(property.images[0])
     : NO_IMAGE
 
+  // Discount/offer pricing: only a positive price below the total counts.
+  const hasDiscount = property.discountPrice != null
+    && property.discountPrice > 0 && property.discountPrice < property.totalPrice
+  const effectivePrice = hasDiscount ? property.discountPrice! : property.totalPrice
+  const discountPct = hasDiscount
+    ? Math.round((1 - property.discountPrice! / property.totalPrice) * 100) : 0
+  const perMonth = property.status === 'for_rent'
+
   // Favourite handling — self-contained so the heart works on every page
   // (PropertiesPage, FeaturedProperties, MapView, etc.), not just the
   // dedicated FavoritesPage. Reads the shared ['favorites'] query cache
@@ -109,6 +117,11 @@ export default function PropertyCard({ property }: Props) {
                 Featured
               </span>
             )}
+            {hasDiscount && (
+              <span className="text-xs font-bold px-2.5 py-1 rounded-full text-white" style={{ backgroundColor: '#F59E0B' }}>
+                {discountPct}% OFF
+              </span>
+            )}
           </div>
 
           {property.isVerified && (
@@ -164,17 +177,20 @@ export default function PropertyCard({ property }: Props) {
 
         <div className="flex items-center justify-between mb-3">
           <div>
-            <div className="text-xl font-bold" style={{ color: '#FF5A5F' }}>
-              {formatLakhs(property.totalPrice)}
-              {property.status === 'for_rent' && (
-                <span className="text-sm font-medium text-gray-500"> / month</span>
+            <div className="flex items-baseline gap-2 flex-wrap">
+              <span className="text-xl font-bold" style={{ color: '#FF5A5F' }}>
+                {formatLakhs(effectivePrice)}
+                {perMonth && <span className="text-sm font-medium text-gray-500"> / month</span>}
+              </span>
+              {hasDiscount && (
+                <span className="text-sm text-gray-400 line-through">{formatLakhs(property.totalPrice)}</span>
               )}
             </div>
-            {property.status !== 'for_rent' && property.pricePerCent && (
-              <div className="text-xs text-gray-500">
-                {formatLakhs(property.pricePerCent)}/cent
-              </div>
-            )}
+            {hasDiscount ? (
+              <div className="text-xs font-semibold" style={{ color: '#6A9739' }}>{discountPct}% off</div>
+            ) : property.status !== 'for_rent' && property.pricePerCent ? (
+              <div className="text-xs text-gray-500">{formatLakhs(property.pricePerCent)}/cent</div>
+            ) : null}
           </div>
           <div className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium"
             style={{ backgroundColor: 'rgba(106,151,57,0.1)', color: '#6A9739' }}>

@@ -88,6 +88,8 @@ export interface PropertySubmission {
   description: string
   totalPrice: number
   pricePerCent?: number
+  /** Optional discounted price (< totalPrice). Send 0 to clear on update. */
+  discountPrice?: number
   address: string
   city: string
   district: string

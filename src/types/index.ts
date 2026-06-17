@@ -43,6 +43,8 @@ export interface Property {
   description: string
   totalPrice: number
   pricePerCent?: number
+  /** Optional discounted/offer price, below totalPrice. */
+  discountPrice?: number
   address: string
   city: string
   district: string
