@@ -43,7 +43,7 @@ export default function MarketingPlanPicker({ value, onChange, totalPriceStr }: 
         active={value === 'VideoPromotion'}
         onClick={() => onChange('VideoPromotion')}
         icon={Video}
-        accent="#FF5A5F"
+        accent="#EA2D34"
         label="Video Promotion"
         priceLine={
           <span className="inline-flex items-center gap-1.5">
@@ -55,12 +55,12 @@ export default function MarketingPlanPicker({ value, onChange, totalPriceStr }: 
         bullets={[
           // Lead with the headline benefit so it's the first thing the seller reads
           <span key="fast" className="inline-flex items-start gap-1">
-            <span className="font-bold" style={{ color: '#FF5A5F' }}>Often sold sooner than expected</span>
+            <span className="font-bold" style={{ color: '#EA2D34' }}>Often sold sooner than expected</span>
             {' '}— premium reach &amp; agent follow-up
           </span>,
           // End-to-end support — the second-most-important pitch for sellers/dealers
           <span key="e2e" className="inline-flex items-start gap-1">
-            <span className="font-bold" style={{ color: '#FF5A5F' }}>End-to-end support</span>
+            <span className="font-bold" style={{ color: '#EA2D34' }}>End-to-end support</span>
             {' '}— buyer screening, site visits, paperwork &amp; registration
           </span>,
           'Professional walkthrough video',

@@ -17,7 +17,7 @@ import {
 import { isValidEmail, EMAIL_PATTERN } from '../../utils/email'
 
 const ROLE_BADGE: Record<AdminUserRole, { bg: string; color: string; label: string }> = {
-  Admin:    { bg: 'rgba(255,90,95,0.10)',  color: '#FF5A5F', label: 'Admin' },
+  Admin:    { bg: 'rgba(255,90,95,0.10)',  color: '#EA2D34', label: 'Admin' },
   Agent:    { bg: 'rgba(41,50,55,0.08)',   color: '#293237', label: 'Agent' },
   Seller:   { bg: 'rgba(245,158,11,0.10)', color: '#B45309', label: 'Seller' },
   Employee: { bg: 'rgba(106,151,57,0.10)', color: '#6A9739', label: 'Employee' },
@@ -216,7 +216,7 @@ export default function AdminUsersPage() {
           { label: 'Sellers',   value: counts.seller,   color: '#B45309', bg: 'rgba(245,158,11,0.08)', icon: UserCheck },
           { label: 'Buyers',    value: counts.buyer,    color: '#4F46E5', bg: 'rgba(99,102,241,0.08)', icon: ShoppingBag },
           { label: 'Agents',    value: counts.agent,    color: '#293237', bg: 'rgba(41,50,55,0.06)',   icon: Shield },
-          { label: 'Admins',    value: counts.admin,    color: '#FF5A5F', bg: 'rgba(255,90,95,0.08)',  icon: UserX },
+          { label: 'Admins',    value: counts.admin,    color: '#EA2D34', bg: 'rgba(255,90,95,0.08)',  icon: UserX },
         ].map(({ label, value, color, bg, icon: Icon }) => (
           <div key={label} className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm">
             <div className="flex items-center gap-3">
@@ -270,7 +270,7 @@ export default function AdminUsersPage() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
-            className="text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#FF5A5F]"
+            className="text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#EA2D34]"
           >
             <option value="all">All Status</option>
             <option value="active">Active</option>
@@ -289,7 +289,7 @@ export default function AdminUsersPage() {
             <AlertCircle className="w-8 h-8 text-red-400 mx-auto mb-3" />
             <p className="text-sm text-red-600">Failed to load users.</p>
             <button onClick={() => query.refetch()}
-              className="mt-3 text-xs font-semibold underline" style={{ color: '#FF5A5F' }}>
+              className="mt-3 text-xs font-semibold underline" style={{ color: '#EA2D34' }}>
               Try again
             </button>
           </div>

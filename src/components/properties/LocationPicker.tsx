@@ -53,7 +53,7 @@ const pinIcon = L.divIcon({
   html: `<div style="
     transform: translate(-50%, -100%);
     width: 28px; height: 28px;
-    background: #FF5A5F;
+    background: #EA2D34;
     border: 3px solid white;
     box-shadow: 0 4px 8px rgba(0,0,0,0.25);
     border-radius: 50% 50% 50% 0;
@@ -158,7 +158,7 @@ export default function LocationPicker({
       {/* URL paste row */}
       <div>
         <label className="text-xs font-semibold text-gray-700 mb-1.5 flex items-center gap-1.5">
-          <LinkIcon className="w-3.5 h-3.5" style={{ color: '#FF5A5F' }} />
+          <LinkIcon className="w-3.5 h-3.5" style={{ color: '#EA2D34' }} />
           Paste Google Maps URL or coordinates
         </label>
         <div className="flex gap-2">
@@ -284,7 +284,7 @@ export default function LocationPicker({
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 font-semibold hover:underline"
-              style={{ color: '#FF5A5F' }}
+              style={{ color: '#EA2D34' }}
             >
               Open in Google Maps <ExternalLink className="w-3 h-3" />
             </a>

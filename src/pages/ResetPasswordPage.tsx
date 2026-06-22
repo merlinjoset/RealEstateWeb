@@ -48,10 +48,10 @@ export default function ResetPasswordPage() {
     <main className="min-h-screen flex items-center justify-center px-4 py-12" style={{ backgroundColor: '#F8F6F3' }}>
       <div className="w-full max-w-md">
         <div className="mb-6 flex items-center justify-between">
-          <Link to="/" className="text-2xl font-extrabold tracking-tight" style={{ color: '#FF5A5F' }}>
+          <Link to="/" className="text-2xl font-extrabold tracking-tight" style={{ color: '#EA2D34' }}>
             Jose For Land
           </Link>
-          <Link to="/login" className="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-[#FF5A5F] transition-colors">
+          <Link to="/login" className="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-[#EA2D34] transition-colors">
             <ArrowLeft className="w-3.5 h-3.5" /> Back to sign in
           </Link>
         </div>
@@ -70,9 +70,9 @@ export default function ResetPasswordPage() {
               <button
                 onClick={() => navigate('/login')}
                 className="w-full py-3 text-white font-semibold rounded-xl transition-colors"
-                style={{ backgroundColor: '#FF5A5F' }}
+                style={{ backgroundColor: '#EA2D34' }}
                 onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#e04a4f')}
-                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#FF5A5F')}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#EA2D34')}
               >
                 Sign in →
               </button>
@@ -172,9 +172,9 @@ export default function ResetPasswordPage() {
                   type="submit"
                   disabled={mutation.isPending}
                   className="w-full inline-flex items-center justify-center gap-2 py-3 text-white font-semibold rounded-xl transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-                  style={{ backgroundColor: '#FF5A5F' }}
+                  style={{ backgroundColor: '#EA2D34' }}
                   onMouseEnter={(e) => { if (!mutation.isPending) e.currentTarget.style.backgroundColor = '#e04a4f' }}
-                  onMouseLeave={(e) => { if (!mutation.isPending) e.currentTarget.style.backgroundColor = '#FF5A5F' }}
+                  onMouseLeave={(e) => { if (!mutation.isPending) e.currentTarget.style.backgroundColor = '#EA2D34' }}
                 >
                   {mutation.isPending
                     ? <><Loader2 className="w-4 h-4 animate-spin" /> Resetting…</>
@@ -184,7 +184,7 @@ export default function ResetPasswordPage() {
 
               <p className="text-center text-xs text-gray-500 mt-6">
                 Didn't get a code?{' '}
-                <Link to="/forgot-password" className="font-semibold hover:underline" style={{ color: '#FF5A5F' }}>
+                <Link to="/forgot-password" className="font-semibold hover:underline" style={{ color: '#EA2D34' }}>
                   Request a new one →
                 </Link>
               </p>

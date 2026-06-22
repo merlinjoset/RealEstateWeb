@@ -21,9 +21,9 @@ export default function StatsSection() {
   const landListings = total >= 100 ? `${total}+` : '400+'
 
   const stats = [
-    { icon: Home,   value: landListings, label: 'Land Listings',     iconColor: '#FF5A5F', iconBg: 'rgba(255,90,95,0.08)' },
+    { icon: Home,   value: landListings, label: 'Land Listings',     iconColor: '#EA2D34', iconBg: 'rgba(255,90,95,0.08)' },
     { icon: Users,  value: '500+',       label: 'Happy Clients',     iconColor: '#6A9739', iconBg: 'rgba(106,151,57,0.08)' },
-    { icon: MapPin, value: '15+',        label: 'Locations Covered', iconColor: '#FF5A5F', iconBg: 'rgba(255,90,95,0.08)' },
+    { icon: MapPin, value: '15+',        label: 'Locations Covered', iconColor: '#EA2D34', iconBg: 'rgba(255,90,95,0.08)' },
     { icon: Award,  value: '10+',        label: 'Years of Trust',    iconColor: '#6A9739', iconBg: 'rgba(106,151,57,0.08)' },
   ]
 
@@ -37,7 +37,7 @@ export default function StatsSection() {
                 style={{ backgroundColor: iconBg, color: iconColor }}>
                 <Icon className="w-6 h-6" />
               </div>
-              <div className="text-3xl font-bold" style={{ color: '#FF5A5F' }}>{value}</div>
+              <div className="text-3xl font-bold" style={{ color: '#EA2D34' }}>{value}</div>
               <div className="text-gray-500 text-sm mt-1">{label}</div>
             </div>
           ))}

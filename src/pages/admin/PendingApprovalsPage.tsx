@@ -162,15 +162,15 @@ export default function PendingApprovalsPage() {
           onClick={() => setVideoOnly(!videoOnly)}
           className="ml-auto inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors border-2"
           style={videoOnly
-            ? { backgroundColor: '#FF5A5F', borderColor: '#FF5A5F', color: 'white' }
-            : { backgroundColor: 'white', borderColor: 'rgba(255,90,95,0.35)', color: '#FF5A5F' }}
+            ? { backgroundColor: '#EA2D34', borderColor: '#EA2D34', color: 'white' }
+            : { backgroundColor: 'white', borderColor: 'rgba(255,90,95,0.35)', color: '#EA2D34' }}
           title="Show only Video Promotion submissions">
           <Video className="w-3.5 h-3.5" />
           Video Promotion
           <span className="text-xs px-1.5 py-0.5 rounded-full"
             style={videoOnly
               ? { backgroundColor: 'rgba(255,255,255,0.25)', color: 'white' }
-              : { backgroundColor: 'rgba(255,90,95,0.10)', color: '#FF5A5F' }}>
+              : { backgroundColor: 'rgba(255,90,95,0.10)', color: '#EA2D34' }}>
             {videoCount}
           </span>
         </button>
@@ -203,7 +203,7 @@ export default function PendingApprovalsPage() {
                   })()}
                 </p>
                 <button onClick={() => pendingQuery.refetch()}
-                  className="text-xs font-semibold underline" style={{ color: '#FF5A5F' }}>
+                  className="text-xs font-semibold underline" style={{ color: '#EA2D34' }}>
                   Try again
                 </button>
               </div>
@@ -230,7 +230,7 @@ export default function PendingApprovalsPage() {
                 key={item.id}
                 className="bg-white rounded-xl p-5 shadow-sm border transition-all cursor-pointer relative"
                 style={selected?.id === item.id
-                  ? { borderColor: '#FF5A5F', boxShadow: '0 0 0 2px rgba(255,90,95,0.15)' }
+                  ? { borderColor: '#EA2D34', boxShadow: '0 0 0 2px rgba(255,90,95,0.15)' }
                   : { borderColor: '#f3f4f6' }}
                 onClick={() => setSelected(selected?.id === item.id ? null : item)}
               >
@@ -238,7 +238,7 @@ export default function PendingApprovalsPage() {
                   {/* Coral ribbon for Video Promotion */}
                   {item.marketingPlan === 'VideoPromotion' && (
                     <div className="self-stretch -my-5 -ml-5 mr-1 w-1.5 rounded-r"
-                      style={{ backgroundColor: '#FF5A5F' }} />
+                      style={{ backgroundColor: '#EA2D34' }} />
                   )}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap mb-2">
@@ -248,7 +248,7 @@ export default function PendingApprovalsPage() {
                       </span>
                       {item.marketingPlan === 'VideoPromotion' && (
                         <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full font-bold text-white"
-                          style={{ backgroundColor: '#FF5A5F' }}
+                          style={{ backgroundColor: '#EA2D34' }}
                           title={`2% brokerage = ${formatLakhs(item.totalPrice * VIDEO_PROMOTION_FEE_RATE)}`}>
                           <Video className="w-2.5 h-2.5" />
                           Video · 2%
@@ -272,7 +272,7 @@ export default function PendingApprovalsPage() {
                       <span className="flex items-center gap-1">
                         <Ruler className="w-3.5 h-3.5" /> {item.areaInCents} cents
                       </span>
-                      <span className="font-semibold" style={{ color: '#FF5A5F' }}>{formatLakhs(item.totalPrice)}</span>
+                      <span className="font-semibold" style={{ color: '#EA2D34' }}>{formatLakhs(item.totalPrice)}</span>
                       <span className="flex items-center gap-1">
                         <User className="w-3.5 h-3.5" /> {item.submittedByName ?? 'Anon'}
                       </span>
@@ -325,11 +325,11 @@ export default function PendingApprovalsPage() {
                 <div className="rounded-xl p-3 border-2 flex items-start gap-3"
                   style={{ backgroundColor: 'rgba(255,90,95,0.06)', borderColor: 'rgba(255,90,95,0.35)' }}>
                   <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 text-white"
-                    style={{ backgroundColor: '#FF5A5F' }}>
+                    style={{ backgroundColor: '#EA2D34' }}>
                     <Video className="w-4 h-4" />
                   </div>
                   <div className="min-w-0">
-                    <div className="text-xs font-bold uppercase tracking-wider" style={{ color: '#FF5A5F' }}>
+                    <div className="text-xs font-bold uppercase tracking-wider" style={{ color: '#EA2D34' }}>
                       Video Promotion · 2% brokerage
                     </div>
                     <div className="text-sm text-gray-900 font-semibold mt-0.5">
@@ -416,7 +416,7 @@ export default function PendingApprovalsPage() {
                 </div>
                 <div>
                   <div className="text-xs text-gray-400 uppercase tracking-wide">Price</div>
-                  <div className="font-semibold mt-0.5" style={{ color: '#FF5A5F' }}>{formatLakhs(selected.totalPrice)}</div>
+                  <div className="font-semibold mt-0.5" style={{ color: '#EA2D34' }}>{formatLakhs(selected.totalPrice)}</div>
                 </div>
               </div>
               {selected.address && (
@@ -439,7 +439,7 @@ export default function PendingApprovalsPage() {
                 <a
                   href={`tel:${selected.submittedByPhone.replace(/\s/g, '')}`}
                   className="flex items-center gap-2 w-full py-2 text-sm font-medium rounded-lg transition-colors justify-center"
-                  style={{ backgroundColor: 'rgba(255,90,95,0.08)', color: '#FF5A5F' }}
+                  style={{ backgroundColor: 'rgba(255,90,95,0.08)', color: '#EA2D34' }}
                   onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255,90,95,0.15)')}
                   onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255,90,95,0.08)')}
                 >
@@ -450,7 +450,7 @@ export default function PendingApprovalsPage() {
                 <a
                   href={`mailto:${selected.submittedByEmail}`}
                   className="flex items-center gap-2 w-full py-2 text-sm font-medium rounded-lg transition-colors justify-center break-all"
-                  style={{ backgroundColor: 'rgba(255,90,95,0.08)', color: '#FF5A5F' }}
+                  style={{ backgroundColor: 'rgba(255,90,95,0.08)', color: '#EA2D34' }}
                   onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255,90,95,0.15)')}
                   onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255,90,95,0.08)')}
                 >
@@ -625,7 +625,7 @@ function AssignPicker({
 
 function roleAccent(role: string) {
   switch (role) {
-    case 'Admin':    return '#FF5A5F'
+    case 'Admin':    return '#EA2D34'
     case 'Employee': return '#6A9739'
     case 'Agent':    return '#293237'
     default:         return '#9CA3AF'

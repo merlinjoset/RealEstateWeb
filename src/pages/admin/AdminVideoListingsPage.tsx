@@ -45,7 +45,7 @@ const STAGE_META: Record<VideoStage, { label: string; color: string; bg: string 
   shoot_scheduled: { label: 'Shoot scheduled', color: '#1E40AF', bg: 'rgba(30,64,175,0.10)' },
   editing:         { label: 'In editing',      color: '#7C3AED', bg: 'rgba(124,58,237,0.10)' },
   published:       { label: 'Published',       color: '#6A9739', bg: 'rgba(106,151,57,0.10)' },
-  sold:            { label: 'Sold · 2% earned', color: '#FF5A5F', bg: 'rgba(255,90,95,0.10)' },
+  sold:            { label: 'Sold · 2% earned', color: '#EA2D34', bg: 'rgba(255,90,95,0.10)' },
 }
 
 const STAGE_FILTERS: Array<{ value: VideoStage | 'all'; label: string }> = [
@@ -139,14 +139,14 @@ export default function AdminVideoListingsPage() {
       <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
         <div className="flex items-start gap-3">
           <div className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 text-white shadow-lg"
-            style={{ backgroundColor: '#FF5A5F' }}>
+            style={{ backgroundColor: '#EA2D34' }}>
             <Video className="w-5 h-5" />
           </div>
           <div>
             <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
               Video Listings
               <span className="text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full text-white"
-                style={{ backgroundColor: '#FF5A5F' }}>
+                style={{ backgroundColor: '#EA2D34' }}>
                 2% Brokerage
               </span>
             </h2>
@@ -163,7 +163,7 @@ export default function AdminVideoListingsPage() {
           icon={Sparkles}
           label="Active listings"
           value={items.filter((p) => p.stage !== 'sold').length.toString()}
-          tone="#FF5A5F"
+          tone="#EA2D34"
           hint={`${items.length} total in pipeline`}
         />
         <StatCard
@@ -222,7 +222,7 @@ export default function AdminVideoListingsPage() {
         <div className="bg-white rounded-xl p-10 text-center shadow-sm border border-gray-100">
           <AlertCircle className="w-8 h-8 text-red-400 mx-auto mb-3" />
           <p className="text-sm font-semibold text-red-600 mb-2">Couldn’t load video listings.</p>
-          <button onClick={() => query.refetch()} className="text-xs font-semibold underline" style={{ color: '#FF5A5F' }}>
+          <button onClick={() => query.refetch()} className="text-xs font-semibold underline" style={{ color: '#EA2D34' }}>
             Try again
           </button>
         </div>
@@ -248,7 +248,7 @@ export default function AdminVideoListingsPage() {
               >
                 {/* Red left ribbon */}
                 <div className="absolute left-0 top-0 bottom-0 w-1"
-                  style={{ backgroundColor: '#FF5A5F' }} />
+                  style={{ backgroundColor: '#EA2D34' }} />
 
                 <div className="pl-3">
                   <div className="flex items-start justify-between gap-3 mb-2">
@@ -307,10 +307,10 @@ export default function AdminVideoListingsPage() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-[10px] uppercase tracking-wider font-semibold" style={{ color: '#FF5A5F' }}>
+                      <div className="text-[10px] uppercase tracking-wider font-semibold" style={{ color: '#EA2D34' }}>
                         2% Brokerage
                       </div>
-                      <div className="text-base font-bold" style={{ color: '#FF5A5F' }}>
+                      <div className="text-base font-bold" style={{ color: '#EA2D34' }}>
                         {formatLakhs(fee)}
                       </div>
                     </div>
@@ -325,7 +325,7 @@ export default function AdminVideoListingsPage() {
                     >
                       <Phone className="w-3 h-3" /> {p.submitterPhone}
                     </a>
-                    <span className="inline-flex items-center gap-1 text-xs text-gray-400 group-hover:text-[#FF5A5F]">
+                    <span className="inline-flex items-center gap-1 text-xs text-gray-400 group-hover:text-[#EA2D34]">
                       View <ChevronRight className="w-3 h-3" />
                     </span>
                   </div>

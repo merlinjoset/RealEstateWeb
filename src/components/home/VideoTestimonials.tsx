@@ -23,8 +23,8 @@ export default function VideoTestimonials() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-end mb-12">
           <div className="lg:col-span-8">
             <div className="flex items-center gap-3 mb-5">
-              <div className="h-px w-10" style={{ backgroundColor: '#FF5A5F' }} />
-              <span className="text-[11px] font-semibold tracking-[0.25em] uppercase" style={{ color: '#FF5A5F' }}>
+              <div className="h-px w-10" style={{ backgroundColor: '#EA2D34' }} />
+              <span className="text-[11px] font-semibold tracking-[0.25em] uppercase" style={{ color: '#EA2D34' }}>
                 In their own words
               </span>
             </div>
@@ -87,7 +87,7 @@ export default function VideoTestimonials() {
 
                 {/* Quote on bottom of thumbnail */}
                 <div className="absolute bottom-0 left-0 right-0 p-5 text-white">
-                  <Quote className="w-5 h-5 mb-2 opacity-80" style={{ color: '#FF5A5F' }} fill="currentColor" />
+                  <Quote className="w-5 h-5 mb-2 opacity-80" style={{ color: '#EA2D34' }} fill="currentColor" />
                   <p className="text-[15px] leading-snug font-medium line-clamp-3">
                     "{t.excerpt}"
                   </p>
@@ -109,7 +109,7 @@ export default function VideoTestimonials() {
                 </div>
                 <div className="flex gap-0.5 shrink-0">
                   {Array.from({ length: t.rating }).map((_, i) => (
-                    <Star key={i} className="w-3.5 h-3.5" style={{ fill: '#FF5A5F', color: '#FF5A5F' }} />
+                    <Star key={i} className="w-3.5 h-3.5" style={{ fill: '#EA2D34', color: '#EA2D34' }} />
                   ))}
                 </div>
               </div>
@@ -122,7 +122,7 @@ export default function VideoTestimonials() {
           <div className="flex items-center gap-2">
             <div className="flex gap-0.5">
               {Array.from({ length: 5 }).map((_, i) => (
-                <Star key={i} className="w-4 h-4" style={{ fill: '#FF5A5F', color: '#FF5A5F' }} />
+                <Star key={i} className="w-4 h-4" style={{ fill: '#EA2D34', color: '#EA2D34' }} />
               ))}
             </div>
             <span className="text-sm font-semibold" style={{ color: '#111111' }}>4.9 / 5</span>
@@ -238,12 +238,12 @@ function VideoModal({ testimonial, onClose }: { testimonial: Testimonial; onClos
             </div>
             <div className="flex gap-0.5 shrink-0">
               {Array.from({ length: testimonial.rating }).map((_, i) => (
-                <Star key={i} className="w-4 h-4" style={{ fill: '#FF5A5F', color: '#FF5A5F' }} />
+                <Star key={i} className="w-4 h-4" style={{ fill: '#EA2D34', color: '#EA2D34' }} />
               ))}
             </div>
           </div>
           <blockquote className="mt-4 pl-4 border-l-2 text-sm md:text-base leading-relaxed text-gray-200 italic"
-            style={{ borderColor: '#FF5A5F' }}>
+            style={{ borderColor: '#EA2D34' }}>
             "{testimonial.excerpt}"
           </blockquote>
         </div>

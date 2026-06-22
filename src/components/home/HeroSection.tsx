@@ -31,7 +31,7 @@ export default function HeroSection() {
     <section style={{ backgroundColor: '#F8F6F3' }} className="relative overflow-hidden">
       {/* Subtle leaf/nature pattern overlay */}
       <div className="absolute inset-0 opacity-5 pointer-events-none" style={{
-        backgroundImage: 'radial-gradient(circle at 20% 50%, #6A9739 0%, transparent 50%), radial-gradient(circle at 80% 20%, #FF5A5F 0%, transparent 40%)',
+        backgroundImage: 'radial-gradient(circle at 20% 50%, #6A9739 0%, transparent 50%), radial-gradient(circle at 80% 20%, #EA2D34 0%, transparent 40%)',
       }} />
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
@@ -41,14 +41,14 @@ export default function HeroSection() {
           <div>
             <div className="flex items-center gap-2 mb-5">
               {[1,2,3,4,5].map(i => (
-                <Star key={i} className="w-4 h-4" style={{ fill: '#FF5A5F', color: '#FF5A5F' }} />
+                <Star key={i} className="w-4 h-4" style={{ fill: '#EA2D34', color: '#EA2D34' }} />
               ))}
               <span className="text-sm ml-1" style={{ color: '#6A9739' }}>Trusted by 1000+ families</span>
             </div>
 
             <h1 className="text-4xl sm:text-5xl font-bold leading-tight mb-4" style={{ color: '#111111' }}>
               Find Your Perfect{' '}
-              <span style={{ color: '#FF5A5F' }}>Land</span>
+              <span style={{ color: '#EA2D34' }}>Land</span>
               <br />in Kanyakumari
             </h1>
 
@@ -77,9 +77,9 @@ export default function HeroSection() {
                   />
                 </div>
                 <button type="submit" className="px-6 py-3 text-white font-semibold rounded-xl transition-colors text-sm"
-                  style={{ backgroundColor: '#FF5A5F' }}
+                  style={{ backgroundColor: '#EA2D34' }}
                   onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#e04a4f')}
-                  onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#FF5A5F')}
+                  onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#EA2D34')}
                 >
                   Search
                 </button>
@@ -116,7 +116,7 @@ export default function HeroSection() {
                 <a key={num} href={`tel:${num.replace(/\s/g,'')}`}
                   className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium border transition-colors bg-white hover:bg-gray-50"
                   style={{ borderColor: '#CFD8DC', color: '#263238' }}>
-                  <Phone className="w-4 h-4" style={{ color: '#FF5A5F' }} />
+                  <Phone className="w-4 h-4" style={{ color: '#EA2D34' }} />
                   {num}
                 </a>
               ))}
@@ -132,7 +132,7 @@ export default function HeroSection() {
               </div>
               {/* Floating stat badges */}
               {[
-                { label: `${listingsLabel} Listings`, pos: '-top-4 -right-4', bg: '#FF5A5F' },
+                { label: `${listingsLabel} Listings`, pos: '-top-4 -right-4', bg: '#EA2D34' },
                 { label: 'Free Consultation', pos: '-bottom-4 -left-4', bg: '#6A9739' },
                 { label: '10+ Years Trust', pos: 'top-1/2 -right-16', bg: '#293237' },
               ].map(({ label, pos, bg }) => (
@@ -156,7 +156,7 @@ export default function HeroSection() {
               { label: '10+', sub: 'Years Experience' },
             ].map(({ label, sub }) => (
               <div key={sub} className="text-center">
-                <div className="text-xl font-bold" style={{ color: '#FF5A5F' }}>{label}</div>
+                <div className="text-xl font-bold" style={{ color: '#EA2D34' }}>{label}</div>
                 <div className="text-xs text-gray-500">{sub}</div>
               </div>
             ))}

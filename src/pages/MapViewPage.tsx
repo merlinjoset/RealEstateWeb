@@ -69,7 +69,7 @@ function makePinIcon(
   const scale = isSelected ? 1.45 : 1
   // Default: brand olive pill with bold white text. Selected: coral pill
   // with a thick white border + tinted glow ring around it for emphasis.
-  const bg = isSelected ? '#FF5A5F' : '#6A9739'
+  const bg = isSelected ? '#EA2D34' : '#6A9739'
   const tailColor = bg
   const ringStyle = isSelected
     // Doubled drop-shadow + a coral glow ring so the pin reads as
@@ -318,7 +318,7 @@ export default function MapViewPage() {
           {/* Main search row */}
           <div className="flex flex-col lg:flex-row gap-2.5">
             {/* Search input */}
-            <div className="flex-1 flex items-center gap-2 bg-gray-50 rounded-xl px-4 py-2.5 border border-gray-200 focus-within:border-[#FF5A5F] transition-colors">
+            <div className="flex-1 flex items-center gap-2 bg-gray-50 rounded-xl px-4 py-2.5 border border-gray-200 focus-within:border-[#EA2D34] transition-colors">
               <Search className="w-4 h-4 text-gray-400 shrink-0" />
               <input
                 type="text"
@@ -361,13 +361,13 @@ export default function MapViewPage() {
               onClick={() => setShowAdvanced(!showAdvanced)}
               className="lg:hidden inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium border transition-colors"
               style={showAdvanced || activeCount > 0
-                ? { backgroundColor: '#FF5A5F', color: 'white', borderColor: '#FF5A5F' }
+                ? { backgroundColor: '#EA2D34', color: 'white', borderColor: '#EA2D34' }
                 : { backgroundColor: 'white', color: '#374151', borderColor: '#e5e7eb' }}
             >
               <SlidersHorizontal className="w-4 h-4" />
               Filters
               {activeCount > 0 && (
-                <span className="ml-1 w-5 h-5 rounded-full bg-white text-[10px] font-bold flex items-center justify-center" style={{ color: '#FF5A5F' }}>
+                <span className="ml-1 w-5 h-5 rounded-full bg-white text-[10px] font-bold flex items-center justify-center" style={{ color: '#EA2D34' }}>
                   {activeCount}
                 </span>
               )}
@@ -401,7 +401,7 @@ export default function MapViewPage() {
                 onClick={() => setTypeFilter(value)}
                 className="px-3 py-1.5 rounded-full text-xs font-medium transition-colors border"
                 style={typeFilter === value
-                  ? { backgroundColor: '#FF5A5F', color: 'white', borderColor: '#FF5A5F' }
+                  ? { backgroundColor: '#EA2D34', color: 'white', borderColor: '#EA2D34' }
                   : { backgroundColor: 'white', color: '#374151', borderColor: '#e5e7eb' }}
               >
                 {label}
@@ -412,7 +412,7 @@ export default function MapViewPage() {
               <button
                 onClick={clearAll}
                 className="ml-auto inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-full transition-colors"
-                style={{ color: '#FF5A5F' }}
+                style={{ color: '#EA2D34' }}
               >
                 <X className="w-3 h-3" /> Clear all ({activeCount + (search ? 1 : 0)})
               </button>
@@ -479,7 +479,7 @@ export default function MapViewPage() {
               </div>
 
               <div className="text-right">
-                <div className="text-lg font-bold leading-none" style={{ color: '#FF5A5F' }}>
+                <div className="text-lg font-bold leading-none" style={{ color: '#EA2D34' }}>
                   {formatLakhs(selected.totalPrice)}
                 </div>
                 {selected.pricePerCent && (
@@ -496,9 +496,9 @@ export default function MapViewPage() {
                 <a
                   href="tel:+919994488490"
                   className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold text-white transition-colors"
-                  style={{ backgroundColor: '#FF5A5F' }}
+                  style={{ backgroundColor: '#EA2D34' }}
                   onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#e04a4f')}
-                  onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#FF5A5F')}
+                  onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#EA2D34')}
                 >
                   <Phone className="w-3.5 h-3.5" />
                   Call
@@ -575,7 +575,7 @@ export default function MapViewPage() {
                       {property.city}
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-bold" style={{ color: '#FF5A5F' }}>
+                      <span className="text-sm font-bold" style={{ color: '#EA2D34' }}>
                         {formatLakhs(property.totalPrice)}
                       </span>
                       <span className="text-xs px-2 py-0.5 rounded-full"
@@ -671,7 +671,7 @@ export default function MapViewPage() {
                         {property.city}, Kanyakumari
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                        <span style={{ color: '#FF5A5F', fontWeight: 700, fontSize: 14 }}>
+                        <span style={{ color: '#EA2D34', fontWeight: 700, fontSize: 14 }}>
                           {formatLakhs(property.totalPrice)}
                         </span>
                         <span style={{ fontSize: 11, color: '#6A9739', backgroundColor: 'rgba(106,151,57,0.1)', padding: '2px 8px', borderRadius: 12 }}>
@@ -680,7 +680,7 @@ export default function MapViewPage() {
                       </div>
                       <Link
                         to={`/properties/${property.id}`}
-                        style={{ display: 'block', textAlign: 'center', backgroundColor: '#FF5A5F', color: 'white', padding: '6px 10px', borderRadius: 6, fontSize: 12, fontWeight: 600, textDecoration: 'none' }}
+                        style={{ display: 'block', textAlign: 'center', backgroundColor: '#EA2D34', color: 'white', padding: '6px 10px', borderRadius: 6, fontSize: 12, fontWeight: 600, textDecoration: 'none' }}
                       >
                         View Details
                       </Link>
@@ -695,7 +695,7 @@ export default function MapViewPage() {
           <button
             onClick={() => setListOpen(true)}
             className="md:hidden absolute top-3 left-3 z-[1000] inline-flex items-center gap-2 px-3 py-2 rounded-full bg-white shadow-md border border-gray-200 text-sm font-semibold"
-            style={{ color: '#FF5A5F' }}
+            style={{ color: '#EA2D34' }}
           >
             <ListIcon className="w-4 h-4" />
             {totalInDb > 0 ? `${totalInDb} listings` : `${visible.length} listings`}
@@ -751,7 +751,7 @@ function FilterSelect({
         onBlur={() => setTimeout(() => setOpen(false), 150)}
         className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-sm font-medium border min-w-[140px] transition-colors whitespace-nowrap"
         style={hasValue
-          ? { backgroundColor: 'rgba(255,90,95,0.06)', borderColor: '#FF5A5F', color: '#FF5A5F' }
+          ? { backgroundColor: 'rgba(255,90,95,0.06)', borderColor: '#EA2D34', color: '#EA2D34' }
           : { backgroundColor: 'white', borderColor: '#e5e7eb', color: '#374151' }}
       >
         <span className="flex-1 text-left">{selected?.label || placeholder}</span>
@@ -772,10 +772,10 @@ function FilterSelect({
                 setOpen(false)
               }}
               className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 transition-colors flex items-center justify-between"
-              style={value === opt.value ? { backgroundColor: 'rgba(255,90,95,0.06)', color: '#FF5A5F', fontWeight: 600 } : { color: '#374151' }}
+              style={value === opt.value ? { backgroundColor: 'rgba(255,90,95,0.06)', color: '#EA2D34', fontWeight: 600 } : { color: '#374151' }}
             >
               {opt.label}
-              {value === opt.value && <span style={{ color: '#FF5A5F' }}>✓</span>}
+              {value === opt.value && <span style={{ color: '#EA2D34' }}>✓</span>}
             </button>
           ))}
         </div>

@@ -20,7 +20,7 @@ export default function BuyerLineBanner() {
           className="jfl-blink-soft group flex items-center justify-center gap-3 sm:gap-4 w-full text-center py-4 px-5 rounded-2xl text-white font-bold shadow-lg hover:shadow-xl transition-all hover:brightness-110"
           style={{
             background:
-              'linear-gradient(90deg, #FF5A5F 0%, #ff7a7e 50%, #FF5A5F 100%)',
+              'linear-gradient(90deg, rgb(224, 79, 84) 0%, rgb(234, 45, 52) 50%, rgb(224, 79, 84) 100%)',
           }}
         >
           <span className="relative inline-flex h-3 w-3 shrink-0">

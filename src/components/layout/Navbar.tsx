@@ -49,11 +49,11 @@ export default function Navbar() {
           </span>
           <div className="flex items-center gap-4 ml-auto">
             <a href="tel:+919994488490" className="flex items-center gap-1.5 hover:text-gray-300 transition-colors">
-              <Phone className="w-3.5 h-3.5" style={{ color: '#FF5A5F' }} />
+              <Phone className="w-3.5 h-3.5" style={{ color: '#EA2D34' }} />
               +91 99944 88490
             </a>
             <a href="tel:+919944885542" className="flex items-center gap-1.5 hover:text-gray-300 transition-colors">
-              <Phone className="w-3.5 h-3.5" style={{ color: '#FF5A5F' }} />
+              <Phone className="w-3.5 h-3.5" style={{ color: '#EA2D34' }} />
               +91 99448 85542
             </a>
           </div>
@@ -89,7 +89,7 @@ export default function Navbar() {
                       isActive ? 'text-white rounded-lg' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                     }`
                   }
-                  style={({ isActive }) => isActive ? { backgroundColor: '#FF5A5F' } : {}}
+                  style={({ isActive }) => isActive ? { backgroundColor: '#EA2D34' } : {}}
                 >
                   {link.label}
                 </NavLink>
@@ -114,7 +114,7 @@ export default function Navbar() {
                     onClick={() => setUserMenuOpen(!userMenuOpen)}
                     className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors"
                   >
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-semibold" style={{ backgroundColor: '#FF5A5F' }}>
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-semibold" style={{ backgroundColor: '#EA2D34' }}>
                       {user?.firstName[0]}
                     </div>
                     <ChevronDown className="w-4 h-4 text-gray-400" />
@@ -131,7 +131,7 @@ export default function Navbar() {
                         </div>
                         <div className="text-xs text-gray-500 truncate">{user?.email}</div>
                         <span className="inline-block mt-1.5 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
-                          style={{ backgroundColor: 'rgba(255,90,95,0.10)', color: '#FF5A5F' }}>
+                          style={{ backgroundColor: 'rgba(255,90,95,0.10)', color: '#EA2D34' }}>
                           {user?.role}
                         </span>
                       </div>
@@ -199,7 +199,7 @@ export default function Navbar() {
                 className={({ isActive }) =>
                   `block px-4 py-2 rounded-lg font-medium text-sm transition-colors ${isActive ? 'text-white' : 'text-gray-600 hover:bg-gray-50'}`
                 }
-                style={({ isActive }) => isActive ? { backgroundColor: '#FF5A5F' } : {}}
+                style={({ isActive }) => isActive ? { backgroundColor: '#EA2D34' } : {}}
               >
                 {link.label}
               </NavLink>

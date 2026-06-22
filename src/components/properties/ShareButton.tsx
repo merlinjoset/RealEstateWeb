@@ -185,7 +185,7 @@ export default function ShareButton({
           {/* Header */}
           <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Share2 className="w-4 h-4" style={{ color: '#FF5A5F' }} />
+              <Share2 className="w-4 h-4" style={{ color: '#EA2D34' }} />
               <span className="text-sm font-bold" style={{ color: '#111111' }}>
                 Share this property
               </span>
@@ -244,7 +244,7 @@ export default function ShareButton({
                   <Check className="w-3.5 h-3.5" /> Copied
                 </span>
               ) : (
-                <span className="text-xs font-semibold inline-flex items-center gap-1 shrink-0" style={{ color: '#FF5A5F' }}>
+                <span className="text-xs font-semibold inline-flex items-center gap-1 shrink-0" style={{ color: '#EA2D34' }}>
                   <Copy className="w-3.5 h-3.5" /> Copy
                 </span>
               )}

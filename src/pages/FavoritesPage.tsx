@@ -26,7 +26,7 @@ export default function FavoritesPage() {
   if (isLoading) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin" style={{ color: '#FF5A5F' }} />
+        <Loader2 className="w-8 h-8 animate-spin" style={{ color: '#EA2D34' }} />
       </div>
     )
   }
@@ -57,7 +57,7 @@ export default function FavoritesPage() {
             </p>
             <Link to="/properties"
               className="inline-flex items-center gap-1.5 text-sm font-semibold transition-colors"
-              style={{ color: '#FF5A5F' }}>
+              style={{ color: '#EA2D34' }}>
               <Search className="w-4 h-4" /> Browse more
             </Link>
           </div>
@@ -77,7 +77,7 @@ export default function FavoritesPage() {
             <AlertCircle className="w-10 h-10 text-red-400 mx-auto mb-4" />
             <p className="text-sm text-red-600 font-medium">Failed to load your favorites.</p>
             <button onClick={() => query.refetch()}
-              className="mt-3 text-xs font-semibold underline" style={{ color: '#FF5A5F' }}>
+              className="mt-3 text-xs font-semibold underline" style={{ color: '#EA2D34' }}>
               Try again
             </button>
           </div>
@@ -87,7 +87,7 @@ export default function FavoritesPage() {
         {!query.isLoading && !query.isError && items.length === 0 && (
           <div className="bg-white rounded-3xl border border-gray-100 p-12 text-center">
             <div className="w-20 h-20 mx-auto rounded-full flex items-center justify-center mb-5"
-              style={{ backgroundColor: 'rgba(255,90,95,0.10)', color: '#FF5A5F' }}>
+              style={{ backgroundColor: 'rgba(255,90,95,0.10)', color: '#EA2D34' }}>
               <Heart className="w-10 h-10" />
             </div>
             <h2 className="text-2xl font-bold mb-2 tracking-tight" style={{ color: '#111111' }}>
@@ -101,9 +101,9 @@ export default function FavoritesPage() {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
               <Link to="/properties"
                 className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-white text-sm font-semibold shadow-sm transition-colors"
-                style={{ backgroundColor: '#FF5A5F' }}
+                style={{ backgroundColor: '#EA2D34' }}
                 onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#e04a4f')}
-                onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#FF5A5F')}>
+                onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#EA2D34')}>
                 <Search className="w-4 h-4" /> Browse Properties
               </Link>
               <Link to="/map"

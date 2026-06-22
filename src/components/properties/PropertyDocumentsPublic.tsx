@@ -12,11 +12,11 @@ import {
 import type { PropertyDocument } from '../../types'
 
 const DOC_TYPE_BADGE: Record<string, { bg: string; color: string }> = {
-  ec:          { bg: 'rgba(255,90,95,0.10)',  color: '#FF5A5F' },
+  ec:          { bg: 'rgba(255,90,95,0.10)',  color: '#EA2D34' },
   patta:       { bg: 'rgba(106,151,57,0.10)', color: '#6A9739' },
   chitta:      { bg: 'rgba(106,151,57,0.10)', color: '#6A9739' },
   layout:      { bg: 'rgba(41,50,55,0.08)',   color: '#293237' },
-  sale_deed:   { bg: 'rgba(255,90,95,0.10)',  color: '#FF5A5F' },
+  sale_deed:   { bg: 'rgba(255,90,95,0.10)',  color: '#EA2D34' },
   tax_receipt: { bg: 'rgba(245,158,11,0.10)', color: '#B45309' },
   noc:         { bg: 'rgba(106,151,57,0.10)', color: '#6A9739' },
   fmb:         { bg: 'rgba(41,50,55,0.08)',   color: '#293237' },
@@ -92,9 +92,9 @@ export default function PropertyDocumentsPublic({ documents, propertyId, propert
         {/* CTA */}
         <button onClick={() => setModalOpen(true)}
           className="w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-lg text-white text-sm font-semibold shadow-sm transition-colors"
-          style={{ backgroundColor: '#FF5A5F' }}
+          style={{ backgroundColor: '#EA2D34' }}
           onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#e04a4f')}
-          onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#FF5A5F')}>
+          onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#EA2D34')}>
           <Lock className="w-4 h-4" />
           Request to View Documents
         </button>
@@ -187,7 +187,7 @@ function DocumentRequestModal({ propertyId, propertyTitle, onClose }: ModalProps
         <div className="px-6 py-5 border-b border-gray-100 flex items-start justify-between gap-3">
           <div>
             <h3 className="font-bold text-gray-900 text-lg flex items-center gap-2">
-              <Lock className="w-5 h-5" style={{ color: '#FF5A5F' }} />
+              <Lock className="w-5 h-5" style={{ color: '#EA2D34' }} />
               Request Documents
             </h3>
             <p className="text-xs text-gray-500 mt-1 line-clamp-1">
@@ -235,15 +235,15 @@ function DocumentRequestModal({ propertyId, propertyTitle, onClose }: ModalProps
             </p>
 
             <div className="flex items-center justify-center gap-2 text-xs text-gray-500 mb-6">
-              <Phone className="w-3.5 h-3.5" style={{ color: '#FF5A5F' }} />
+              <Phone className="w-3.5 h-3.5" style={{ color: '#EA2D34' }} />
               SMS confirmation sent to {form.phone}
             </div>
 
             <button onClick={onClose}
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold transition-colors"
-              style={{ backgroundColor: '#FF5A5F' }}
+              style={{ backgroundColor: '#EA2D34' }}
               onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#e04a4f')}
-              onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#FF5A5F')}>
+              onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#EA2D34')}>
               Close
             </button>
           </div>
@@ -320,9 +320,9 @@ function DocumentRequestModal({ propertyId, propertyTitle, onClose }: ModalProps
             <button type="submit"
               disabled={submitMutation.isPending}
               className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-xl text-white text-sm font-semibold shadow-sm transition-colors disabled:opacity-60"
-              style={{ backgroundColor: '#FF5A5F' }}
+              style={{ backgroundColor: '#EA2D34' }}
               onMouseEnter={e => !submitMutation.isPending && (e.currentTarget.style.backgroundColor = '#e04a4f')}
-              onMouseLeave={e => !submitMutation.isPending && (e.currentTarget.style.backgroundColor = '#FF5A5F')}>
+              onMouseLeave={e => !submitMutation.isPending && (e.currentTarget.style.backgroundColor = '#EA2D34')}>
               {submitMutation.isPending
                 ? <><Loader2 className="w-4 h-4 animate-spin" /> Sending request…</>
                 : <><Send className="w-4 h-4" /> Send Request</>

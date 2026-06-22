@@ -48,7 +48,7 @@ export default function ContactPage() {
                 ].map(({ icon: Icon, label, value, href }) => (
                   <a key={label} href={href} className="flex items-center gap-3 group">
                     <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-colors"
-                      style={{ backgroundColor: 'rgba(255,90,95,0.08)', color: '#FF5A5F' }}>
+                      style={{ backgroundColor: 'rgba(255,90,95,0.08)', color: '#EA2D34' }}>
                       <Icon className="w-4 h-4" />
                     </div>
                     <div>
@@ -73,7 +73,7 @@ export default function ContactPage() {
 
             <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
               <div className="flex items-start gap-2">
-                <MapPin className="w-4 h-4 mt-0.5 shrink-0" style={{ color: '#FF5A5F' }} />
+                <MapPin className="w-4 h-4 mt-0.5 shrink-0" style={{ color: '#EA2D34' }} />
                 <div>
                   <h3 className="font-semibold text-gray-900 mb-1">Office Location</h3>
                   <p className="text-sm text-gray-600">Appattuvilai, Thuckalay,<br />Kanyakumari District,<br />Tamil Nadu – 629 175, India</p>
@@ -186,7 +186,7 @@ export default function ContactPage() {
                             key={v}
                             className="flex items-center gap-2 flex-1 cursor-pointer border-2 rounded-xl p-3 transition-colors"
                             style={form.contact === v
-                              ? { borderColor: '#FF5A5F', backgroundColor: 'rgba(255,90,95,0.04)' }
+                              ? { borderColor: '#EA2D34', backgroundColor: 'rgba(255,90,95,0.04)' }
                               : { borderColor: '#e5e7eb' }}
                           >
                             <input
@@ -195,7 +195,7 @@ export default function ContactPage() {
                               value={v}
                               checked={form.contact === v}
                               onChange={() => setForm({ ...form, contact: v })}
-                              className="accent-[#FF5A5F]"
+                              className="accent-[#EA2D34]"
                             />
                             <span className="text-sm font-medium text-gray-700 capitalize">{v}</span>
                           </label>

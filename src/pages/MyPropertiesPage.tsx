@@ -84,9 +84,9 @@ export default function MyPropertiesPage() {
 
           <Link to="/sell"
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold shadow-sm transition-colors"
-            style={{ backgroundColor: '#FF5A5F' }}
+            style={{ backgroundColor: '#EA2D34' }}
             onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#e04a4f')}
-            onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#FF5A5F')}>
+            onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#EA2D34')}>
             <Plus className="w-4 h-4" /> Add New Property
           </Link>
         </div>
@@ -105,7 +105,7 @@ export default function MyPropertiesPage() {
             <AlertCircle className="w-10 h-10 text-red-400 mx-auto mb-4" />
             <p className="text-sm text-red-600 font-medium">Failed to load your properties.</p>
             <button onClick={() => query.refetch()}
-              className="mt-3 text-xs font-semibold underline" style={{ color: '#FF5A5F' }}>
+              className="mt-3 text-xs font-semibold underline" style={{ color: '#EA2D34' }}>
               Try again
             </button>
           </div>
@@ -127,9 +127,9 @@ export default function MyPropertiesPage() {
             </p>
             <Link to="/sell"
               className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-white text-sm font-semibold shadow-sm transition-colors"
-              style={{ backgroundColor: '#FF5A5F' }}
+              style={{ backgroundColor: '#EA2D34' }}
               onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#e04a4f')}
-              onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#FF5A5F')}>
+              onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#EA2D34')}>
               <Plus className="w-4 h-4" /> Submit Your First Property
             </Link>
           </div>
@@ -193,7 +193,7 @@ function PropertyRow({ property }: { property: Property }) {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            <span className="text-xl font-bold" style={{ color: '#FF5A5F' }}>
+            <span className="text-xl font-bold" style={{ color: '#EA2D34' }}>
               {formatLakhs(property.totalPrice)}
             </span>
             <span className="text-sm text-gray-300">·</span>

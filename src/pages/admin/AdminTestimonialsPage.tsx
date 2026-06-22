@@ -167,9 +167,9 @@ export default function AdminTestimonialsPage() {
         <button
           onClick={openCreate}
           className="flex items-center gap-2 px-4 py-2 text-white text-sm font-semibold rounded-lg transition-colors"
-          style={{ backgroundColor: '#FF5A5F' }}
+          style={{ backgroundColor: '#EA2D34' }}
           onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#e04a4f')}
-          onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#FF5A5F')}
+          onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#EA2D34')}
         >
           <Plus className="w-4 h-4" /> Add Testimonial
         </button>
@@ -181,7 +181,7 @@ export default function AdminTestimonialsPage() {
           { label: 'Total',      value: stats.total,     color: '#111111' },
           { label: 'Published',  value: stats.published, color: '#6A9739' },
           { label: 'Drafts',     value: stats.drafts,    color: '#F59E0B' },
-          { label: 'Avg Rating', value: stats.avgRating, color: '#FF5A5F' },
+          { label: 'Avg Rating', value: stats.avgRating, color: '#EA2D34' },
         ].map(({ label, value, color }) => (
           <div key={label} className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm">
             <div className="text-2xl font-bold tracking-tight" style={{ color }}>{value}</div>
@@ -214,7 +214,7 @@ export default function AdminTestimonialsPage() {
             <AlertCircle className="w-8 h-8 text-red-400 mx-auto mb-3" />
             <p className="text-sm text-red-600">Failed to load testimonials.</p>
             <button onClick={() => query.refetch()}
-              className="mt-3 text-xs font-semibold underline" style={{ color: '#FF5A5F' }}>
+              className="mt-3 text-xs font-semibold underline" style={{ color: '#EA2D34' }}>
               Try again
             </button>
           </div>
@@ -272,7 +272,7 @@ export default function AdminTestimonialsPage() {
                     <div className="font-bold text-gray-900 text-sm">{t.name}</div>
                     <div className="flex gap-0.5 shrink-0">
                       {Array.from({ length: t.rating }).map((_, i) => (
-                        <Star key={i} className="w-3 h-3" style={{ fill: '#FF5A5F', color: '#FF5A5F' }} />
+                        <Star key={i} className="w-3 h-3" style={{ fill: '#EA2D34', color: '#EA2D34' }} />
                       ))}
                     </div>
                   </div>
@@ -357,8 +357,8 @@ export default function AdminTestimonialsPage() {
                       <button key={n} type="button" onClick={() => setForm({ ...form, rating: n })}>
                         <Star className="w-6 h-6 transition-colors"
                           style={{
-                            fill: n <= form.rating ? '#FF5A5F' : '#E5E7EB',
-                            color: n <= form.rating ? '#FF5A5F' : '#E5E7EB',
+                            fill: n <= form.rating ? '#EA2D34' : '#E5E7EB',
+                            color: n <= form.rating ? '#EA2D34' : '#E5E7EB',
                           }} />
                       </button>
                     ))}
@@ -474,9 +474,9 @@ export default function AdminTestimonialsPage() {
               <button type="submit"
                 disabled={createMutation.isPending || updateMutation.isPending}
                 className="flex items-center gap-2 px-5 py-2.5 text-white text-sm font-semibold rounded-lg transition-colors disabled:opacity-60"
-                style={{ backgroundColor: '#FF5A5F' }}
+                style={{ backgroundColor: '#EA2D34' }}
                 onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#e04a4f')}
-                onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#FF5A5F')}>
+                onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#EA2D34')}>
                 {(createMutation.isPending || updateMutation.isPending)
                   ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving…</>
                   : <><Save className="w-4 h-4" /> {editingId ? 'Update Testimonial' : 'Add Testimonial'}</>

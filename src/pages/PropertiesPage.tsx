@@ -238,13 +238,13 @@ export default function PropertiesPage({ rentalMode = false }: PropertiesPagePro
               onClick={() => setShowFilters(!showFilters)}
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium border transition-colors"
               style={showFilters || hasFilters
-                ? { backgroundColor: '#FF5A5F', color: 'white', borderColor: '#FF5A5F' }
+                ? { backgroundColor: '#EA2D34', color: 'white', borderColor: '#EA2D34' }
                 : { backgroundColor: 'white', color: '#374151', borderColor: '#e5e7eb' }}
             >
               <SlidersHorizontal className="w-4 h-4" />
               Filters
               {hasFilters && (
-                <span className="w-4 h-4 rounded-full bg-white text-xs flex items-center justify-center font-bold" style={{ color: '#FF5A5F' }}>
+                <span className="w-4 h-4 rounded-full bg-white text-xs flex items-center justify-center font-bold" style={{ color: '#EA2D34' }}>
                   !
                 </span>
               )}
@@ -286,7 +286,7 @@ export default function PropertiesPage({ rentalMode = false }: PropertiesPagePro
                 <select
                   value={selectedCity}
                   onChange={(e) => { setSelectedCity(e.target.value); setPage(1) }}
-                  className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#FF5A5F]"
+                  className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#EA2D34]"
                 >
                   <option value="">All Locations</option>
                   {CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
@@ -298,7 +298,7 @@ export default function PropertiesPage({ rentalMode = false }: PropertiesPagePro
                 <select
                   value={priceRange}
                   onChange={(e) => { setPriceRange(Number(e.target.value)); setPage(1) }}
-                  className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#FF5A5F]"
+                  className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#EA2D34]"
                 >
                   {PRICE_RANGES.map((r, i) => <option key={r.label} value={i}>{r.label}</option>)}
                 </select>
@@ -309,7 +309,7 @@ export default function PropertiesPage({ rentalMode = false }: PropertiesPagePro
                 <select
                   value={propertyType}
                   onChange={(e) => { setPropertyType(e.target.value); setPage(1) }}
-                  className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#FF5A5F]"
+                  className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#EA2D34]"
                 >
                   <option value="">All Types</option>
                   <option value="open_land">Open Land</option>
@@ -325,7 +325,7 @@ export default function PropertiesPage({ rentalMode = false }: PropertiesPagePro
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
-                  className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#FF5A5F]"
+                  className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#EA2D34]"
                 >
                   <option value="newest">Newest First</option>
                   <option value="price_asc">Price: Low to High</option>
@@ -362,7 +362,7 @@ export default function PropertiesPage({ rentalMode = false }: PropertiesPagePro
           <div className="text-center py-20">
             <AlertCircle className="w-8 h-8 text-red-400 mx-auto mb-3" />
             <p className="text-sm text-red-600 mb-2">Couldn't load properties.</p>
-            <button onClick={() => query.refetch()} className="text-xs font-semibold underline" style={{ color: '#FF5A5F' }}>
+            <button onClick={() => query.refetch()} className="text-xs font-semibold underline" style={{ color: '#EA2D34' }}>
               Try again
             </button>
           </div>
@@ -412,7 +412,7 @@ export default function PropertiesPage({ rentalMode = false }: PropertiesPagePro
                     ? 'text-white'
                     : 'border border-gray-200 text-gray-600 hover:bg-gray-50'
                 }`}
-                style={n === page ? { backgroundColor: '#FF5A5F' } : {}}
+                style={n === page ? { backgroundColor: '#EA2D34' } : {}}
               >
                 {n}
               </button>

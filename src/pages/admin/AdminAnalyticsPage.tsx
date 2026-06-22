@@ -31,7 +31,7 @@ export default function AdminAnalyticsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <BarChart3 className="w-6 h-6" style={{ color: '#FF5A5F' }} /> Traffic
+            <BarChart3 className="w-6 h-6" style={{ color: '#EA2D34' }} /> Traffic
           </h1>
           <p className="text-sm text-gray-500 mt-0.5">
             Page views across the site over the selected period. Updated live from visitor activity.
@@ -43,7 +43,7 @@ export default function AdminAnalyticsPage() {
               key={r.days}
               onClick={() => setDays(r.days)}
               className="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
-              style={days === r.days ? { backgroundColor: '#FF5A5F', color: 'white' } : { color: '#4B5563' }}
+              style={days === r.days ? { backgroundColor: '#EA2D34', color: 'white' } : { color: '#4B5563' }}
             >
               {r.label}
             </button>
@@ -60,7 +60,7 @@ export default function AdminAnalyticsPage() {
         <div className="text-center py-20">
           <AlertCircle className="w-8 h-8 text-red-400 mx-auto mb-3" />
           <p className="text-sm text-red-600 mb-2">Couldn't load analytics.</p>
-          <button onClick={() => q.refetch()} className="text-xs font-semibold underline" style={{ color: '#FF5A5F' }}>
+          <button onClick={() => q.refetch()} className="text-xs font-semibold underline" style={{ color: '#EA2D34' }}>
             Try again
           </button>
         </div>
@@ -77,7 +77,7 @@ function Dashboard({ data, days }: { data: AnalyticsSummary; days: number }) {
     <div className="space-y-6">
       {/* Stat cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <StatCard icon={Eye} label={`Page views (${days}d)`} value={data.totalViews} accent="#FF5A5F"
+        <StatCard icon={Eye} label={`Page views (${days}d)`} value={data.totalViews} accent="#EA2D34"
           footer={t ? (
             <span className="inline-flex items-center gap-1 text-xs font-semibold" style={{ color: t.up ? '#16a34a' : '#dc2626' }}>
               {t.up ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
@@ -137,7 +137,7 @@ function DailyChart({ daily }: { daily: AnalyticsSummary['daily'] }) {
           <div key={d.date} className="flex-1 h-full flex items-end group relative" title={`${label}: ${d.count} views`}>
             <div
               className="w-full rounded-t transition-all group-hover:opacity-80"
-              style={{ height: `${Math.max(h, d.count > 0 ? 4 : 1)}%`, backgroundColor: d.count > 0 ? '#FF5A5F' : '#E5E7EB' }}
+              style={{ height: `${Math.max(h, d.count > 0 ? 4 : 1)}%`, backgroundColor: d.count > 0 ? '#EA2D34' : '#E5E7EB' }}
             />
           </div>
         )

@@ -71,7 +71,7 @@ export default function PropertyDetailPage() {
           <h1 className="text-xl font-bold text-gray-900 mb-2">Property not found</h1>
           <p className="text-sm text-gray-500 mb-4">
             This listing may have been removed or you may need to{' '}
-            <Link to="/login" className="font-semibold underline" style={{ color: '#FF5A5F' }}>sign in</Link>{' '}
+            <Link to="/login" className="font-semibold underline" style={{ color: '#EA2D34' }}>sign in</Link>{' '}
             to view free listings.
           </p>
           <Link to="/properties" className="btn-primary inline-flex">
@@ -168,9 +168,9 @@ export default function PropertyDetailPage() {
       />
       <div className="bg-white border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center gap-2 text-sm text-gray-500">
-          <Link to="/" className="hover:text-[#FF5A5F] transition-colors">Home</Link>
+          <Link to="/" className="hover:text-[#EA2D34] transition-colors">Home</Link>
           <span>/</span>
-          <Link to="/properties" className="hover:text-[#FF5A5F] transition-colors">Properties</Link>
+          <Link to="/properties" className="hover:text-[#EA2D34] transition-colors">Properties</Link>
           <span>/</span>
           <span className="text-gray-900 font-medium line-clamp-1">{property.title}</span>
         </div>
@@ -178,7 +178,7 @@ export default function PropertyDetailPage() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <button onClick={handleBack}
-          className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-[#FF5A5F] mb-4 transition-colors">
+          className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-[#EA2D34] mb-4 transition-colors">
           <ChevronLeft className="w-4 h-4" /> Back to listings
         </button>
 
@@ -211,7 +211,7 @@ export default function PropertyDetailPage() {
                       // Serial reads as a peer of the title now — same font
                       // family + weight, just in the brand red so it stands
                       // apart without needing the muted chip styling.
-                      <span className="text-3xl md:text-4xl font-bold mr-3 align-middle" style={{ color: '#FF5A5F' }}>
+                      <span className="text-3xl md:text-4xl font-bold mr-3 align-middle" style={{ color: '#EA2D34' }}>
                         #{property.serialNo}
                       </span>
                     )}
@@ -309,7 +309,7 @@ export default function PropertyDetailPage() {
                 <ul className="space-y-2">
                   {property.nearbyLandmarks.map((lm) => (
                     <li key={lm} className="flex items-center gap-2 text-sm text-gray-600">
-                      <MapPin className="w-4 h-4 shrink-0" style={{ color: '#FF5A5F' }} />
+                      <MapPin className="w-4 h-4 shrink-0" style={{ color: '#EA2D34' }} />
                       {lm}
                     </li>
                   ))}
@@ -331,7 +331,7 @@ export default function PropertyDetailPage() {
             <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-semibold text-gray-900 flex items-center gap-2">
-                  <FolderOpen className="w-4 h-4" style={{ color: '#FF5A5F' }} />
+                  <FolderOpen className="w-4 h-4" style={{ color: '#EA2D34' }} />
                   Property Documents
                 </h2>
                 <span className="text-xs px-2 py-0.5 rounded-full"
@@ -370,7 +370,7 @@ export default function PropertyDetailPage() {
                   return (
                     <>
                       <div className="flex items-baseline gap-2 flex-wrap mb-1">
-                        <span className="text-3xl font-bold" style={{ color: '#FF5A5F' }}>
+                        <span className="text-3xl font-bold" style={{ color: '#EA2D34' }}>
                           {formatLakhs(eff)}
                           {perMonth && <span className="text-base font-medium text-gray-500"> / month</span>}
                         </span>
@@ -397,9 +397,9 @@ export default function PropertyDetailPage() {
                 <a
                   href="tel:+919994488490"
                   className="flex items-center justify-center gap-2 w-full py-3 text-white font-semibold rounded-xl transition-colors"
-                  style={{ backgroundColor: '#FF5A5F' }}
+                  style={{ backgroundColor: '#EA2D34' }}
                   onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#e04a4f')}
-                  onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#FF5A5F')}
+                  onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#EA2D34')}
                 >
                   <Phone className="w-4 h-4" />
                   Call: +91 99944 88490
@@ -444,7 +444,7 @@ export default function PropertyDetailPage() {
                       <a
                         href={`tel:${property.submittedByPhone.replace(/\s/g, '')}`}
                         className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-lg border-2 transition-colors"
-                        style={{ borderColor: '#FF5A5F', color: '#FF5A5F' }}
+                        style={{ borderColor: '#EA2D34', color: '#EA2D34' }}
                         onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(255,90,95,0.06)' }}
                         onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent' }}
                       >

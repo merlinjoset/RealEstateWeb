@@ -31,7 +31,7 @@ export default function PageHeader({
     return (
       <>
         {parts[0]}
-        <span style={{ color: '#FF5A5F' }}>{highlight}</span>
+        <span style={{ color: '#EA2D34' }}>{highlight}</span>
         {parts[1] ?? ''}
       </>
     )
@@ -47,7 +47,7 @@ export default function PageHeader({
       {/* Decorative brand blobs */}
       <div
         className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-[0.08] -translate-y-1/3 translate-x-1/4 pointer-events-none"
-        style={{ backgroundColor: '#FF5A5F' }}
+        style={{ backgroundColor: '#EA2D34' }}
       />
       <div
         className="absolute bottom-0 left-0 w-80 h-80 rounded-full opacity-[0.08] translate-y-1/3 -translate-x-1/4 pointer-events-none"
@@ -66,15 +66,15 @@ export default function PageHeader({
               isCenter ? 'justify-center' : ''
             }`}
           >
-            <div className="h-px w-10" style={{ backgroundColor: '#FF5A5F' }} />
+            <div className="h-px w-10" style={{ backgroundColor: '#EA2D34' }} />
             <span
               className="text-[11px] font-semibold tracking-[0.25em] uppercase"
-              style={{ color: '#FF5A5F' }}
+              style={{ color: '#EA2D34' }}
             >
               {eyebrow}
             </span>
             {isCenter && (
-              <div className="h-px w-10" style={{ backgroundColor: '#FF5A5F' }} />
+              <div className="h-px w-10" style={{ backgroundColor: '#EA2D34' }} />
             )}
           </div>
         )}

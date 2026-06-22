@@ -19,7 +19,7 @@ const CITY_COORDS: Record<string, { lat: number; lng: number }> = {
 }
 
 const TYPE_COLORS: Record<Property['propertyType'], string> = {
-  open_land:          '#FF5A5F',
+  open_land:          '#EA2D34',
   land_with_building: '#6A9739',
   agricultural:       '#8BC34A',
   residential_plot:   '#F59E0B',
@@ -86,7 +86,7 @@ export default function PropertyLocationMap({ property }: Props) {
   ]
 
   const isPrecise = property.latitude != null && property.longitude != null
-  const color = TYPE_COLORS[property.propertyType] ?? '#FF5A5F'
+  const color = TYPE_COLORS[property.propertyType] ?? '#EA2D34'
 
   const fullAddress = [
     property.address,

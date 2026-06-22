@@ -155,12 +155,12 @@ export default function PropertyCard({ property }: Props) {
               rather than a separate row above — saves vertical space and
               reads as "ref → title" without doubling the line height.
               Hidden when no serial is set (most legacy imports). */}
-          <h3 className="font-semibold text-gray-900 transition-colors line-clamp-1 mb-1 hover:text-[#FF5A5F]">
+          <h3 className="font-semibold text-gray-900 transition-colors line-clamp-1 mb-1 hover:text-[#EA2D34]">
             {property.serialNo && (
               // Same #N treatment as the detail page — brand-red, same
               // weight/size as the title so the two read as one phrase
               // ("#685 commercial property") rather than chip + title.
-              <span className="font-semibold mr-1.5" style={{ color: '#FF5A5F' }}>
+              <span className="font-semibold mr-1.5" style={{ color: '#EA2D34' }}>
                 #{property.serialNo}
               </span>
             )}
@@ -178,7 +178,7 @@ export default function PropertyCard({ property }: Props) {
         <div className="flex items-center justify-between mb-3">
           <div>
             <div className="flex items-baseline gap-2 flex-wrap">
-              <span className="text-xl font-bold" style={{ color: '#FF5A5F' }}>
+              <span className="text-xl font-bold" style={{ color: '#EA2D34' }}>
                 {formatLakhs(effectivePrice)}
                 {perMonth && <span className="text-sm font-medium text-gray-500"> / month</span>}
               </span>
@@ -224,7 +224,7 @@ export default function PropertyCard({ property }: Props) {
               href="tel:+919994488490"
               onClick={(e) => e.stopPropagation()}
               className="flex items-center gap-1 text-xs font-medium hover:underline"
-              style={{ color: '#FF5A5F' }}
+              style={{ color: '#EA2D34' }}
             >
               <Phone className="w-3.5 h-3.5" />
               Call

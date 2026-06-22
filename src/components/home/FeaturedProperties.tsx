@@ -26,7 +26,7 @@ export default function FeaturedProperties() {
           <Link
             to="/properties"
             className="hidden sm:flex items-center gap-1 font-semibold hover:gap-2 transition-all"
-            style={{ color: '#FF5A5F' }}
+            style={{ color: '#EA2D34' }}
           >
             View all <ArrowRight className="w-4 h-4" />
           </Link>
@@ -43,7 +43,7 @@ export default function FeaturedProperties() {
           </div>
         ) : featured.length === 0 ? (
           <div className="py-16 text-center text-sm text-gray-500">
-            No featured properties yet — <Link to="/properties" className="font-semibold underline" style={{ color: '#FF5A5F' }}>browse all listings</Link>.
+            No featured properties yet — <Link to="/properties" className="font-semibold underline" style={{ color: '#EA2D34' }}>browse all listings</Link>.
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">

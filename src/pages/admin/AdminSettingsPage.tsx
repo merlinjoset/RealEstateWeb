@@ -84,7 +84,7 @@ const INITIAL: SettingsState = {
   youtube: 'https://youtube.com/@joseforland',
   website: 'https://joseforland.com',
 
-  primaryColor: '#FF5A5F',
+  primaryColor: '#EA2D34',
   secondaryColor: '#6A9739',
   showStatsStrip: true,
   showFreeBadge: true,
@@ -519,7 +519,7 @@ function Field({ label, required, icon: Icon, children }: {
       <label className="block text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-1.5">
         {Icon && <Icon className="w-3.5 h-3.5 text-gray-400" />}
         {label}
-        {required && <span style={{ color: '#FF5A5F' }}>*</span>}
+        {required && <span style={{ color: '#EA2D34' }}>*</span>}
       </label>
       {children}
     </div>
@@ -598,9 +598,9 @@ function PasswordChange() {
         </div>
         <button type="button"
           className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold text-white transition-colors"
-          style={{ backgroundColor: '#FF5A5F' }}
+          style={{ backgroundColor: '#EA2D34' }}
           onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#e04a4f')}
-          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#FF5A5F')}>
+          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#EA2D34')}>
           <IndianRupee className="w-3.5 h-3.5" /> Update password
         </button>
       </div>

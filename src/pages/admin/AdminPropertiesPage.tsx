@@ -108,7 +108,7 @@ export default function AdminPropertiesPage() {
                   </td>
                   <td className="px-4 py-3 text-gray-600 hidden sm:table-cell">{p.city}</td>
                   <td className="px-4 py-3 text-gray-600 hidden md:table-cell">{p.areaInCents} cents</td>
-                  <td className="px-4 py-3 font-semibold" style={{ color: '#FF5A5F' }}>{formatLakhs(p.totalPrice)}</td>
+                  <td className="px-4 py-3 font-semibold" style={{ color: '#EA2D34' }}>{formatLakhs(p.totalPrice)}</td>
                   <td className="px-4 py-3 hidden lg:table-cell">
                     <div className="flex items-center gap-1.5">
                       {p.isVerified && (

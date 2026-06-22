@@ -175,7 +175,7 @@ export default function DashboardPage() {
                   <div className="text-xs text-gray-500 mt-0.5 flex flex-wrap gap-x-2 gap-y-0.5">
                     <span>{item.areaInCents} cents</span>
                     <span>·</span>
-                    <span style={{ color: '#FF5A5F' }} className="font-semibold">{formatLakhs(item.totalPrice)}</span>
+                    <span style={{ color: '#EA2D34' }} className="font-semibold">{formatLakhs(item.totalPrice)}</span>
                     <span>·</span>
                     <span>{item.city}</span>
                     <span>·</span>
@@ -237,7 +237,7 @@ export default function DashboardPage() {
                   <div className="font-medium text-gray-900 text-sm flex items-center gap-2">
                     {inq.name}
                     {!inq.isRead && (
-                      <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#FF5A5F' }} />
+                      <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#EA2D34' }} />
                     )}
                   </div>
                   <div className="text-xs text-gray-500 truncate">
@@ -251,7 +251,7 @@ export default function DashboardPage() {
                 <a
                   href={`tel:${inq.phone.replace(/\s/g, '')}`}
                   className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors"
-                  style={{ backgroundColor: 'rgba(255,90,95,0.08)', color: '#FF5A5F' }}
+                  style={{ backgroundColor: 'rgba(255,90,95,0.08)', color: '#EA2D34' }}
                   onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255,90,95,0.15)')}
                   onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255,90,95,0.08)')}
                 >
@@ -280,7 +280,7 @@ function DashboardError({ onRetry }: { onRetry: () => void }) {
     <div className="px-5 py-10 text-center">
       <AlertCircle className="w-6 h-6 text-red-400 mx-auto mb-2" />
       <p className="text-sm text-red-600 mb-2">Failed to load.</p>
-      <button onClick={onRetry} className="text-xs font-semibold underline" style={{ color: '#FF5A5F' }}>
+      <button onClick={onRetry} className="text-xs font-semibold underline" style={{ color: '#EA2D34' }}>
         Try again
       </button>
     </div>

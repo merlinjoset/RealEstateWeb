@@ -2,9 +2,9 @@
 
 @theme {
   /* === Jose For Land Brand Colors === */
-  --color-brand-coral: #FF5A5F;
-  --color-brand-coral-dark: #e04a4f;
-  --color-brand-coral-light: #ff7a7e;
+  --color-brand-coral: #EA2D34;
+  --color-brand-coral-dark: #c8222a;
+  --color-brand-coral-light: #f2696e;
 
   --color-brand-olive: #6A9739;
   --color-brand-olive-dark: #547a2d;
@@ -51,7 +51,7 @@
   /* Primary CTA — coral */
   .btn-primary {
     @apply inline-flex items-center justify-center gap-2 px-6 py-3 font-semibold rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-white;
-    background-color: #FF5A5F;
+    background-color: #EA2D34;
   }
   .btn-primary:hover { background-color: #e04a4f; }
 
@@ -87,10 +87,10 @@
   /* Input */
   .input-field {
     @apply w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 transition-all duration-200 bg-white text-gray-900 placeholder-gray-400;
-    --tw-ring-color: #FF5A5F;
+    --tw-ring-color: #EA2D34;
     border-color: #CFD8DC;
   }
-  .input-field:focus { border-color: #FF5A5F; }
+  .input-field:focus { border-color: #EA2D34; }
 
   /* Card */
   .card {

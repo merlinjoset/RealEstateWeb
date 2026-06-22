@@ -5,7 +5,7 @@ export default function CallToAction() {
     <section className="py-20 relative overflow-hidden" style={{ backgroundColor: '#F8F6F3' }}>
       {/* Decorative brand blobs */}
       <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-[0.10] -translate-y-1/3 translate-x-1/4 pointer-events-none"
-        style={{ backgroundColor: '#FF5A5F' }} />
+        style={{ backgroundColor: '#EA2D34' }} />
       <div className="absolute bottom-0 left-0 w-80 h-80 rounded-full opacity-[0.10] translate-y-1/3 -translate-x-1/4 pointer-events-none"
         style={{ backgroundColor: '#6A9739' }} />
 
@@ -18,7 +18,7 @@ export default function CallToAction() {
 
         {/* Headline + description */}
         <h2 className="text-4xl md:text-5xl font-bold leading-tight tracking-tight mb-4" style={{ color: '#111111' }}>
-          Ready to find your <span style={{ color: '#FF5A5F' }}>perfect land?</span>
+          Ready to find your <span style={{ color: '#EA2D34' }}>perfect land?</span>
         </h2>
         <p className="text-lg max-w-2xl mx-auto leading-relaxed mb-10" style={{ color: '#4B5563' }}>
           Call us now for a <strong style={{ color: '#111111' }}>FREE doorstep consultation</strong>. We'll visit
@@ -30,9 +30,9 @@ export default function CallToAction() {
           <a
             href="tel:+919994488490"
             className="inline-flex items-center gap-3 font-bold px-7 py-4 rounded-xl transition-colors text-base shadow-lg text-white"
-            style={{ backgroundColor: '#FF5A5F' }}
+            style={{ backgroundColor: '#EA2D34' }}
             onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#e04a4f')}
-            onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#FF5A5F')}
+            onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#EA2D34')}
           >
             <Phone className="w-5 h-5" />
             +91 99944 88490

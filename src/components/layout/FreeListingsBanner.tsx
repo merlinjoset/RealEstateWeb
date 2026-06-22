@@ -50,7 +50,7 @@ export default function FreeListingsBanner() {
       className="jfl-blink-soft block w-full text-center text-xs sm:text-sm font-semibold text-white py-2 px-3 hover:brightness-110 transition-all"
       style={{
         background:
-          'linear-gradient(90deg, #FF5A5F 0%, #ff7a7e 35%, #FF5A5F 65%, #e04a4f 100%)',
+          'linear-gradient(90deg, #EA2D34 0%, #ff7a7e 35%, #EA2D34 65%, #e04a4f 100%)',
       }}
     >
       <span className="inline-flex items-center gap-2 flex-wrap justify-center">

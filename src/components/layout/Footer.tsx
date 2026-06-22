@@ -109,24 +109,24 @@ export default function Footer() {
             <h4 className="text-white font-semibold">Contact Us</h4>
             <ul className="space-y-3 text-sm">
               <li className="flex items-start gap-3">
-                <MapPin className="w-4 h-4 mt-0.5 shrink-0" style={{ color: '#FF5A5F' }} />
+                <MapPin className="w-4 h-4 mt-0.5 shrink-0" style={{ color: '#EA2D34' }} />
                 <span>Appattuvilai, Thuckalay,<br />Kanyakumari District, Tamil Nadu, India</span>
               </li>
               <li>
                 <a href="tel:+919994488490" className="flex items-center gap-3 hover:text-white transition-colors">
-                  <Phone className="w-4 h-4 shrink-0" style={{ color: '#FF5A5F' }} />
+                  <Phone className="w-4 h-4 shrink-0" style={{ color: '#EA2D34' }} />
                   +91 99944 88490
                 </a>
               </li>
               <li>
                 <a href="tel:+919944885542" className="flex items-center gap-3 hover:text-white transition-colors">
-                  <Phone className="w-4 h-4 shrink-0" style={{ color: '#FF5A5F' }} />
+                  <Phone className="w-4 h-4 shrink-0" style={{ color: '#EA2D34' }} />
                   +91 99448 85542
                 </a>
               </li>
               <li>
                 <a href="mailto:josepowerj@gmail.com" className="flex items-center gap-3 hover:text-white transition-colors">
-                  <Mail className="w-4 h-4 shrink-0" style={{ color: '#FF5A5F' }} />
+                  <Mail className="w-4 h-4 shrink-0" style={{ color: '#EA2D34' }} />
                   josepowerj@gmail.com
                 </a>
               </li>

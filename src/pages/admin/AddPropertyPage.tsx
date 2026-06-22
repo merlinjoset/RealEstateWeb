@@ -24,7 +24,7 @@ const FEATURES_OPTIONS = [
 ]
 
 const PROPERTY_TYPES = [
-  { value: 'open_land',          label: 'Open Land',          icon: Trees,       color: '#FF5A5F' },
+  { value: 'open_land',          label: 'Open Land',          icon: Trees,       color: '#EA2D34' },
   { value: 'land_with_building', label: 'Land + Building',    icon: HomeIcon,    color: '#6A9739' },
   { value: 'agricultural',       label: 'Agricultural',       icon: Wheat,       color: '#8BC34A' },
   { value: 'residential_plot',   label: 'Residential Plot',   icon: MapPinIcon,  color: '#F59E0B' },
@@ -593,7 +593,7 @@ export default function AddPropertyPage() {
           <div>
             <div className="text-xs font-semibold uppercase tracking-wider text-gray-500">Listing Completeness</div>
             <div className="flex items-center gap-2 mt-1">
-              <span className="text-2xl font-bold tracking-tight" style={{ color: progress === 100 ? '#6A9739' : '#FF5A5F' }}>
+              <span className="text-2xl font-bold tracking-tight" style={{ color: progress === 100 ? '#6A9739' : '#EA2D34' }}>
                 {progress}%
               </span>
               <span className="text-xs text-gray-400">
@@ -614,7 +614,7 @@ export default function AddPropertyPage() {
               width: `${progress}%`,
               background: progress === 100
                 ? 'linear-gradient(90deg, #6A9739 0%, #8BC34A 100%)'
-                : 'linear-gradient(90deg, #FF5A5F 0%, #FFA0A3 100%)',
+                : 'linear-gradient(90deg, #EA2D34 0%, #FFA0A3 100%)',
             }} />
         </div>
       </div>
@@ -653,7 +653,7 @@ export default function AddPropertyPage() {
                       <Check className="w-3 h-3 text-white" strokeWidth={3} />
                     </div>
                   ) : !s.isOptional ? (
-                    <span className="text-[9px] font-bold uppercase tracking-wider shrink-0" style={{ color: '#FF5A5F' }}>
+                    <span className="text-[9px] font-bold uppercase tracking-wider shrink-0" style={{ color: '#EA2D34' }}>
                       Required
                     </span>
                   ) : null}
@@ -868,7 +868,7 @@ export default function AddPropertyPage() {
               </div>
               {form.discountPrice && form.totalPrice && !errorFor('discountPrice')
                 && Number(form.discountPrice) > 0 && Number(form.discountPrice) < Number(form.totalPrice) && (
-                <p className="text-xs mt-1.5 font-semibold" style={{ color: '#FF5A5F' }}>
+                <p className="text-xs mt-1.5 font-semibold" style={{ color: '#EA2D34' }}>
                   {formatLakhs(form.discountPrice)}{isRental ? ' / month' : ''} · {Math.round((1 - Number(form.discountPrice) / Number(form.totalPrice)) * 100)}% off
                 </p>
               )}
@@ -879,7 +879,7 @@ export default function AddPropertyPage() {
               <div className="mt-2 p-4 rounded-xl border flex items-center gap-4"
                 style={{ backgroundColor: 'rgba(255,90,95,0.04)', borderColor: 'rgba(255,90,95,0.15)' }}>
                 <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
-                  style={{ backgroundColor: '#FF5A5F', color: 'white' }}>
+                  style={{ backgroundColor: '#EA2D34', color: 'white' }}>
                   <IndianRupee className="w-5 h-5" />
                 </div>
                 <div className="flex-1">
@@ -1049,7 +1049,7 @@ export default function AddPropertyPage() {
 
                     {idx === 0 && (
                       <div className="absolute top-2 left-2 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide flex items-center gap-1 text-white"
-                        style={{ backgroundColor: '#FF5A5F' }}>
+                        style={{ backgroundColor: '#EA2D34' }}>
                         <Star className="w-2.5 h-2.5" fill="currentColor" /> Cover
                       </div>
                     )}
@@ -1111,7 +1111,7 @@ export default function AddPropertyPage() {
               label="Mark as Featured"
               desc="Show this property prominently on the home page and at the top of listings"
               icon={Star}
-              accent="#FF5A5F" />
+              accent="#EA2D34" />
 
             <ToggleRow
               checked={form.isVerified}
@@ -1189,7 +1189,7 @@ export default function AddPropertyPage() {
                 {Object.keys(errors).length} validation {Object.keys(errors).length === 1 ? 'error' : 'errors'}
               </div>
             ) : progress < 100 ? (
-              <div className="hidden sm:flex items-center gap-1.5 text-xs font-medium" style={{ color: '#FF5A5F' }}>
+              <div className="hidden sm:flex items-center gap-1.5 text-xs font-medium" style={{ color: '#EA2D34' }}>
                 <AlertCircle className="w-3.5 h-3.5" />
                 Required fields missing
               </div>
@@ -1286,7 +1286,7 @@ function Field({ label, required, hint, error, children }: {
     <div>
       <label className="text-sm font-medium text-gray-700 mb-1.5 flex items-center justify-between gap-2">
         <span>
-          {label}{required && <span style={{ color: '#FF5A5F' }} className="ml-0.5">*</span>}
+          {label}{required && <span style={{ color: '#EA2D34' }} className="ml-0.5">*</span>}
         </span>
         {hint && !error && <span className="text-[11px] font-normal text-gray-400">{hint}</span>}
       </label>
@@ -1362,7 +1362,7 @@ function PreviewModal({ form, typeMeta, images, onClose }: {
         className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden max-h-[90vh] flex flex-col">
         <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between">
           <div className="text-sm font-bold flex items-center gap-2">
-            <Eye className="w-4 h-4" style={{ color: '#FF5A5F' }} />
+            <Eye className="w-4 h-4" style={{ color: '#EA2D34' }} />
             Listing Preview
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
@@ -1401,7 +1401,7 @@ function PreviewModal({ form, typeMeta, images, onClose }: {
             </div>
 
             <div className="flex items-center justify-between mt-4 pb-3 border-b border-gray-100">
-              <div className="text-xl font-bold" style={{ color: '#FF5A5F' }}>
+              <div className="text-xl font-bold" style={{ color: '#EA2D34' }}>
                 {form.totalPrice ? formatLakhs(form.totalPrice) : '—'}{form.status === 'for_rent' && form.totalPrice ? '/mo' : ''}
               </div>
               <div className="text-xs px-2 py-1 rounded-md font-medium"

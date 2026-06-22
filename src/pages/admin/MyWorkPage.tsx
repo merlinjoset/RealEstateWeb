@@ -70,7 +70,7 @@ export default function MyWorkPage() {
           label="Properties to verify"
           value={properties.length}
           hint={properties.length === 0 ? 'Nothing assigned yet' : 'Site visits + document checks'}
-          color="#FF5A5F"
+          color="#EA2D34"
         />
         <StatCard
           icon={MessageSquare}
@@ -100,7 +100,7 @@ export default function MyWorkPage() {
                   {p.title}
                   {p.marketingPlan === 'VideoPromotion' && (
                     <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-bold text-white"
-                      style={{ backgroundColor: '#FF5A5F' }}
+                      style={{ backgroundColor: '#EA2D34' }}
                       title={`2% brokerage on sale: ${formatLakhs(p.totalPrice * VIDEO_PROMOTION_FEE_RATE)}`}>
                       <Video className="w-2.5 h-2.5" /> Video · 2%
                     </span>
@@ -113,7 +113,7 @@ export default function MyWorkPage() {
                   <span className="inline-flex items-center gap-1">
                     <Ruler className="w-3 h-3" /> {p.areaInCents} cents
                   </span>
-                  <span style={{ color: '#FF5A5F' }} className="font-semibold">{formatLakhs(p.totalPrice)}</span>
+                  <span style={{ color: '#EA2D34' }} className="font-semibold">{formatLakhs(p.totalPrice)}</span>
                   <span>Seller: {p.submittedByName ?? 'Anon'}</span>
                   <span className="inline-flex items-center gap-1">
                     <Calendar className="w-3 h-3" /> Assigned {timeAgo(p.assignedToVerifyAt)}
@@ -125,7 +125,7 @@ export default function MyWorkPage() {
                   <a
                     href={`tel:${p.submittedByPhone.replace(/\s/g, '')}`}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors"
-                    style={{ backgroundColor: 'rgba(255,90,95,0.08)', color: '#FF5A5F' }}>
+                    style={{ backgroundColor: 'rgba(255,90,95,0.08)', color: '#EA2D34' }}>
                     <Phone className="w-3 h-3" /> Call seller
                   </a>
                 )}
@@ -162,7 +162,7 @@ export default function MyWorkPage() {
                 <div className="font-medium text-gray-900 text-sm flex items-center gap-2">
                   {inq.name}
                   {!inq.isRead && (
-                    <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#FF5A5F' }} />
+                    <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#EA2D34' }} />
                   )}
                 </div>
                 <div className="text-xs text-gray-500 mt-0.5 line-clamp-2 leading-snug">
@@ -185,7 +185,7 @@ export default function MyWorkPage() {
               <a
                 href={`tel:${inq.phone.replace(/\s/g, '')}`}
                 className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors"
-                style={{ backgroundColor: 'rgba(255,90,95,0.08)', color: '#FF5A5F' }}>
+                style={{ backgroundColor: 'rgba(255,90,95,0.08)', color: '#EA2D34' }}>
                 <Phone className="w-3 h-3" /> Call
               </a>
             </div>
@@ -256,7 +256,7 @@ function Section({
         <div className="px-5 py-10 text-center">
           <AlertCircle className="w-6 h-6 text-red-400 mx-auto mb-2" />
           <p className="text-sm text-red-600 mb-2">Failed to load.</p>
-          <button onClick={onRetry} className="text-xs font-semibold underline" style={{ color: '#FF5A5F' }}>
+          <button onClick={onRetry} className="text-xs font-semibold underline" style={{ color: '#EA2D34' }}>
             Try again
           </button>
         </div>

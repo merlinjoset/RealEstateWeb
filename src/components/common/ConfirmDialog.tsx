@@ -43,7 +43,7 @@ export default function ConfirmDialog({
 
   if (!open) return null
 
-  const accent = tone === 'danger' ? '#DC2626' : '#FF5A5F'
+  const accent = tone === 'danger' ? '#DC2626' : '#EA2D34'
   const accentSoft = tone === 'danger' ? 'rgba(220,38,38,0.10)' : 'rgba(255,90,95,0.10)'
   const accentHover = tone === 'danger' ? '#B91C1C' : '#e04a4f'
 

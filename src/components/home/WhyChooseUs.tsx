@@ -50,15 +50,15 @@ export default function WhyChooseUs() {
       <div className="relative overflow-hidden" style={{ backgroundColor: '#F8F6F3' }}>
         {/* Subtle decorative texture */}
         <div className="absolute inset-0 opacity-[0.05] pointer-events-none" style={{
-          backgroundImage: 'radial-gradient(circle at 15% 20%, #FF5A5F 0%, transparent 35%), radial-gradient(circle at 85% 80%, #6A9739 0%, transparent 40%)',
+          backgroundImage: 'radial-gradient(circle at 15% 20%, #EA2D34 0%, transparent 35%), radial-gradient(circle at 85% 80%, #6A9739 0%, transparent 40%)',
         }} />
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-28">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-end">
             <div className="lg:col-span-8">
               <div className="flex items-center gap-3 mb-8">
-                <div className="h-px w-12" style={{ backgroundColor: '#FF5A5F' }} />
-                <span className="text-[11px] font-semibold tracking-[0.25em] uppercase" style={{ color: '#FF5A5F' }}>
+                <div className="h-px w-12" style={{ backgroundColor: '#EA2D34' }} />
+                <span className="text-[11px] font-semibold tracking-[0.25em] uppercase" style={{ color: '#EA2D34' }}>
                   The Jose For Land Difference
                 </span>
               </div>
@@ -68,7 +68,7 @@ export default function WhyChooseUs() {
                 Land is permanent.
                 <br />
                 <span style={{ color: '#9CA3AF' }}>So is the way </span>
-                <em className="not-italic" style={{ color: '#FF5A5F', fontStyle: 'italic', fontWeight: 600 }}>
+                <em className="not-italic" style={{ color: '#EA2D34', fontStyle: 'italic', fontWeight: 600 }}>
                   we work.
                 </em>
               </h2>
@@ -93,7 +93,7 @@ export default function WhyChooseUs() {
               <div key={l}>
                 <div className="text-3xl md:text-4xl font-bold tracking-tight" style={{ color: '#111111' }}>
                   {v.replace(/[+%]/, '')}
-                  <span style={{ color: '#FF5A5F' }}>{v.match(/[+%]/)?.[0]}</span>
+                  <span style={{ color: '#EA2D34' }}>{v.match(/[+%]/)?.[0]}</span>
                 </div>
                 <div className="text-xs uppercase tracking-wider mt-2" style={{ color: '#6B7280' }}>{l}</div>
               </div>
@@ -121,9 +121,9 @@ export default function WhyChooseUs() {
 
               <a href="tel:+919994488490"
                 className="group inline-flex items-center gap-2 text-sm font-semibold border-b-2 pb-1 transition-colors"
-                style={{ color: '#111111', borderColor: '#FF5A5F' }}
+                style={{ color: '#111111', borderColor: '#EA2D34' }}
               >
-                <Phone className="w-4 h-4" style={{ color: '#FF5A5F' }} />
+                <Phone className="w-4 h-4" style={{ color: '#EA2D34' }} />
                 Speak to a specialist
                 <ArrowUpRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
               </a>
@@ -140,7 +140,7 @@ export default function WhyChooseUs() {
                   style={{ borderColor: '#EAEAE5' }}
                 >
                   <div className="col-span-2 sm:col-span-1">
-                    <span className="text-sm font-semibold tabular-nums" style={{ color: '#FF5A5F' }}>
+                    <span className="text-sm font-semibold tabular-nums" style={{ color: '#EA2D34' }}>
                       {no}
                     </span>
                   </div>
@@ -149,14 +149,14 @@ export default function WhyChooseUs() {
                     <div className="flex items-start justify-between gap-4">
                       <h4 className="text-xl md:text-[22px] font-bold leading-snug tracking-tight transition-colors"
                         style={{ color: '#111111' }}
-                        onMouseEnter={e => (e.currentTarget.style.color = '#FF5A5F')}
+                        onMouseEnter={e => (e.currentTarget.style.color = '#EA2D34')}
                         onMouseLeave={e => (e.currentTarget.style.color = '#111111')}
                       >
                         {title}
                       </h4>
                       <ArrowUpRight
                         className="w-5 h-5 shrink-0 transition-all opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-                        style={{ color: '#FF5A5F' }}
+                        style={{ color: '#EA2D34' }}
                       />
                     </div>
                     <p className="text-gray-600 text-[15.5px] leading-relaxed mt-3 max-w-2xl">

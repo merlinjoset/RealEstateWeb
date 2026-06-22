@@ -128,7 +128,7 @@ export default function LoginPage() {
           <div className="mt-5 text-center">
             <p className="text-sm text-gray-500">
               Don't have an account?{' '}
-              <Link to="/register" className="font-semibold hover:underline" style={{ color: '#FF5A5F' }}>
+              <Link to="/register" className="font-semibold hover:underline" style={{ color: '#EA2D34' }}>
                 Register
               </Link>
             </p>

@@ -154,7 +154,7 @@ export default function AdminSmsTemplatesPage() {
           <AlertCircle className="w-8 h-8 text-red-400 mx-auto mb-3" />
           <p className="text-sm text-red-600">Failed to load templates.</p>
           <button onClick={() => query.refetch()}
-            className="mt-3 text-xs font-semibold underline" style={{ color: '#FF5A5F' }}>
+            className="mt-3 text-xs font-semibold underline" style={{ color: '#EA2D34' }}>
             Try again
           </button>
         </div>
@@ -200,7 +200,7 @@ export default function AdminSmsTemplatesPage() {
                   )}
 
                   <div className="rounded-lg p-3 text-sm leading-relaxed border-l-3"
-                    style={{ backgroundColor: '#FAFAF8', borderLeftColor: '#FF5A5F', borderLeftWidth: '3px' }}>
+                    style={{ backgroundColor: '#FAFAF8', borderLeftColor: '#EA2D34', borderLeftWidth: '3px' }}>
                     {t.body}
                   </div>
 
@@ -227,7 +227,7 @@ export default function AdminSmsTemplatesPage() {
                   <button onClick={() => openTest(t)}
                     title="Send test SMS"
                     className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg transition-colors"
-                    style={{ backgroundColor: 'rgba(255,90,95,0.08)', color: '#FF5A5F' }}>
+                    style={{ backgroundColor: 'rgba(255,90,95,0.08)', color: '#EA2D34' }}>
                     <Send className="w-3.5 h-3.5" /> Test
                   </button>
                   <button onClick={() => openEdit(t)}
@@ -252,7 +252,7 @@ export default function AdminSmsTemplatesPage() {
             <div className="p-6 border-b border-gray-100 flex items-start justify-between gap-3">
               <div>
                 <h3 className="font-bold text-gray-900 text-lg flex items-center gap-2">
-                  <Smartphone className="w-5 h-5" style={{ color: '#FF5A5F' }} />
+                  <Smartphone className="w-5 h-5" style={{ color: '#EA2D34' }} />
                   Send Test SMS
                 </h3>
                 <p className="text-xs text-gray-500 mt-1">
@@ -286,7 +286,7 @@ export default function AdminSmsTemplatesPage() {
                   </div>
 
                   <div className="rounded-lg p-3 text-sm leading-relaxed border-l-4"
-                    style={{ backgroundColor: '#F8F6F3', borderLeftColor: '#FF5A5F' }}>
+                    style={{ backgroundColor: '#F8F6F3', borderLeftColor: '#EA2D34' }}>
                     <div className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1">
                       Sample preview
                     </div>
@@ -356,9 +356,9 @@ export default function AdminSmsTemplatesPage() {
                   <button type="submit"
                     disabled={testMutation.isPending || !testPhone.trim()}
                     className="flex items-center gap-2 px-5 py-2.5 text-white text-sm font-semibold rounded-lg transition-colors disabled:opacity-60"
-                    style={{ backgroundColor: '#FF5A5F' }}
+                    style={{ backgroundColor: '#EA2D34' }}
                     onMouseEnter={e => !testMutation.isPending && (e.currentTarget.style.backgroundColor = '#e04a4f')}
-                    onMouseLeave={e => !testMutation.isPending && (e.currentTarget.style.backgroundColor = '#FF5A5F')}>
+                    onMouseLeave={e => !testMutation.isPending && (e.currentTarget.style.backgroundColor = '#EA2D34')}>
                     {testMutation.isPending
                       ? <><Loader2 className="w-4 h-4 animate-spin" /> Sending…</>
                       : <><Send className="w-4 h-4" /> Send Test SMS</>

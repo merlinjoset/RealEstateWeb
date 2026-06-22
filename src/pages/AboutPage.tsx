@@ -62,9 +62,9 @@ export default function AboutPage() {
 
             <div className="grid grid-cols-2 gap-4">
               {[
-                { icon: Home, value: listingsLabel, label: 'Active Listings', bg: 'rgba(255,90,95,0.08)', color: '#FF5A5F' },
+                { icon: Home, value: listingsLabel, label: 'Active Listings', bg: 'rgba(255,90,95,0.08)', color: '#EA2D34' },
                 { icon: Users, value: '500+', label: 'Happy Clients', bg: 'rgba(106,151,57,0.08)', color: '#6A9739' },
-                { icon: MapPin, value: '15+', label: 'Locations Covered', bg: 'rgba(255,90,95,0.08)', color: '#FF5A5F' },
+                { icon: MapPin, value: '15+', label: 'Locations Covered', bg: 'rgba(255,90,95,0.08)', color: '#EA2D34' },
                 { icon: Award, value: '10+', label: 'Years of Trust', bg: 'rgba(106,151,57,0.08)', color: '#6A9739' },
               ].map(({ icon: Icon, value, label, bg, color }) => (
                 <div key={label} className="rounded-2xl p-6 text-center" style={{ backgroundColor: bg, color }}>

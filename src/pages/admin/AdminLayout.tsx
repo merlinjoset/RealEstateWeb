@@ -177,7 +177,7 @@ export default function AdminLayout() {
                       : 'text-gray-400 hover:text-white hover:bg-gray-800'
                   }`
                 }
-                style={({ isActive }) => isActive ? { backgroundColor: '#FF5A5F' } : {}}
+                style={({ isActive }) => isActive ? { backgroundColor: '#EA2D34' } : {}}
               >
                 <item.icon className="w-4 h-4 shrink-0" />
                 <span className="flex-1">{item.label}</span>
@@ -243,7 +243,7 @@ export default function AdminLayout() {
               className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-gray-50 transition-colors"
             >
               <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-semibold"
-                style={{ backgroundColor: '#FF5A5F' }}>
+                style={{ backgroundColor: '#EA2D34' }}>
                 {initials}
               </div>
               <span className="hidden sm:block text-sm font-medium text-gray-700">
@@ -261,7 +261,7 @@ export default function AdminLayout() {
                     </div>
                     <div className="text-xs text-gray-500 truncate">{user.email}</div>
                     <span className="inline-block mt-1.5 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
-                      style={{ backgroundColor: 'rgba(255,90,95,0.10)', color: '#FF5A5F' }}>
+                      style={{ backgroundColor: 'rgba(255,90,95,0.10)', color: '#EA2D34' }}>
                       {user.role}
                     </span>
                   </div>

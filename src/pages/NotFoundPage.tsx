@@ -11,7 +11,7 @@ export default function NotFoundPage() {
         {/* Big 404 */}
         <div className="relative inline-block mb-6">
           <div className="text-[140px] sm:text-[180px] font-black leading-none tracking-tight"
-            style={{ color: '#FF5A5F' }}>
+            style={{ color: '#EA2D34' }}>
             404
           </div>
           <div className="absolute inset-0 flex items-center justify-center">
@@ -37,9 +37,9 @@ export default function NotFoundPage() {
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
           <Link to="/"
             className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-white text-sm font-semibold shadow-sm transition-colors"
-            style={{ backgroundColor: '#FF5A5F' }}
+            style={{ backgroundColor: '#EA2D34' }}
             onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#e04a4f')}
-            onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#FF5A5F')}>
+            onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#EA2D34')}>
             <Home className="w-4 h-4" /> Back to Home
           </Link>
           <Link to="/properties"

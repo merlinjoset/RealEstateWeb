@@ -30,7 +30,7 @@ export default function RequireAdmin({ children }: { children: React.ReactNode }
       <div className="min-h-screen flex items-center justify-center px-6" style={{ backgroundColor: '#F8F6F3' }}>
         <div className="max-w-md w-full bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center">
           <div className="w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-5"
-            style={{ backgroundColor: 'rgba(255,90,95,0.10)', color: '#FF5A5F' }}>
+            style={{ backgroundColor: 'rgba(255,90,95,0.10)', color: '#EA2D34' }}>
             <ShieldAlert className="w-8 h-8" />
           </div>
           <h1 className="text-2xl font-bold mb-2 tracking-tight" style={{ color: '#111111' }}>

@@ -27,7 +27,7 @@ const FEATURES_OPTIONS = [
 ]
 
 const PROPERTY_TYPES = [
-  { value: 'open_land',          label: 'Open Land',          icon: Trees,      color: '#FF5A5F' },
+  { value: 'open_land',          label: 'Open Land',          icon: Trees,      color: '#EA2D34' },
   { value: 'land_with_building', label: 'Land + Building',    icon: HomeIcon,   color: '#6A9739' },
   { value: 'agricultural',       label: 'Agricultural',       icon: Wheat,      color: '#8BC34A' },
   { value: 'residential_plot',   label: 'Residential Plot',   icon: MapPinIcon, color: '#F59E0B' },
@@ -309,7 +309,7 @@ export default function SubmitPropertyPage() {
             <div className="p-4 rounded-xl border bg-white text-left flex items-center gap-3"
               style={{ borderColor: 'rgba(255,90,95,0.2)' }}>
               <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
-                style={{ backgroundColor: 'rgba(255,90,95,0.10)', color: '#FF5A5F' }}>
+                style={{ backgroundColor: 'rgba(255,90,95,0.10)', color: '#EA2D34' }}>
                 <Phone className="w-4 h-4" />
               </div>
               <div>
@@ -335,9 +335,9 @@ export default function SubmitPropertyPage() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link to="/" className="btn-ghost">← Back to home</Link>
             <Link to="/properties" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-colors"
-              style={{ backgroundColor: '#FF5A5F' }}
+              style={{ backgroundColor: '#EA2D34' }}
               onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#e04a4f')}
-              onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#FF5A5F')}>
+              onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#EA2D34')}>
               Browse other listings
             </Link>
           </div>
@@ -607,7 +607,7 @@ export default function SubmitPropertyPage() {
                     <img src={img.preview} alt="" className="w-full h-full object-cover" />
                     {idx === 0 && (
                       <div className="absolute top-2 left-2 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide flex items-center gap-1 text-white"
-                        style={{ backgroundColor: '#FF5A5F' }}>
+                        style={{ backgroundColor: '#EA2D34' }}>
                         <Star className="w-2.5 h-2.5" fill="currentColor" /> Cover
                       </div>
                     )}
@@ -663,7 +663,7 @@ export default function SubmitPropertyPage() {
               {form.marketingPlan === 'VideoPromotion' && (
                 <div className="mt-3 rounded-xl p-3 text-xs flex items-start gap-2.5"
                   style={{ backgroundColor: 'rgba(255,90,95,0.06)', border: '1px solid rgba(255,90,95,0.2)', color: '#7F1D1D' }}>
-                  <Sparkles className="w-3.5 h-3.5 shrink-0 mt-0.5" style={{ color: '#FF5A5F' }} />
+                  <Sparkles className="w-3.5 h-3.5 shrink-0 mt-0.5" style={{ color: '#EA2D34' }} />
                   <span>
                     <strong>Sells faster — often sooner than expected.</strong> You get full
                     <strong> end-to-end support</strong> — we shortlist buyers, run site visits, handle paperwork and
@@ -692,15 +692,15 @@ export default function SubmitPropertyPage() {
 
           {/* === Submit === */}
           <div className="flex items-center justify-between gap-3 pt-4">
-            <Link to="/" className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-[#FF5A5F] transition-colors">
+            <Link to="/" className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-[#EA2D34] transition-colors">
               <ArrowLeft className="w-4 h-4" /> Cancel
             </Link>
             <button type="submit"
               disabled={submitMutation.isPending || uploadProgress != null}
               className="inline-flex items-center gap-2 px-7 py-3.5 text-white text-base font-bold rounded-xl shadow-lg transition-colors disabled:opacity-60"
-              style={{ backgroundColor: '#FF5A5F' }}
+              style={{ backgroundColor: '#EA2D34' }}
               onMouseEnter={e => !submitMutation.isPending && (e.currentTarget.style.backgroundColor = '#e04a4f')}
-              onMouseLeave={e => !submitMutation.isPending && (e.currentTarget.style.backgroundColor = '#FF5A5F')}>
+              onMouseLeave={e => !submitMutation.isPending && (e.currentTarget.style.backgroundColor = '#EA2D34')}>
               {uploadProgress
                 ? <><Loader2 className="w-5 h-5 animate-spin" /> Uploading {uploadProgress.done}/{uploadProgress.total}…</>
                 : submitMutation.isPending

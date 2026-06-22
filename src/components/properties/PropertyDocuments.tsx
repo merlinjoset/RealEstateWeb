@@ -18,11 +18,11 @@ export const DOC_TYPE_LABELS: Record<DocumentType, string> = {
 }
 
 const DOC_TYPE_BADGE: Record<DocumentType, { bg: string; color: string }> = {
-  ec:          { bg: 'rgba(255,90,95,0.10)',  color: '#FF5A5F' },
+  ec:          { bg: 'rgba(255,90,95,0.10)',  color: '#EA2D34' },
   patta:       { bg: 'rgba(106,151,57,0.10)', color: '#6A9739' },
   chitta:      { bg: 'rgba(106,151,57,0.10)', color: '#6A9739' },
   layout:      { bg: 'rgba(41,50,55,0.08)',   color: '#293237' },
-  sale_deed:   { bg: 'rgba(255,90,95,0.10)',  color: '#FF5A5F' },
+  sale_deed:   { bg: 'rgba(255,90,95,0.10)',  color: '#EA2D34' },
   tax_receipt: { bg: 'rgba(245,158,11,0.10)', color: '#B45309' },
   noc:         { bg: 'rgba(106,151,57,0.10)', color: '#6A9739' },
   fmb:         { bg: 'rgba(41,50,55,0.08)',   color: '#293237' },
@@ -111,7 +111,7 @@ export function PropertyDocumentsView({ documents, publicOnly = true }: ViewProp
                   href={doc.fileUrl}
                   download={doc.fileName}
                   className="p-2 rounded-lg transition-colors hover:bg-gray-100"
-                  style={{ color: '#FF5A5F' }}
+                  style={{ color: '#EA2D34' }}
                   title="Download"
                 >
                   <Download className="w-4 h-4" />
@@ -152,7 +152,7 @@ function DocumentPreview({ document, onClose }: { document: PropertyDocument; on
           </div>
           <a href={document.fileUrl} download={document.fileName}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white shrink-0"
-            style={{ backgroundColor: '#FF5A5F' }}>
+            style={{ backgroundColor: '#EA2D34' }}>
             <Download className="w-3.5 h-3.5" /> Download
           </a>
         </div>
@@ -168,7 +168,7 @@ function DocumentPreview({ document, onClose }: { document: PropertyDocument; on
               <p className="text-sm text-gray-500 mb-3">Preview not available for this file type.</p>
               <a href={document.fileUrl} target="_blank" rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold text-white"
-                style={{ backgroundColor: '#FF5A5F' }}>
+                style={{ backgroundColor: '#EA2D34' }}>
                 <ExternalLink className="w-4 h-4" /> Open in new tab
               </a>
             </div>
@@ -369,7 +369,7 @@ export function PropertyDocumentsEditor({ documents, onChange, propertyId = 0 }:
               type="checkbox"
               checked={draft.isPublic}
               onChange={(e) => setDraft({ ...draft, isPublic: e.target.checked })}
-              className="accent-[#FF5A5F] w-4 h-4"
+              className="accent-[#EA2D34] w-4 h-4"
             />
             <span className="text-gray-700">
               <strong style={{ color: '#111111' }}>Visible to buyers</strong>

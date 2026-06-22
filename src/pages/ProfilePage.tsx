@@ -11,7 +11,7 @@ import PageHeader from '../components/layout/PageHeader'
 import ConfirmDialog from '../components/common/ConfirmDialog'
 
 const ROLE_BADGE: Record<string, { bg: string; color: string; label: string }> = {
-  Admin:    { bg: 'rgba(255,90,95,0.10)',  color: '#FF5A5F', label: 'Admin' },
+  Admin:    { bg: 'rgba(255,90,95,0.10)',  color: '#EA2D34', label: 'Admin' },
   Agent:    { bg: 'rgba(41,50,55,0.08)',   color: '#293237', label: 'Agent' },
   Seller:   { bg: 'rgba(245,158,11,0.10)', color: '#B45309', label: 'Seller' },
   Employee: { bg: 'rgba(106,151,57,0.10)', color: '#6A9739', label: 'Employee' },
@@ -257,7 +257,7 @@ export default function ProfilePage() {
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 rounded-lg flex items-center justify-center"
-                    style={{ backgroundColor: 'rgba(255,90,95,0.08)', color: '#FF5A5F' }}>
+                    style={{ backgroundColor: 'rgba(255,90,95,0.08)', color: '#EA2D34' }}>
                     <Lock className="w-4 h-4" />
                   </div>
                   <div>
@@ -268,7 +268,7 @@ export default function ProfilePage() {
                 {!showPwForm && (
                   <button onClick={() => setShowPwForm(true)}
                     className="text-xs font-semibold transition-colors"
-                    style={{ color: '#FF5A5F' }}>
+                    style={{ color: '#EA2D34' }}>
                     Change password
                   </button>
                 )}
@@ -312,7 +312,7 @@ export default function ProfilePage() {
                     </button>
                     <button type="submit" disabled={pwSaving}
                       className="inline-flex items-center gap-1.5 px-4 py-2 text-white text-xs font-semibold rounded-lg transition-colors disabled:opacity-60"
-                      style={{ backgroundColor: '#FF5A5F' }}>
+                      style={{ backgroundColor: '#EA2D34' }}>
                       {pwSaving
                         ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Saving…</>
                         : <><Save className="w-3.5 h-3.5" /> Update Password</>}
@@ -330,7 +330,7 @@ export default function ProfilePage() {
               <nav className="space-y-1.5">
                 {isAdmin && (
                   <QuickLink to="/admin" icon={Shield} label="Admin Dashboard"
-                    desc="Manage properties, users, inquiries" color="#FF5A5F" />
+                    desc="Manage properties, users, inquiries" color="#EA2D34" />
                 )}
                 {isEmployee && (
                   <QuickLink to="/admin/my-work" icon={Briefcase} label="My Work"

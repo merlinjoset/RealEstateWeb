@@ -78,7 +78,7 @@ export default function NotificationsBell() {
           {/* Header */}
           <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Bell className="w-4 h-4" style={{ color: '#FF5A5F' }} />
+              <Bell className="w-4 h-4" style={{ color: '#EA2D34' }} />
               <span className="text-sm font-bold text-gray-900">Notifications</span>
             </div>
             <span className="text-xs text-gray-400">

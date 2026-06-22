@@ -16,7 +16,7 @@ import { useAuth } from '../../context/AuthContext'
 type StatusKey = 'new' | 'assigned' | 'in_progress' | 'resolved' | 'closed'
 
 const STATUS_BADGE: Record<StatusKey, { bg: string; color: string; label: string }> = {
-  new:         { bg: 'rgba(255,90,95,0.10)',  color: '#FF5A5F', label: 'New' },
+  new:         { bg: 'rgba(255,90,95,0.10)',  color: '#EA2D34', label: 'New' },
   assigned:    { bg: 'rgba(99,102,241,0.10)', color: '#4F46E5', label: 'Assigned' },
   in_progress: { bg: 'rgba(245,158,11,0.10)', color: '#B45309', label: 'In Progress' },
   resolved:    { bg: 'rgba(106,151,57,0.10)', color: '#6A9739', label: 'Resolved' },
@@ -166,12 +166,12 @@ export default function AdminInquiriesPage() {
             {isEmployee ? (
               <>
                 {counts.all} assigned to you ·{' '}
-                <span style={{ color: '#FF5A5F' }} className="font-semibold">{counts.unread} unread</span>
+                <span style={{ color: '#EA2D34' }} className="font-semibold">{counts.unread} unread</span>
               </>
             ) : (
               <>
                 {counts.all} total ·{' '}
-                <span style={{ color: '#FF5A5F' }} className="font-semibold">{counts.unread} unread</span> ·
+                <span style={{ color: '#EA2D34' }} className="font-semibold">{counts.unread} unread</span> ·
                 <span style={{ color: '#B45309' }} className="font-semibold"> {counts.unassigned} unassigned</span>
               </>
             )}
@@ -182,7 +182,7 @@ export default function AdminInquiriesPage() {
       {/* Stat row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         {[
-          { label: 'New',         value: counts.new,        color: '#FF5A5F', bg: 'rgba(255,90,95,0.08)' },
+          { label: 'New',         value: counts.new,        color: '#EA2D34', bg: 'rgba(255,90,95,0.08)' },
           { label: 'Assigned',    value: counts.assigned,   color: '#4F46E5', bg: 'rgba(99,102,241,0.08)' },
           { label: 'In Progress', value: counts.in_progress, color: '#B45309', bg: 'rgba(245,158,11,0.08)' },
           { label: 'Closed',      value: counts.closed + counts.resolved, color: '#6A9739', bg: 'rgba(106,151,57,0.08)' },
@@ -246,7 +246,7 @@ export default function AdminInquiriesPage() {
                   onClick={() => setReadFilter(readFilter === 'unread' ? 'all' : 'unread')}
                   className="ml-auto px-3 py-1.5 rounded-full text-xs font-medium border transition-colors inline-flex items-center gap-1"
                   style={readFilter === 'unread'
-                    ? { backgroundColor: '#FF5A5F', color: 'white', borderColor: '#FF5A5F' }
+                    ? { backgroundColor: '#EA2D34', color: 'white', borderColor: '#EA2D34' }
                     : { backgroundColor: 'white', color: '#374151', borderColor: '#e5e7eb' }}>
                   <Filter className="w-3 h-3" /> Unread only
                 </button>
@@ -264,7 +264,7 @@ export default function AdminInquiriesPage() {
                 <AlertCircle className="w-8 h-8 text-red-400 mx-auto mb-3" />
                 <p className="text-sm text-red-600">Failed to load inquiries.</p>
                 <button onClick={() => inquiriesQuery.refetch()}
-                  className="mt-3 text-xs font-semibold underline" style={{ color: '#FF5A5F' }}>
+                  className="mt-3 text-xs font-semibold underline" style={{ color: '#EA2D34' }}>
                   Try again
                 </button>
               </div>
@@ -294,7 +294,7 @@ export default function AdminInquiriesPage() {
                       <div className="flex items-start gap-3">
                         <div className="shrink-0 mt-1.5">
                           {!i.isRead ? (
-                            <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#FF5A5F' }} />
+                            <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#EA2D34' }} />
                           ) : (
                             <div className="w-2.5 h-2.5 rounded-full bg-gray-200" />
                           )}
@@ -448,7 +448,7 @@ export default function AdminInquiriesPage() {
                   <a href={`tel:${selected.phone.replace(/\s/g, '')}`}
                     className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 hover:border-gray-200 hover:bg-gray-50 transition-all">
                     <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
-                      style={{ backgroundColor: 'rgba(255,90,95,0.08)', color: '#FF5A5F' }}>
+                      style={{ backgroundColor: 'rgba(255,90,95,0.08)', color: '#EA2D34' }}>
                       <Phone className="w-4 h-4" />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -523,7 +523,7 @@ export default function AdminInquiriesPage() {
                 <div>
                   <div className="text-[10px] text-gray-400 uppercase tracking-wider font-semibold mb-1.5">Message</div>
                   <div className="rounded-xl p-4 text-sm text-gray-700 leading-relaxed border-l-4"
-                    style={{ backgroundColor: '#FAFAF8', borderColor: '#FF5A5F' }}>
+                    style={{ backgroundColor: '#FAFAF8', borderColor: '#EA2D34' }}>
                     {selected.message}
                   </div>
                 </div>
@@ -634,7 +634,7 @@ function AssignPicker({
 
 function roleAccent(role: string) {
   switch (role) {
-    case 'Admin':    return '#FF5A5F'
+    case 'Admin':    return '#EA2D34'
     case 'Employee': return '#6A9739'
     case 'Agent':    return '#293237'
     default:         return '#9CA3AF'
@@ -648,7 +648,7 @@ const STATUS_OPTIONS: Array<{
   label: string
   color: string
 }> = [
-  { key: 'New',        label: 'New',         color: '#FF5A5F' },
+  { key: 'New',        label: 'New',         color: '#EA2D34' },
   { key: 'InProgress', label: 'In Progress', color: '#B45309' },
   { key: 'Resolved',   label: 'Resolved',    color: '#6A9739' },
   { key: 'Closed',     label: 'Closed',      color: '#293237' },

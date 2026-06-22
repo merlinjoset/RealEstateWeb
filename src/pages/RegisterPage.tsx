@@ -18,7 +18,7 @@ const ROLE_OPTIONS = [
     label: 'Seller',
     desc: 'I have land or property to sell',
     icon: UserIcon,
-    color: '#FF5A5F',
+    color: '#EA2D34',
   },
   {
     value: 'Agent' as const,
@@ -157,7 +157,7 @@ export default function RegisterPage() {
             >
               <div
                 className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 text-white"
-                style={{ backgroundColor: planHint === 'premium' ? '#FF5A5F' : '#6A9739' }}
+                style={{ backgroundColor: planHint === 'premium' ? '#EA2D34' : '#6A9739' }}
               >
                 {planHint === 'premium' ? <Video className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
               </div>
@@ -295,7 +295,7 @@ export default function RegisterPage() {
 
           <p className="mt-5 text-center text-sm text-gray-500">
             Already have an account?{' '}
-            <Link to="/login" className="font-semibold hover:underline" style={{ color: '#FF5A5F' }}>Sign in</Link>
+            <Link to="/login" className="font-semibold hover:underline" style={{ color: '#EA2D34' }}>Sign in</Link>
           </p>
         </div>
       </div>
