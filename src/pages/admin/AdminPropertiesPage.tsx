@@ -91,6 +91,7 @@ export default function AdminPropertiesPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50">
+                <th className="text-left px-4 py-3 font-semibold text-gray-500 text-xs uppercase">Serial No</th>
                 <th className="text-left px-4 py-3 font-semibold text-gray-500 text-xs uppercase">Property</th>
                 <th className="text-left px-4 py-3 font-semibold text-gray-500 text-xs uppercase hidden sm:table-cell">City</th>
                 <th className="text-left px-4 py-3 font-semibold text-gray-500 text-xs uppercase hidden md:table-cell">Area</th>
@@ -102,6 +103,7 @@ export default function AdminPropertiesPage() {
             <tbody className="divide-y divide-gray-50">
               {filtered.map((p) => (
                 <tr key={p.id} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-4 py-3 text-gray-600 whitespace-nowrap font-medium">{p.serialNo ? `#${p.serialNo}` : '—'}</td>
                   <td className="px-4 py-3">
                     <div className="font-medium text-gray-900 line-clamp-1 max-w-xs">{p.title}</div>
                     <div className="text-xs text-gray-400 mt-0.5">{p.propertyType.replace('_', ' ')}</div>

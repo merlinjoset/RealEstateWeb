@@ -224,7 +224,7 @@ export default function PropertiesPage({ rentalMode = false }: PropertiesPagePro
                 type="text"
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setPage(1) }}
-                placeholder="Search by city or location..."
+                placeholder="Search by serial no, city, or location..."
                 className="flex-1 bg-transparent outline-none text-sm text-gray-900 placeholder-gray-400"
               />
               {search && (

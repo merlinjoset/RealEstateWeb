@@ -5,6 +5,8 @@ interface Props {
   title?: string
   /** Meta description (155 chars max ideally). Falls back to the site default in index.html. */
   description?: string
+  /** Comma-separated SEO keywords / target phrases for this page. */
+  keywords?: string
   /** Absolute or root-relative path for canonical URL. Defaults to current location. */
   path?: string
   /** Override the OG image (defaults to /og-cover.jpg). Pass a property hero image
@@ -28,7 +30,7 @@ const DEFAULT_IMAGE = `${SITE_BASE}/og-cover.jpg`
  * `noindex` so we don't leak anything sensitive into Google.
  */
 export default function SEO({
-  title, description, path, image, type = 'website', noindex = false, jsonLd,
+  title, description, keywords, path, image, type = 'website', noindex = false, jsonLd,
 }: Props) {
   const fullTitle = title ? `${title} — ${SITE_NAME}` : `${SITE_NAME} — Land for sale in Kanyakumari, Tamil Nadu`
   const url = path
@@ -42,6 +44,7 @@ export default function SEO({
     <Helmet>
       <title>{fullTitle}</title>
       {description && <meta name="description" content={description} />}
+      {keywords && <meta name="keywords" content={keywords} />}
       <link rel="canonical" href={url} />
       <meta name="robots" content={noindex ? 'noindex, nofollow' : 'index, follow, max-image-preview:large'} />
 

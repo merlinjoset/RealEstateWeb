@@ -324,7 +324,7 @@ export default function MapViewPage() {
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search by city, location, or landmark..."
+                placeholder="Search by serial no, city, location, or landmark..."
                 className="flex-1 bg-transparent outline-none text-sm placeholder-gray-400"
               />
               {search && (

@@ -68,7 +68,13 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (res) => res,
   async (error: AxiosError) => {
-    if (error.response?.status === 401) {
+    // A 401 on the auth endpoints themselves (login / register) is an expected
+    // "bad credentials" outcome — let it propagate so the page can show an
+    // inline error. Only a 401 on a *protected* request means the session
+    // expired, which is what should bounce the user to /login.
+    const reqUrl = error.config?.url ?? ''
+    const isAuthRequest = /\/auth\/(login|register|refresh)/.test(reqUrl)
+    if (error.response?.status === 401 && !isAuthRequest) {
       localStorage.removeItem('accessToken')
       localStorage.removeItem('refreshToken')
       window.location.href = '/login'
@@ -302,19 +308,39 @@ export const authApi = {
    * older server without /auth/public-key).
    */
   login: async (credentials: LoginCredentials) => {
-    const { encryptPassword } = await import('./crypto')
-    let body: { email: string; password?: string; encryptedPassword?: string }
-    try {
-      body = {
-        email: credentials.email,
-        encryptedPassword: await encryptPassword(credentials.password),
+    const { encryptPassword, clearPublicKeyCache } = await import('./crypto')
+
+    const attempt = async () => {
+      let body: { email: string; password?: string; encryptedPassword?: string }
+      try {
+        body = {
+          email: credentials.email,
+          encryptedPassword: await encryptPassword(credentials.password),
+        }
+      } catch {
+        // RSA encryption failed (e.g. old server, browser without WebCrypto) —
+        // fall back to plaintext over HTTPS.
+        body = credentials
       }
-    } catch {
-      // RSA encryption failed (e.g. old server, browser without WebCrypto) —
-      // fall back to plaintext over HTTPS.
-      body = credentials
+      return api
+        .post<{ user: User; tokens: AuthTokens }>('/auth/login', body)
+        .then((r) => r.data)
     }
-    return api.post<{ user: User; tokens: AuthTokens }>('/auth/login', body).then((r) => r.data)
+
+    try {
+      return await attempt()
+    } catch (err) {
+      // The server rotates its RSA keypair on every restart. A page that
+      // loaded before a restart holds a stale cached public key, so the
+      // ciphertext it sends can't be decrypted → the server returns 401 even
+      // when the password is correct. Drop the cached key, refetch a fresh
+      // one, and retry once before surfacing "invalid credentials".
+      if ((err as AxiosError).response?.status === 401) {
+        clearPublicKeyCache()
+        return await attempt()
+      }
+      throw err
+    }
   },
 
   register: (data: RegisterData) =>
