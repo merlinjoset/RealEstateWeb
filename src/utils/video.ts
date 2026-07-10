@@ -19,6 +19,23 @@ export type VideoSource =
   | { kind: 'instagram'; src: string; portrait: boolean }
   | { kind: 'native';    src: string }
 
+/**
+ * Best-effort still-image (poster) URL for a video link. YouTube serves a
+ * thumbnail at a predictable path keyed on the video id (works for Shorts,
+ * youtu.be, watch and embed forms alike). Other providers don't expose a
+ * stable image URL, so we return null and callers fall back to a placeholder.
+ */
+export function videoPosterUrl(raw: string | null | undefined): string | null {
+  const url = (raw ?? '').trim()
+  if (!url) return null
+  const id =
+    url.match(/youtube\.com\/shorts\/([A-Za-z0-9_-]{6,})/)?.[1] ??
+    url.match(/youtu\.be\/([A-Za-z0-9_-]{6,})/)?.[1] ??
+    url.match(/[?&]v=([A-Za-z0-9_-]{6,})/)?.[1] ??
+    url.match(/youtube\.com\/embed\/([A-Za-z0-9_-]{6,})/)?.[1]
+  return id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : null
+}
+
 export function classifyVideoUrl(raw: string | null | undefined): VideoSource {
   const url = (raw ?? '').trim()
   if (!url) return { kind: 'native', src: '' }

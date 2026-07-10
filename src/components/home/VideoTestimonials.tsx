@@ -1,8 +1,22 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Play, Pause, Quote, Star, MapPin, X, Loader2 } from 'lucide-react'
-import { testimonialsApi, type Testimonial } from '../../services/api'
-import { classifyVideoUrl } from '../../utils/video'
+import { testimonialsApi, resolveMediaUrl, type Testimonial } from '../../services/api'
+import { classifyVideoUrl, videoPosterUrl } from '../../utils/video'
+
+/**
+ * Resolve the best still image for a testimonial card. The stored `thumbnail`
+ * is sometimes a real image, but often it's just the video URL (e.g. a
+ * YouTube Shorts link) — in that case derive YouTube's poster image. Falls
+ * back to the video URL's poster, then to '' (→ gradient placeholder).
+ */
+function testimonialPoster(t: Testimonial): string {
+  return (
+    videoPosterUrl(t.thumbnail) ??
+    videoPosterUrl(t.videoUrl) ??
+    (t.thumbnail ? resolveMediaUrl(t.thumbnail) : '')
+  )
+}
 
 export default function VideoTestimonials() {
   const [active, setActive] = useState<Testimonial | null>(null)
@@ -57,12 +71,17 @@ export default function VideoTestimonials() {
               onClick={() => setActive(t)}
             >
               {/* Thumbnail with play button */}
-              <div className="relative overflow-hidden rounded-2xl aspect-[4/5] mb-5">
-                <img
-                  src={t.thumbnail ?? ''}
-                  alt={t.name}
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                />
+              <div className="relative overflow-hidden rounded-2xl aspect-[4/5] mb-5"
+                style={{ background: 'linear-gradient(135deg, #EA2D34 0%, #b91c22 100%)' }}>
+                {testimonialPoster(t) && (
+                  <img
+                    src={testimonialPoster(t)}
+                    alt={t.name}
+                    loading="lazy"
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    onError={(e) => { e.currentTarget.style.display = 'none' }}
+                  />
+                )}
 
                 {/* Dark gradient overlay */}
                 <div className="absolute inset-0" style={{
@@ -203,7 +222,7 @@ function VideoModal({ testimonial, onClose }: { testimonial: Testimonial; onClos
               <video
                 key={testimonial.id}
                 src={source.src}
-                poster={testimonial.thumbnail ?? ''}
+                poster={testimonialPoster(testimonial)}
                 controls
                 autoPlay
                 playsInline
