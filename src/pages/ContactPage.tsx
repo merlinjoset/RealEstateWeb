@@ -1,8 +1,11 @@
 import { useState } from 'react'
+import { useMutation } from '@tanstack/react-query'
 import { Phone, Mail, MapPin, MessageCircle, Send, Clock } from 'lucide-react'
 import PageHeader from '../components/layout/PageHeader'
 import SEO from '../components/common/SEO'
+import { contactApi } from '../services/api'
 import { isValidEmail, EMAIL_PATTERN } from '../utils/email'
+import { isValidIndianMobile, PHONE_PATTERN } from '../utils/phone'
 
 export default function ContactPage() {
   const [form, setForm] = useState({ name: '', phone: '', email: '', message: '', contact: 'phone' as 'phone' | 'whatsapp' })
@@ -10,14 +13,31 @@ export default function ContactPage() {
 
   const emailRequired = false
   const emailLooksInvalid = form.email.length > 0 && !isValidEmail(form.email)
+  const phoneLooksInvalid = form.phone.length > 0 && !isValidIndianMobile(form.phone)
+
+  const submitMutation = useMutation({
+    mutationFn: () => contactApi.send({
+      name: form.name.trim(),
+      phone: form.phone.trim(),
+      email: form.email.trim() || undefined,
+      message: form.message.trim(),
+      preferredContact: form.contact,
+      type: 'General',
+    }),
+    onSuccess: () => setSent(true),
+  })
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    if (!isValidIndianMobile(form.phone)) {
+      alert('Please enter a valid 10-digit mobile number (starting with 6, 7, 8, or 9).')
+      return
+    }
     if (form.email.trim() && !isValidEmail(form.email)) {
       alert('Please enter a valid email address (e.g. you@example.com).')
       return
     }
-    setSent(true)
+    submitMutation.mutate()
   }
 
   return (
@@ -118,7 +138,14 @@ export default function ContactPage() {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Phone Number *</label>
+                        <label className="text-sm font-medium text-gray-700 mb-1.5 flex items-center justify-between">
+                          <span>Phone Number *</span>
+                          {phoneLooksInvalid && (
+                            <span className="text-[11px] font-normal" style={{ color: '#B45309' }}>
+                              ⚠ Enter a valid 10-digit mobile
+                            </span>
+                          )}
+                        </label>
                         <div className="relative">
                           {/* Static "+91" prefix — visual only. */}
                           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-medium pointer-events-none">
@@ -129,10 +156,12 @@ export default function ContactPage() {
                             type="tel"
                             inputMode="numeric"
                             maxLength={10}
+                            pattern={PHONE_PATTERN}
                             value={form.phone}
                             onChange={(e) => setForm({ ...form, phone: e.target.value.replace(/\D/g, '') })}
                             placeholder="10-digit mobile"
                             className="input-field pl-12"
+                            style={phoneLooksInvalid ? { borderColor: '#F59E0B' } : undefined}
                           />
                         </div>
                       </div>
@@ -203,9 +232,18 @@ export default function ContactPage() {
                       </div>
                     </div>
 
-                    <button type="submit" className="w-full btn-primary py-3.5 text-base">
-                      <Send className="w-4 h-4" /> Send Inquiry
+                    <button
+                      type="submit"
+                      disabled={submitMutation.isPending}
+                      className="w-full btn-primary py-3.5 text-base disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      <Send className="w-4 h-4" /> {submitMutation.isPending ? 'Sending…' : 'Send Inquiry'}
                     </button>
+                    {submitMutation.isError && (
+                      <p className="text-sm text-center" style={{ color: '#EA2D34' }}>
+                        Couldn't send your inquiry. Please try again, or call us at +91 99944 88490.
+                      </p>
+                    )}
                   </form>
                 </>
               )}

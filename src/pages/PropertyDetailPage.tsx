@@ -11,6 +11,7 @@ import { PropertyDocumentsView } from '../components/properties/PropertyDocument
 import PropertyDocumentsPublic from '../components/properties/PropertyDocumentsPublic'
 import PropertyLocationMap from '../components/properties/PropertyLocationMap'
 import ShareButton from '../components/properties/ShareButton'
+import PropertyInquiryForm from '../components/properties/PropertyInquiryForm'
 import { useAuth } from '../context/AuthContext'
 import { propertiesApi, resolveMediaUrl } from '../services/api'
 
@@ -426,6 +427,10 @@ export default function PropertyDetailPage() {
                   <Phone className="w-4 h-4" />
                   Alt: +91 99448 85542
                 </a>
+              </div>
+
+              <div className="mb-5">
+                <PropertyInquiryForm propertyId={property.id} propertyTitle={property.title} />
               </div>
 
               {(property.submittedByPhone || property.submittedByEmail) && (
