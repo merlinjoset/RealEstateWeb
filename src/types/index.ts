@@ -127,6 +127,7 @@ export interface RegisterData {
   password: string
   phone?: string
   role: 'Agent' | 'Seller' | 'Buyer'
+  turnstileToken?: string
 }
 
 export interface PropertyFilters {
@@ -174,6 +175,7 @@ export interface ContactForm {
   propertyId?: number
   preferredContact: 'phone' | 'whatsapp'
   type?: InquiryType
+  turnstileToken?: string
 }
 
 export interface Inquiry {

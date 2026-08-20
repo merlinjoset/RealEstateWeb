@@ -4,6 +4,7 @@ import { useMutation } from '@tanstack/react-query'
 import { Eye, EyeOff, UserPlus, Loader2, AlertCircle, Briefcase, User as UserIcon, Search, Video, Sparkles } from 'lucide-react'
 import { authApi } from '../services/api'
 import type { RegisterData } from '../types'
+import Turnstile, { turnstileEnabled } from '../components/common/Turnstile'
 
 const ROLE_OPTIONS = [
   {
@@ -73,6 +74,7 @@ export default function RegisterPage() {
   )
   const [showPw, setShowPw] = useState(false)
   const [error, setError] = useState('')
+  const [captcha, setCaptcha] = useState<string | null>(null)
   const navigate = useNavigate()
 
   // Copy varies based on intent — keeps the existing seller/agent flow intact.
@@ -129,6 +131,7 @@ export default function RegisterPage() {
       phone: form.phone.trim() || undefined,
       password: form.password,
       role: form.role,
+      turnstileToken: captcha ?? undefined,
     })
   }
 
@@ -283,8 +286,10 @@ export default function RegisterPage() {
                 placeholder="Repeat password" className="input-field" />
             </div>
 
+            <Turnstile onToken={setCaptcha} />
+
             <button type="submit"
-              disabled={registerMutation.isPending}
+              disabled={registerMutation.isPending || (turnstileEnabled && !captcha)}
               className="w-full btn-primary py-3 text-base mt-2 disabled:opacity-60">
               {registerMutation.isPending
                 ? <><Loader2 className="w-4 h-4 animate-spin" /> Creating account…</>

@@ -6,6 +6,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { contactApi } from '../../services/api'
+import Turnstile, { turnstileEnabled } from '../common/Turnstile'
 import {
   DOC_TYPE_LABELS,
 } from './PropertyDocuments'
@@ -151,6 +152,7 @@ function DocumentRequestModal({ propertyId, propertyTitle, onClose }: ModalProps
     preferredContact: 'phone',
   })
   const [submitted, setSubmitted] = useState(false)
+  const [captcha, setCaptcha] = useState<string | null>(null)
 
   const phoneIsIndian = isIndianMobile(form.phone)
   const emailRequired = !phoneIsIndian && form.phone.length > 0
@@ -164,6 +166,7 @@ function DocumentRequestModal({ propertyId, propertyTitle, onClose }: ModalProps
       propertyId,
       preferredContact: form.preferredContact,
       type: 'DocumentRequest',  // ← tagged in backend so admins can filter
+      turnstileToken: captcha ?? undefined,
     }),
     onSuccess: () => setSubmitted(true),
   })
@@ -317,8 +320,10 @@ function DocumentRequestModal({ propertyId, propertyTitle, onClose }: ModalProps
               </span>
             </div>
 
+            <Turnstile onToken={setCaptcha} />
+
             <button type="submit"
-              disabled={submitMutation.isPending}
+              disabled={submitMutation.isPending || (turnstileEnabled && !captcha)}
               className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-xl text-white text-sm font-semibold shadow-sm transition-colors disabled:opacity-60"
               style={{ backgroundColor: '#EA2D34' }}
               onMouseEnter={e => !submitMutation.isPending && (e.currentTarget.style.backgroundColor = '#e04a4f')}

@@ -6,10 +6,12 @@ import SEO from '../components/common/SEO'
 import { contactApi } from '../services/api'
 import { isValidEmail, EMAIL_PATTERN } from '../utils/email'
 import { isValidIndianMobile, PHONE_PATTERN } from '../utils/phone'
+import Turnstile, { turnstileEnabled } from '../components/common/Turnstile'
 
 export default function ContactPage() {
   const [form, setForm] = useState({ name: '', phone: '', email: '', message: '', contact: 'phone' as 'phone' | 'whatsapp' })
   const [sent, setSent] = useState(false)
+  const [captcha, setCaptcha] = useState<string | null>(null)
 
   const emailRequired = false
   const emailLooksInvalid = form.email.length > 0 && !isValidEmail(form.email)
@@ -23,6 +25,7 @@ export default function ContactPage() {
       message: form.message.trim(),
       preferredContact: form.contact,
       type: 'General',
+      turnstileToken: captcha ?? undefined,
     }),
     onSuccess: () => setSent(true),
   })
@@ -232,9 +235,11 @@ export default function ContactPage() {
                       </div>
                     </div>
 
+                    <Turnstile onToken={setCaptcha} />
+
                     <button
                       type="submit"
-                      disabled={submitMutation.isPending}
+                      disabled={submitMutation.isPending || (turnstileEnabled && !captcha)}
                       className="w-full btn-primary py-3.5 text-base disabled:opacity-60 disabled:cursor-not-allowed"
                     >
                       <Send className="w-4 h-4" /> {submitMutation.isPending ? 'Sending…' : 'Send Inquiry'}
